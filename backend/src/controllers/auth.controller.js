@@ -1,38 +1,26 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 
 import User from "../models/User.js";
-import { env } from "../config/env.js";
-
-const signToken = (user) =>
-  jwt.sign({ sub: user._id.toString(), email: user.email }, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn,
-  });
+import { buildAuthResponse, toPublicUser } from "../utils/auth.js";
 
 export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({ message: "User already exists" });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       passwordHash,
     });
 
-    return res.status(201).json({
-      token: signToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+    return res.status(201).json(buildAuthResponse(user));
   } catch (error) {
     return next(error);
   }
@@ -41,7 +29,8 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -52,16 +41,24 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    return res.json({
-      token: signToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+    return res.json(buildAuthResponse(user));
   } catch (error) {
     return next(error);
   }
 };
 
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.sub).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      user: toPublicUser(user),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

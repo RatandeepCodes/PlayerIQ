@@ -1,17 +1,20 @@
 import express from "express";
 import { body } from "express-validator";
 
-import { login, register } from "../controllers/auth.controller.js";
+import { getCurrentUser, login, register } from "../controllers/auth.controller.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireDatabase } from "../middleware/db.middleware.js";
 import { validateRequest } from "../utils/validate-request.js";
 
 const router = express.Router();
 
 router.post(
   "/register",
+  requireDatabase,
   [
-    body("name").trim().notEmpty(),
-    body("email").isEmail(),
-    body("password").isLength({ min: 6 }),
+    body("name").trim().isLength({ min: 2, max: 80 }),
+    body("email").trim().isEmail().normalizeEmail(),
+    body("password").isLength({ min: 8, max: 128 }),
     validateRequest,
   ],
   register,
@@ -19,9 +22,11 @@ router.post(
 
 router.post(
   "/login",
-  [body("email").isEmail(), body("password").notEmpty(), validateRequest],
+  requireDatabase,
+  [body("email").trim().isEmail().normalizeEmail(), body("password").notEmpty(), validateRequest],
   login,
 );
 
-export default router;
+router.get("/me", requireAuth, requireDatabase, getCurrentUser);
 
+export default router;

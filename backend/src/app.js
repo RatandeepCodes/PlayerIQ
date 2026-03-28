@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 
+import { isDatabaseConnected } from "./config/db.js";
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "playeriq-backend",
+    database: isDatabaseConnected() ? "connected" : "disconnected",
   });
 });
 
@@ -36,4 +38,3 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;
-

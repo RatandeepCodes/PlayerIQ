@@ -9,7 +9,10 @@ export const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: "Authentication required" });
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.slice("Bearer ".length).trim();
+  if (!token) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
@@ -19,4 +22,3 @@ export const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
-
