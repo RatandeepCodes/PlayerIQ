@@ -1,0 +1,31 @@
+source,match_id,competition,season,minute,second,timestamp,team,opponent,player_id,player_name,nationality,position,event_type,outcome,xg,is_key_pass,progressive_pass,dribble_success,shot_on_target,goal,score_difference
+statsbomb_open_data,SB-1001,Premier League,2023-24,12,14,00:12:14,Manchester City,Liverpool,P001,Kevin De Bruyne,Belgium,CAM,pass,success,0,1,1,0,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,24,33,00:24:33,Manchester City,Liverpool,P001,Kevin De Bruyne,Belgium,CAM,pass,success,0,0,1,0,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,33,18,00:33:18,Manchester City,Liverpool,P001,Kevin De Bruyne,Belgium,CAM,shot,success,0.08,0,0,0,1,0,0
+statsbomb_open_data,SB-1002,Premier League,2023-24,61,42,01:01:42,Manchester City,Arsenal,P001,Kevin De Bruyne,Belgium,CAM,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,82,4,01:22:04,Manchester City,Arsenal,P001,Kevin De Bruyne,Belgium,CAM,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,86,27,01:26:27,Manchester City,Arsenal,P001,Kevin De Bruyne,Belgium,CAM,tackle,success,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1001,Premier League,2023-24,18,7,00:18:07,Manchester City,Liverpool,P002,Erling Haaland,Norway,ST,shot,success,0.45,0,0,0,1,1,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,35,16,00:35:16,Manchester City,Liverpool,P002,Erling Haaland,Norway,ST,pass,success,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1001,Premier League,2023-24,52,2,00:52:02,Manchester City,Liverpool,P002,Erling Haaland,Norway,ST,dribble,success,0,0,0,1,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,67,41,01:07:41,Manchester City,Arsenal,P002,Erling Haaland,Norway,ST,shot,success,0.31,0,0,0,1,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,84,9,01:24:09,Manchester City,Arsenal,P002,Erling Haaland,Norway,ST,shot,fail,0.18,0,0,0,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,88,11,01:28:11,Manchester City,Arsenal,P002,Erling Haaland,Norway,ST,pass,fail,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1001,Premier League,2023-24,9,50,00:09:50,Liverpool,Manchester City,P003,Virgil van Dijk,Netherlands,CB,pass,success,0,0,1,0,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,28,31,00:28:31,Liverpool,Manchester City,P003,Virgil van Dijk,Netherlands,CB,tackle,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,41,22,00:41:22,Liverpool,Manchester City,P003,Virgil van Dijk,Netherlands,CB,interception,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1003,Premier League,2023-24,58,5,00:58:05,Liverpool,Chelsea,P003,Virgil van Dijk,Netherlands,CB,clearance,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1003,Premier League,2023-24,79,40,01:19:40,Liverpool,Chelsea,P003,Virgil van Dijk,Netherlands,CB,pass,success,0,0,1,0,0,0,1
+statsbomb_open_data,SB-1003,Premier League,2023-24,87,44,01:27:44,Liverpool,Chelsea,P003,Virgil van Dijk,Netherlands,CB,recovery,success,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1004,Premier League,2023-24,11,30,00:11:30,Arsenal,Tottenham,P004,Bukayo Saka,England,RW,pass,success,0,1,1,0,0,0,0
+statsbomb_open_data,SB-1004,Premier League,2023-24,22,8,00:22:08,Arsenal,Tottenham,P004,Bukayo Saka,England,RW,dribble,success,0,0,0,1,0,0,0
+statsbomb_open_data,SB-1004,Premier League,2023-24,37,43,00:37:43,Arsenal,Tottenham,P004,Bukayo Saka,England,RW,shot,success,0.15,0,0,0,1,0,0
+statsbomb_open_data,SB-1002,Premier League,2023-24,63,11,01:03:11,Arsenal,Manchester City,P004,Bukayo Saka,England,RW,dribble,fail,0,0,0,0,0,0,-1
+statsbomb_open_data,SB-1002,Premier League,2023-24,81,6,01:21:06,Arsenal,Manchester City,P004,Bukayo Saka,England,RW,pass,success,0,0,1,0,0,0,-1
+statsbomb_open_data,SB-1002,Premier League,2023-24,83,52,01:23:52,Arsenal,Manchester City,P004,Bukayo Saka,England,RW,shot,success,0.22,0,0,0,1,1,-1
+statsbomb_open_data,SB-1005,La Liga,2023-24,14,17,00:14:17,Real Madrid,Barcelona,P005,Jude Bellingham,England,CM,pass,success,0,0,1,0,0,0,0
+statsbomb_open_data,SB-1005,La Liga,2023-24,26,54,00:26:54,Real Madrid,Barcelona,P005,Jude Bellingham,England,CM,tackle,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1005,La Liga,2023-24,49,28,00:49:28,Real Madrid,Barcelona,P005,Jude Bellingham,England,CM,shot,success,0.1,0,0,0,1,0,0
+statsbomb_open_data,SB-1006,La Liga,2023-24,64,12,01:04:12,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,interception,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1006,La Liga,2023-24,78,47,01:18:47,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,dribble,success,0,0,0,1,0,0,1
+statsbomb_open_data,SB-1006,La Liga,2023-24,85,15,01:25:15,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,pass,success,0,1,1,0,0,0,1

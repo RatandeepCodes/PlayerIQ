@@ -1,0 +1,25 @@
+source,match_id,competition,season,minute,second,timestamp,team,opponent,player_id,player_name,nationality,position,event_type,outcome,xg,is_key_pass,progressive_pass,dribble_success,shot_on_target,goal,score_difference
+kaggle_indian_players,ISL-2001,Indian Super League,2024-25,16,12,00:16:12,Bengaluru FC,Kerala Blasters,P101,Sunil Chhetri,India,ST,shot,success,0.33,0,0,0,1,1,0
+kaggle_indian_players,ISL-2001,Indian Super League,2024-25,31,46,00:31:46,Bengaluru FC,Kerala Blasters,P101,Sunil Chhetri,India,ST,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2001,Indian Super League,2024-25,57,5,00:57:05,Bengaluru FC,Kerala Blasters,P101,Sunil Chhetri,India,ST,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,74,19,01:14:19,Bengaluru FC,Mumbai City,P101,Sunil Chhetri,India,ST,shot,success,0.27,0,0,0,1,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,82,25,01:22:25,Bengaluru FC,Mumbai City,P101,Sunil Chhetri,India,ST,shot,fail,0.17,0,0,0,0,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,88,2,01:28:02,Bengaluru FC,Mumbai City,P101,Sunil Chhetri,India,ST,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,10,40,00:10:40,Mohun Bagan SG,FC Goa,P102,Sahal Abdul Samad,India,CAM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,23,14,00:23:14,Mohun Bagan SG,FC Goa,P102,Sahal Abdul Samad,India,CAM,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,39,57,00:39:57,Mohun Bagan SG,FC Goa,P102,Sahal Abdul Samad,India,CAM,shot,success,0.12,0,0,0,1,0,0
+kaggle_indian_players,ISL-2004,Indian Super League,2024-25,62,7,01:02:07,Mohun Bagan SG,Odisha FC,P102,Sahal Abdul Samad,India,CAM,pass,success,0,0,1,0,0,0,1
+kaggle_indian_players,ISL-2004,Indian Super League,2024-25,80,44,01:20:44,Mohun Bagan SG,Odisha FC,P102,Sahal Abdul Samad,India,CAM,tackle,success,0,0,0,0,0,0,1
+kaggle_indian_players,ISL-2004,Indian Super League,2024-25,86,31,01:26:31,Mohun Bagan SG,Odisha FC,P102,Sahal Abdul Samad,India,CAM,pass,success,0,1,1,0,0,0,1
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,8,9,00:08:09,FC Goa,Mohun Bagan SG,P103,Sandesh Jhingan,India,CB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,27,52,00:27:52,FC Goa,Mohun Bagan SG,P103,Sandesh Jhingan,India,CB,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,45,4,00:45:04,FC Goa,Mohun Bagan SG,P103,Sandesh Jhingan,India,CB,interception,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2005,Indian Super League,2024-25,59,38,00:59:38,FC Goa,Kerala Blasters,P103,Sandesh Jhingan,India,CB,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2005,Indian Super League,2024-25,81,11,01:21:11,FC Goa,Kerala Blasters,P103,Sandesh Jhingan,India,CB,pass,success,0,0,1,0,0,0,1
+kaggle_indian_players,ISL-2005,Indian Super League,2024-25,87,20,01:27:20,FC Goa,Kerala Blasters,P103,Sandesh Jhingan,India,CB,recovery,success,0,0,0,0,0,0,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,13,36,00:13:36,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,29,17,00:29:17,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,shot,success,0.14,0,0,0,1,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,46,5,00:46:05,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,77,43,01:17:43,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,83,59,01:23:59,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,shot,success,0.2,0,0,0,1,1,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,89,7,01:29:07,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,pass,success,0,1,1,0,0,0,1
