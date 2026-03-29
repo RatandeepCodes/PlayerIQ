@@ -51,32 +51,28 @@ const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
   },
 });
 
+export const fetchPlayerRating = async (playerId) =>
+  fetchAiResource("get", `/rating/${playerId}`, "Player rating unavailable from AI service");
+
+export const fetchPlayerPlaystyle = async (playerId) =>
+  fetchAiResource("get", `/playstyle/${playerId}`, "Player playstyle unavailable from AI service");
+
+export const fetchPlayerPressure = async (playerId) =>
+  fetchAiResource("get", `/pressure/${playerId}`, "Player pressure analytics unavailable from AI service");
+
+export const fetchPlayerReport = async (playerId) =>
+  fetchAiResource("get", `/report/${playerId}`, "Player report unavailable from AI service");
+
 export const fetchPlayerProfile = async (playerId) => {
   try {
     const [rating, playstyle, pressure, report] = await Promise.all([
-      aiClient.get(`/rating/${playerId}`),
-      aiClient.get(`/playstyle/${playerId}`),
-      aiClient.get(`/pressure/${playerId}`),
-      aiClient.get(`/report/${playerId}`),
+      fetchAiResource("get", `/rating/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/playstyle/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/pressure/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/report/${playerId}`, "Player profile unavailable from AI service"),
     ]);
 
-    return {
-      player: {
-        playerId,
-        name: rating.data.playerName,
-        team: rating.data.team,
-        position: rating.data.position,
-        nationality: rating.data.nationality || "Unknown",
-      },
-      analytics: {
-        overallRating: rating.data.overallRating,
-        attributes: rating.data.attributes,
-        playstyle: playstyle.data.playstyle,
-        ppi: rating.data.ppi,
-        pressureIndex: pressure.data.pressureIndex,
-        summary: report.data.summary,
-      },
-    };
+    return mapPlayerProfile(playerId, rating, playstyle, pressure, report);
   } catch (error) {
     normalizeAiError(error, "Player profile unavailable from AI service");
   }

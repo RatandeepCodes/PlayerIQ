@@ -301,6 +301,7 @@ def get_live_feature_snapshot(event_slice: pd.DataFrame, player_id: str) -> dict
 
     live_row = player_rows.iloc[0].to_dict()
     reference_table = get_player_feature_table()
+<<<<<<< HEAD
     for metric in [
         "shooting",
         "passing",
@@ -309,6 +310,9 @@ def get_live_feature_snapshot(event_slice: pd.DataFrame, player_id: str) -> dict
         "creativity",
         "physical",
     ]:
+=======
+    for metric in ["shooting", "passing", "dribbling", "defending", "creativity", "physical"]:
+>>>>>>> Backend
         raw_column = f"{metric}_raw"
         score_column = f"{metric}_score"
         live_row[score_column] = _scale_value_against_reference(live_row[raw_column], reference_table[raw_column])
