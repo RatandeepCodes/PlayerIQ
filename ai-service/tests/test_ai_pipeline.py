@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.services.comparison_engine import compare_players
 from app.services.data_repository import get_dataset_summary, get_match_events, list_players
+from app.services.feature_engineering import get_live_feature_snapshot
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
 from app.services.pressure_engine import get_pressure_profile
@@ -74,6 +75,16 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         ordered_minutes = [tick.minute for tick in simulation.timeline]
         self.assertEqual(ordered_minutes, sorted(ordered_minutes))
         self.assertGreaterEqual(len(simulation.timeline), 1)
+
+    def test_live_snapshot_uses_dynamic_match_context(self) -> None:
+        match_events = get_match_events("SB-1001").sort_values(["minute", "second"]).reset_index(drop=True)
+        live_window = match_events.iloc[:5].copy()
+        ratings = []
+        for player_id in live_window["player_id"].astype(str).tolist():
+            snapshot = get_live_feature_snapshot(live_window, player_id)
+            ratings.append(snapshot["overall_rating"])
+
+        self.assertGreater(len(set(ratings)), 1)
 
     def test_match_event_data_is_coherent(self) -> None:
         match_events = get_match_events("SB-1001")

@@ -1,57 +1,144 @@
 import Player from "../models/Player.js";
-import { fetchPlayerProfile } from "./ai.service.js";
+import {
+  fetchPlayerPlaystyle,
+  fetchPlayerPressure,
+  fetchPlayerRating,
+  fetchPlayerReport,
+} from "./ai.service.js";
 import { createHttpError } from "../utils/http-error.js";
 
-const buildStoredPlayerProfile = (player) => ({
-  player: {
-    playerId: player.playerId,
-    name: player.name,
-    team: player.team || "Unknown Team",
-    position: player.position || "Unknown",
-    nationality: player.nationality || "Unknown",
-  },
-  analytics: null,
+const ATTRIBUTE_KEYS = ["shooting", "passing", "dribbling", "defending", "creativity", "physical"];
+
+const getSectionValue = (result) => (result?.status === "fulfilled" ? result.value : null);
+
+const normalizeAttributes = (attributes = null) =>
+  Object.fromEntries(ATTRIBUTE_KEYS.map((key) => [key, attributes?.[key] ?? null]));
+
+const buildIdentity = (storedPlayer, rating, requestedPlayerId = "") => ({
+  playerId: storedPlayer?.playerId || rating?.playerId || requestedPlayerId,
+  name: storedPlayer?.name || rating?.playerName || "Unknown Player",
+  team: storedPlayer?.team || rating?.team || "Unknown Team",
+  position: storedPlayer?.position || rating?.position || "Unknown",
+  nationality: storedPlayer?.nationality || rating?.nationality || "Unknown",
 });
 
-const mergeStoredPlayer = (storedPlayer, aiProfile) => {
-  if (!storedPlayer) {
-    return aiProfile;
-  }
+export const buildProfileEnvelope = ({
+  storedPlayer = null,
+  rating = null,
+  playstyle = null,
+  pressure = null,
+  report = null,
+  requestedPlayerId = "",
+}) => {
+  const hasLiveAnalytics = Boolean(rating || playstyle || pressure || report);
+  const availability = {
+    hasLiveAnalytics,
+    isPartial: hasLiveAnalytics && (!rating || !playstyle || !pressure || !report),
+    sourceMode: hasLiveAnalytics ? (storedPlayer ? "hybrid" : "ai-service") : "stored-player",
+    sections: {
+      rating: Boolean(rating),
+      playstyle: Boolean(playstyle),
+      pressure: Boolean(pressure),
+      report: Boolean(report),
+    },
+  };
+
+  const analytics = {
+    overallRating: rating?.overallRating ?? null,
+    attributes: normalizeAttributes(rating?.attributes),
+    playstyle: playstyle?.playstyle ?? null,
+    ppi: rating?.ppi ?? null,
+    pressureIndex: pressure?.pressureIndex ?? null,
+    summary: report?.summary ?? null,
+    rating: rating
+      ? {
+          overallRating: rating.overallRating,
+          ppi: rating.ppi,
+          matchesAnalyzed: rating.matchesAnalyzed,
+          sources: rating.sources,
+          attributes: normalizeAttributes(rating.attributes),
+        }
+      : null,
+    playstyleProfile: playstyle
+      ? {
+          name: playstyle.playstyle,
+          clusterDistance: playstyle.clusterDistance,
+          supportingTraits: playstyle.supportingTraits,
+        }
+      : null,
+    pressure: pressure
+      ? {
+          pressureIndex: pressure.pressureIndex,
+          pressureScore: pressure.pressureScore,
+          pressureEvents: pressure.pressureEvents,
+          interpretation: pressure.interpretation,
+        }
+      : null,
+    report: report
+      ? {
+          summary: report.summary,
+          strengths: report.strengths,
+          developmentAreas: report.developmentAreas,
+        }
+      : null,
+    availability,
+  };
 
   return {
-    player: {
-      playerId: aiProfile.player.playerId,
-      name: storedPlayer.name || aiProfile.player.name,
-      team: storedPlayer.team || aiProfile.player.team,
-      position: storedPlayer.position || aiProfile.player.position,
-      nationality: storedPlayer.nationality || aiProfile.player.nationality || "Unknown",
+    player: buildIdentity(storedPlayer, rating, requestedPlayerId),
+    overview: {
+      overallRating: analytics.overallRating,
+      ppi: analytics.ppi,
+      playstyle: analytics.playstyle,
+      pressureIndex: analytics.pressureIndex,
+      matchesAnalyzed: rating?.matchesAnalyzed ?? 0,
+      sources: rating?.sources ?? [],
+      reportSummary: analytics.summary,
     },
-    analytics: aiProfile.analytics,
+    analytics,
+    metadata: {
+      hasStoredProfile: Boolean(storedPlayer),
+      matchesAnalyzed: rating?.matchesAnalyzed ?? 0,
+      sources: rating?.sources ?? [],
+      availability,
+    },
   };
 };
 
+const buildStoredPlayerProfile = (storedPlayer) => buildProfileEnvelope({ storedPlayer, requestedPlayerId: storedPlayer.playerId });
+
 export const getPlayerProfileData = async (playerId) => {
-  const [storedPlayerResult, aiProfileResult] = await Promise.allSettled([
+  const [storedPlayerResult, ratingResult, playstyleResult, pressureResult, reportResult] = await Promise.allSettled([
     Player.findOne({ playerId }).lean(),
-    fetchPlayerProfile(playerId),
+    fetchPlayerRating(playerId),
+    fetchPlayerPlaystyle(playerId),
+    fetchPlayerPressure(playerId),
+    fetchPlayerReport(playerId),
   ]);
 
   const storedPlayer = storedPlayerResult.status === "fulfilled" ? storedPlayerResult.value : null;
+  const rating = getSectionValue(ratingResult);
+  const playstyle = getSectionValue(playstyleResult);
+  const pressure = getSectionValue(pressureResult);
+  const report = getSectionValue(reportResult);
+  const hasAnalytics = Boolean(rating || playstyle || pressure || report);
 
-  if (aiProfileResult.status === "fulfilled") {
-    return mergeStoredPlayer(storedPlayer, aiProfileResult.value);
+  if (storedPlayer || rating || hasAnalytics) {
+    return buildProfileEnvelope({
+      storedPlayer,
+      rating,
+      playstyle,
+      pressure,
+      report,
+      requestedPlayerId: playerId,
+    });
   }
 
-  const upstreamError = aiProfileResult.reason;
-  if (upstreamError?.statusCode === 404 && storedPlayer) {
-    return buildStoredPlayerProfile(storedPlayer);
-  }
+  const upstreamErrors = [ratingResult, playstyleResult, pressureResult, reportResult]
+    .filter((result) => result.status === "rejected")
+    .map((result) => result.reason);
 
-  if (storedPlayer) {
-    return buildStoredPlayerProfile(storedPlayer);
-  }
-
-  if (upstreamError?.statusCode === 404) {
+  if (upstreamErrors.some((error) => error?.statusCode === 404)) {
     throw createHttpError(404, `Player '${playerId}' not found`);
   }
 

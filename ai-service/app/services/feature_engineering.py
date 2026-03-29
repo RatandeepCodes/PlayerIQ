@@ -5,6 +5,15 @@ import pandas as pd
 from app.services.data_repository import get_player_metadata, load_all_events
 
 PRESSURE_MINUTE_THRESHOLD = 75
+RAW_SCORE_COLUMNS = [
+    "shooting_raw",
+    "passing_raw",
+    "dribbling_raw",
+    "defending_raw",
+    "creativity_raw",
+    "physical_raw",
+]
+PRIOR_MATCH_WEIGHT = 3.0
 
 
 def _safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
@@ -56,6 +65,17 @@ def _scale_series(series: pd.Series, lower: int = 35, upper: int = 99) -> pd.Ser
 
     scaled = lower + (series - series.min()) * (upper - lower) / (series.max() - series.min())
     return scaled.round().clip(lower, upper).astype("int64")
+
+
+def _scale_value_against_reference(value: float, reference: pd.Series, lower: int = 35, upper: int = 99) -> int:
+    reference_min = float(reference.min())
+    reference_max = float(reference.max())
+
+    if reference_max <= reference_min:
+        return round((lower + upper) / 2)
+
+    scaled = lower + (value - reference_min) * (upper - lower) / (reference_max - reference_min)
+    return int(round(max(lower, min(upper, scaled))))
 
 
 def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
@@ -157,6 +177,9 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         )
 
     frame = pd.DataFrame.from_records(records).sort_values("player_name").reset_index(drop=True)
+    if frame.empty:
+        return frame
+
     frame["shooting_raw"] = (
         frame["shots_per_match"] * 10
         + frame["shots_on_target_per_match"] * 14
@@ -193,6 +216,13 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         + frame["success_rate"] * 25
     )
 
+    reliability = (frame["matches_played"] / (frame["matches_played"] + PRIOR_MATCH_WEIGHT)).clip(lower=0.25, upper=1.0)
+    for column in RAW_SCORE_COLUMNS:
+        population_mean = frame[column].mean()
+        frame[column] = (frame[column] * reliability) + (population_mean * (1.0 - reliability))
+
+    frame["pressure_index"] = (frame["pressure_index"] * reliability) + (1.0 * (1.0 - reliability))
+
     frame["shooting_score"] = _scale_series(frame["shooting_raw"])
     frame["passing_score"] = _scale_series(frame["passing_raw"])
     frame["dribbling_score"] = _scale_series(frame["dribbling_raw"])
@@ -200,7 +230,7 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
     frame["creativity_score"] = _scale_series(frame["creativity_raw"])
     frame["physical_score"] = _scale_series(frame["physical_raw"])
 
-    ppi_raw = (
+    frame["ppi_raw"] = (
         frame["shooting_raw"] * 0.24
         + frame["passing_raw"] * 0.16
         + frame["dribbling_raw"] * 0.16
@@ -208,7 +238,7 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         + frame["creativity_raw"] * 0.16
         + frame["physical_raw"] * 0.10
     )
-    frame["ppi"] = _scale_series(ppi_raw, lower=30, upper=99)
+    frame["ppi"] = _scale_series(frame["ppi_raw"], lower=30, upper=99)
     frame["overall_rating"] = (
         frame[
             [
@@ -261,11 +291,37 @@ def get_feature_matrix_for_clustering() -> pd.DataFrame:
 
 
 def get_live_feature_snapshot(event_slice: pd.DataFrame, player_id: str) -> dict:
-    player_events = event_slice.loc[event_slice["player_id"] == player_id]
-    if player_events.empty:
+    if event_slice.loc[event_slice["player_id"] == player_id].empty:
         raise KeyError(f"Player '{player_id}' not found in live event slice")
 
-    live_table = _aggregate_player_metrics(player_events)
-    live_row = live_table.iloc[0].to_dict()
+    live_table = _aggregate_player_metrics(event_slice)
+    player_rows = live_table.loc[live_table["player_id"] == player_id]
+    if player_rows.empty:
+        raise KeyError(f"Player '{player_id}' not found in live feature table")
+
+    live_row = player_rows.iloc[0].to_dict()
+    reference_table = get_player_feature_table()
+    for metric in ["shooting", "passing", "dribbling", "defending", "creativity", "physical"]:
+        raw_column = f"{metric}_raw"
+        score_column = f"{metric}_score"
+        live_row[score_column] = _scale_value_against_reference(live_row[raw_column], reference_table[raw_column])
+
+    live_row["ppi"] = _scale_value_against_reference(live_row["ppi_raw"], reference_table["ppi_raw"], lower=30, upper=99)
+    live_row["overall_rating"] = int(
+        round(
+            (
+                live_row["shooting_score"]
+                + live_row["passing_score"]
+                + live_row["dribbling_score"]
+                + live_row["defending_score"]
+                + live_row["creativity_score"]
+                + live_row["physical_score"]
+            )
+            / 6
+        )
+    )
+    live_row["pressure_score"] = _scale_value_against_reference(
+        live_row["pressure_index"], reference_table["pressure_index"], lower=25, upper=99
+    )
     live_row["sources"] = list(live_row["sources"])
     return live_row
