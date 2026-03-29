@@ -1,6 +1,5 @@
-import { fetchPlayerComparison } from "../services/ai.service.js";
+import { getPlayerComparisonData } from "../services/player-comparison.service.js";
 import { getPlayerData, getPlayerProfileData } from "../services/player-profile.service.js";
-import { createHttpError } from "../utils/http-error.js";
 
 export const getPlayer = async (req, res, next) => {
   try {
@@ -23,10 +22,7 @@ export const getPlayerProfile = async (req, res, next) => {
 export const comparePlayers = async (req, res, next) => {
   try {
     const { player1, player2 } = req.query;
-    if (!player1 || !player2) {
-      throw createHttpError(400, "player1 and player2 query parameters are required");
-    }
-    const comparison = await fetchPlayerComparison(player1, player2);
+    const comparison = await getPlayerComparisonData(player1, player2);
     res.json(comparison);
   } catch (error) {
     next(error);
