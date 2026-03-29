@@ -54,12 +54,29 @@ const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
 export const fetchPlayerProfile = async (playerId) => {
   try {
     const [rating, playstyle, pressure, report] = await Promise.all([
-      fetchAiResource("get", `/rating/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/playstyle/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/pressure/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/report/${playerId}`, "Player profile unavailable from AI service"),
+      aiClient.get(`/rating/${playerId}`),
+      aiClient.get(`/playstyle/${playerId}`),
+      aiClient.get(`/pressure/${playerId}`),
+      aiClient.get(`/report/${playerId}`),
     ]);
-    return mapPlayerProfile(playerId, rating, playstyle, pressure, report);
+
+    return {
+      player: {
+        playerId,
+        name: rating.data.playerName,
+        team: rating.data.team,
+        position: rating.data.position,
+        nationality: rating.data.nationality || "Unknown",
+      },
+      analytics: {
+        overallRating: rating.data.overallRating,
+        attributes: rating.data.attributes,
+        playstyle: playstyle.data.playstyle,
+        ppi: rating.data.ppi,
+        pressureIndex: pressure.data.pressureIndex,
+        summary: report.data.summary,
+      },
+    };
   } catch (error) {
     normalizeAiError(error, "Player profile unavailable from AI service");
   }
