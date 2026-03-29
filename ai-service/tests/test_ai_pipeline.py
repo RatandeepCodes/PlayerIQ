@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.comparison_engine import compare_players
-from app.services.data_repository import get_dataset_summary, get_match_events, list_players
+from app.services.data_repository import get_dataset_summary, get_match_events, list_players, load_all_events
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
 from app.services.pressure_engine import get_pressure_profile
@@ -81,6 +81,17 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         opponents = set(match_events["opponent"].unique())
         self.assertLessEqual(len(teams), 2)
         self.assertTrue(opponents.issubset(teams))
+
+    def test_normalized_event_values_are_sanitized(self) -> None:
+        events = load_all_events()
+        self.assertTrue((events["minute"] >= 0).all())
+        self.assertTrue(((events["second"] >= 0) & (events["second"] <= 59)).all())
+        self.assertTrue((events["xg"] >= 0).all())
+
+    def test_pressure_index_stays_within_supported_bounds(self) -> None:
+        pressure = get_pressure_profile("P101")
+        self.assertGreaterEqual(pressure.pressure_index, 0.5)
+        self.assertLessEqual(pressure.pressure_index, 1.6)
 
     def test_api_returns_clean_not_found_error(self) -> None:
         response = self.client.get("/rating/UNKNOWN")

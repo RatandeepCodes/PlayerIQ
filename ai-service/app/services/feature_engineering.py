@@ -5,6 +5,15 @@ import pandas as pd
 from app.services.data_repository import get_player_metadata, load_all_events
 
 PRESSURE_MINUTE_THRESHOLD = 75
+RAW_SCORE_COLUMNS = [
+    "shooting_raw",
+    "passing_raw",
+    "dribbling_raw",
+    "defending_raw",
+    "creativity_raw",
+    "physical_raw",
+]
+PRIOR_MATCH_WEIGHT = 3.0
 
 
 def _safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
@@ -157,6 +166,9 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         )
 
     frame = pd.DataFrame.from_records(records).sort_values("player_name").reset_index(drop=True)
+    if frame.empty:
+        return frame
+
     frame["shooting_raw"] = (
         frame["shots_per_match"] * 10
         + frame["shots_on_target_per_match"] * 14
@@ -192,6 +204,13 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         + frame["pressure_actions_per_match"] * 7
         + frame["success_rate"] * 25
     )
+
+    reliability = (frame["matches_played"] / (frame["matches_played"] + PRIOR_MATCH_WEIGHT)).clip(lower=0.25, upper=1.0)
+    for column in RAW_SCORE_COLUMNS:
+        population_mean = frame[column].mean()
+        frame[column] = (frame[column] * reliability) + (population_mean * (1.0 - reliability))
+
+    frame["pressure_index"] = (frame["pressure_index"] * reliability) + (1.0 * (1.0 - reliability))
 
     frame["shooting_score"] = _scale_series(frame["shooting_raw"])
     frame["passing_score"] = _scale_series(frame["passing_raw"])

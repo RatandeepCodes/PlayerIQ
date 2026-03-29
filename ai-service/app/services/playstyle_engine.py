@@ -22,6 +22,23 @@ PLAYSTYLE_FEATURES = [
 ]
 
 
+def _position_bonus(position: str, role: str) -> float:
+    normalized_position = position.upper()
+    bonus_map = {
+        "ST": {"Striker": 2.2, "Winger": 0.4},
+        "CF": {"Striker": 2.0, "Playmaker": 0.5},
+        "RW": {"Winger": 2.0, "Striker": 0.6},
+        "LW": {"Winger": 2.0, "Striker": 0.6},
+        "CAM": {"Playmaker": 2.1, "Box-to-box": 0.8},
+        "CM": {"Box-to-box": 1.8, "Playmaker": 1.1},
+        "CDM": {"Box-to-box": 1.5, "Defender": 1.0},
+        "CB": {"Defender": 2.5},
+        "RB": {"Defender": 1.6, "Winger": 0.4},
+        "LB": {"Defender": 1.6, "Winger": 0.4},
+    }
+    return bonus_map.get(normalized_position, {}).get(role, 0.0)
+
+
 def _cluster_role_score(row: pd.Series, role: str) -> float:
     scores = {
         "Playmaker": (
@@ -95,7 +112,13 @@ def get_playstyle_profile(player_id: str) -> PlaystyleResponse:
     transformed = scaler.transform(player_row[PLAYSTYLE_FEATURES])
     distances = model.transform(transformed)[0]
     cluster_id = int(player_row.iloc[0]["cluster"])
-    playstyle = cluster_label_map[cluster_id]
+    cluster_playstyle = cluster_label_map[cluster_id]
+    role_scores = {
+        role: _cluster_role_score(player_row.iloc[0], role) + _position_bonus(player["position"], role)
+        for role in ["Playmaker", "Striker", "Defender", "Box-to-box", "Winger"]
+    }
+    role_scores[cluster_playstyle] += 1.2
+    playstyle = max(role_scores, key=role_scores.get)
     traits = _supporting_traits(player_row.iloc[0], feature_table)
     max_distance = max(float(distances.max()), 1e-6)
     distance = round(float(distances[cluster_id]) / max_distance, 2)

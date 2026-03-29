@@ -36,6 +36,39 @@ SOURCE_FILES = {
     "kaggle_indian_players": settings.data_path / "sources" / "kaggle_indian_players" / "events.csv",
 }
 
+NUMERIC_DEFAULTS = {
+    "minute": 0,
+    "second": 0,
+    "xg": 0.0,
+    "is_key_pass": 0,
+    "progressive_pass": 0,
+    "dribble_success": 0,
+    "shot_on_target": 0,
+    "goal": 0,
+    "score_difference": 0,
+}
+
+TEXT_COLUMNS = {
+    "source",
+    "match_id",
+    "competition",
+    "season",
+    "timestamp",
+    "team",
+    "opponent",
+    "player_id",
+    "player_name",
+    "nationality",
+    "position",
+    "event_type",
+    "outcome",
+}
+
+
+def _coerce_numeric_column(frame: pd.DataFrame, column: str, default: int | float) -> pd.Series:
+    coerced = pd.to_numeric(frame[column], errors="coerce").fillna(default)
+    return coerced
+
 
 def _normalize_frame(frame: pd.DataFrame, source_name: str) -> pd.DataFrame:
     normalized = frame.copy()
@@ -51,17 +84,21 @@ def _normalize_frame(frame: pd.DataFrame, source_name: str) -> pd.DataFrame:
                 normalized[column] = ""
 
     normalized = normalized[REQUIRED_EVENT_COLUMNS]
-    normalized["minute"] = normalized["minute"].astype(int)
-    normalized["second"] = normalized["second"].astype(int)
-    normalized["xg"] = normalized["xg"].astype(float)
-    normalized["is_key_pass"] = normalized["is_key_pass"].astype(int)
-    normalized["progressive_pass"] = normalized["progressive_pass"].astype(int)
-    normalized["dribble_success"] = normalized["dribble_success"].astype(int)
-    normalized["shot_on_target"] = normalized["shot_on_target"].astype(int)
-    normalized["goal"] = normalized["goal"].astype(int)
+    for column, default in NUMERIC_DEFAULTS.items():
+        normalized[column] = _coerce_numeric_column(normalized, column, default)
+
+    for column in TEXT_COLUMNS:
+        normalized[column] = normalized[column].fillna("").astype(str).str.strip()
+
+    normalized["minute"] = normalized["minute"].clip(lower=0).astype(int)
+    normalized["second"] = normalized["second"].clip(lower=0, upper=59).astype(int)
+    normalized["xg"] = normalized["xg"].clip(lower=0.0).astype(float)
+    normalized["is_key_pass"] = normalized["is_key_pass"].clip(lower=0, upper=1).astype(int)
+    normalized["progressive_pass"] = normalized["progressive_pass"].clip(lower=0, upper=1).astype(int)
+    normalized["dribble_success"] = normalized["dribble_success"].clip(lower=0, upper=1).astype(int)
+    normalized["shot_on_target"] = normalized["shot_on_target"].clip(lower=0, upper=1).astype(int)
+    normalized["goal"] = normalized["goal"].clip(lower=0, upper=1).astype(int)
     normalized["score_difference"] = normalized["score_difference"].astype(int)
-    normalized["player_id"] = normalized["player_id"].astype(str)
-    normalized["match_id"] = normalized["match_id"].astype(str)
     return normalized.sort_values(["match_id", "minute", "second"]).reset_index(drop=True)
 
 

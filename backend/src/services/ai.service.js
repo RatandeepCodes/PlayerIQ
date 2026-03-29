@@ -21,42 +21,58 @@ const normalizeAiError = (error, fallbackMessage) => {
   throw createHttpError(502, fallbackMessage);
 };
 
+const fetchAiResource = async (method, path, fallbackMessage) => {
+  try {
+    const response = await aiClient.request({
+      method,
+      url: path,
+    });
+    return response.data;
+  } catch (error) {
+    normalizeAiError(error, fallbackMessage);
+  }
+};
+
+const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
+  player: {
+    playerId,
+    name: rating.playerName,
+    team: rating.team,
+    position: rating.position,
+    nationality: rating.nationality || "Unknown",
+  },
+  analytics: {
+    overallRating: rating.overallRating,
+    attributes: rating.attributes,
+    playstyle: playstyle.playstyle,
+    ppi: rating.ppi,
+    pressureIndex: pressure.pressureIndex,
+    summary: report.summary,
+  },
+});
+
 export const fetchPlayerProfile = async (playerId) => {
   try {
     const [rating, playstyle, pressure, report] = await Promise.all([
-      aiClient.get(`/rating/${playerId}`),
-      aiClient.get(`/playstyle/${playerId}`),
-      aiClient.get(`/pressure/${playerId}`),
-      aiClient.get(`/report/${playerId}`),
+      fetchAiResource("get", `/rating/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/playstyle/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/pressure/${playerId}`, "Player profile unavailable from AI service"),
+      fetchAiResource("get", `/report/${playerId}`, "Player profile unavailable from AI service"),
     ]);
-
-    return {
-      player: {
-        playerId,
-        name: rating.data.playerName,
-        team: rating.data.team,
-        position: rating.data.position,
-        nationality: rating.data.nationality || "Unknown",
-      },
-      analytics: {
-        overallRating: rating.data.overallRating,
-        attributes: rating.data.attributes,
-        playstyle: playstyle.data.playstyle,
-        ppi: rating.data.ppi,
-        pressureIndex: pressure.data.pressureIndex,
-        summary: report.data.summary,
-      },
-    };
+    return mapPlayerProfile(playerId, rating, playstyle, pressure, report);
   } catch (error) {
     normalizeAiError(error, "Player profile unavailable from AI service");
   }
 };
 
-export const fetchPlayerComparison = async (player1, player2) => {
-  try {
-    const response = await aiClient.get(`/compare/${player1}/${player2}`);
-    return response.data;
-  } catch (error) {
-    normalizeAiError(error, "Player comparison unavailable from AI service");
-  }
-};
+export const fetchPlayerComparison = async (player1, player2) =>
+  fetchAiResource("get", `/compare/${player1}/${player2}`, "Player comparison unavailable from AI service");
+
+export const fetchMatchMomentum = async (matchId) =>
+  fetchAiResource("get", `/match/${matchId}/momentum`, "Match momentum unavailable from AI service");
+
+export const fetchMatchTurningPoints = async (matchId) =>
+  fetchAiResource("get", `/match/${matchId}/turning-points`, "Turning points unavailable from AI service");
+
+export const fetchMatchSimulation = async (matchId) =>
+  fetchAiResource("post", `/simulate/match/${matchId}`, "Match simulation unavailable from AI service");
