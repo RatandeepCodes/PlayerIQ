@@ -1,4 +1,5 @@
 import Player from "../models/Player.js";
+import { getCachedPlayerProfile, savePlayerProfileCache } from "./analytics-cache.service.js";
 import {
   fetchPlayerPlaystyle,
   fetchPlayerPressure,
@@ -108,8 +109,9 @@ export const buildProfileEnvelope = ({
 const buildStoredPlayerProfile = (storedPlayer) => buildProfileEnvelope({ storedPlayer, requestedPlayerId: storedPlayer.playerId });
 
 export const getPlayerProfileData = async (playerId) => {
-  const [storedPlayerResult, ratingResult, playstyleResult, pressureResult, reportResult] = await Promise.allSettled([
+  const [storedPlayerResult, cachedProfileResult, ratingResult, playstyleResult, pressureResult, reportResult] = await Promise.allSettled([
     Player.findOne({ playerId }).lean(),
+    getCachedPlayerProfile(playerId),
     fetchPlayerRating(playerId),
     fetchPlayerPlaystyle(playerId),
     fetchPlayerPressure(playerId),
@@ -117,6 +119,7 @@ export const getPlayerProfileData = async (playerId) => {
   ]);
 
   const storedPlayer = storedPlayerResult.status === "fulfilled" ? storedPlayerResult.value : null;
+  const cachedProfile = cachedProfileResult.status === "fulfilled" ? cachedProfileResult.value : null;
   const rating = getSectionValue(ratingResult);
   const playstyle = getSectionValue(playstyleResult);
   const pressure = getSectionValue(pressureResult);
@@ -124,7 +127,7 @@ export const getPlayerProfileData = async (playerId) => {
   const hasAnalytics = Boolean(rating || playstyle || pressure || report);
 
   if (storedPlayer || rating || hasAnalytics) {
-    return buildProfileEnvelope({
+    const profile = buildProfileEnvelope({
       storedPlayer,
       rating,
       playstyle,
@@ -132,6 +135,12 @@ export const getPlayerProfileData = async (playerId) => {
       report,
       requestedPlayerId: playerId,
     });
+    await savePlayerProfileCache(profile).catch(() => undefined);
+    return profile;
+  }
+
+  if (cachedProfile) {
+    return cachedProfile;
   }
 
   const upstreamErrors = [ratingResult, playstyleResult, pressureResult, reportResult]
