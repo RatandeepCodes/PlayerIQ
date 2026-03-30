@@ -1,4 +1,5 @@
 import { fetchPlayerComparison } from "./ai.service.js";
+import { getCachedComparison, saveComparisonCache } from "./analytics-cache.service.js";
 
 const buildPlayerSummary = (playerId, playerName) => ({
   playerId,
@@ -57,6 +58,16 @@ export const shapePlayerComparisonData = (player1, player2, comparison) => {
 };
 
 export const getPlayerComparisonData = async (player1, player2) => {
-  const comparison = await fetchPlayerComparison(player1, player2);
-  return shapePlayerComparisonData(player1, player2, comparison);
+  try {
+    const comparison = await fetchPlayerComparison(player1, player2);
+    const shaped = shapePlayerComparisonData(player1, player2, comparison);
+    await saveComparisonCache(player1, player2, shaped).catch(() => undefined);
+    return shaped;
+  } catch (error) {
+    const cached = await getCachedComparison(player1, player2).catch(() => null);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
 };

@@ -6,6 +6,22 @@ const analyticsResultSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    playerSnapshot: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    overview: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    analytics: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
     matchId: String,
     season: String,
     overallRating: Number,
@@ -32,4 +48,3 @@ const analyticsResultSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("AnalyticsResult", analyticsResultSchema);
-

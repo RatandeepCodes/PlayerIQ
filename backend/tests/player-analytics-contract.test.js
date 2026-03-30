@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { getCachedComparison, getCachedPlayerProfile, saveComparisonCache, savePlayerProfileCache } from "../src/services/analytics-cache.service.js";
 import { shapePlayerComparisonData } from "../src/services/player-comparison.service.js";
 import { buildProfileEnvelope } from "../src/services/player-profile.service.js";
 
@@ -98,5 +99,40 @@ describe("Player analytics contract shaping", () => {
     assert.equal(profile.analytics.playstyle, "Winger");
     assert.equal(profile.analytics.availability.isPartial, true);
     assert.equal(profile.analytics.availability.hasLiveAnalytics, true);
+  });
+
+  it("keeps cache helpers safe when the database is unavailable", async () => {
+    const cachedProfile = await getCachedPlayerProfile("P101");
+    const cachedComparison = await getCachedComparison("P001", "P101");
+
+    assert.equal(cachedProfile, null);
+    assert.equal(cachedComparison, null);
+
+    await savePlayerProfileCache(
+      buildProfileEnvelope({
+        requestedPlayerId: "P101",
+        rating: {
+          playerId: "P101",
+          playerName: "Sunil Chhetri",
+          team: "Bengaluru FC",
+          nationality: "India",
+          position: "ST",
+          overallRating: 67,
+          ppi: 60,
+          matchesAnalyzed: 2,
+          sources: ["kaggle_indian_players"],
+          attributes: {
+            shooting: 75,
+            passing: 76,
+            dribbling: 75,
+            defending: 35,
+            creativity: 71,
+            physical: 45,
+          },
+        },
+      }),
+    );
+    await saveComparisonCache("P001", "P101", { winner: { playerId: "P101", name: "Sunil Chhetri" } });
+    assert.equal(true, true);
   });
 });
