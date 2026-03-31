@@ -1,4 +1,13 @@
-import { getMatchAnalysisData, getMatchSimulationData } from "../services/match-analysis.service.js";
+import {
+  getMatchAnalysisData,
+  getMatchMomentumData,
+  getMatchTurningPointsData,
+} from "../services/match-analysis.service.js";
+import {
+  controlSimulationSession,
+  getSimulationSessionState,
+  initializeSimulationSession,
+} from "../services/simulation-session.service.js";
 
 export const getMatchAnalysis = async (req, res, next) => {
   try {
@@ -9,9 +18,45 @@ export const getMatchAnalysis = async (req, res, next) => {
   }
 };
 
-export const simulateMatch = async (req, res, next) => {
+export const getMatchMomentum = async (req, res, next) => {
   try {
-    const simulation = await getMatchSimulationData(req.params.id);
+    const momentum = await getMatchMomentumData(req.params.id);
+    res.json(momentum);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMatchTurningPoints = async (req, res, next) => {
+  try {
+    const turningPoints = await getMatchTurningPointsData(req.params.id);
+    res.json(turningPoints);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const startMatchSimulation = async (req, res, next) => {
+  try {
+    const simulation = await initializeSimulationSession(req.params.id);
+    res.status(201).json(simulation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMatchSimulation = async (req, res, next) => {
+  try {
+    const simulation = getSimulationSessionState(req.params.id);
+    res.json(simulation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const controlMatchSimulation = async (req, res, next) => {
+  try {
+    const simulation = controlSimulationSession(req.params.id, req.body.action, req.body.speed);
     res.json(simulation);
   } catch (error) {
     next(error);
