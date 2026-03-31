@@ -8,21 +8,21 @@ export function getStoredToken() {
   return window.localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
-export function isAuthenticated() {
-  return Boolean(getStoredToken());
-}
-
 export function setStoredToken(token) {
   if (typeof window === "undefined") {
     return;
   }
 
   if (!token) {
-    clearStoredToken();
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
     return;
   }
 
   window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function isAuthenticated() {
+  return Boolean(getStoredToken());
 }
 
 export function clearStoredToken() {
