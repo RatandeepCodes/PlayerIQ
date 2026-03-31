@@ -1,4 +1,4 @@
-import { fetchMatchMomentum, fetchMatchTurningPoints } from "./ai.service.js";
+import { fetchMatchMomentum, fetchMatchSimulation, fetchMatchTurningPoints } from "./ai.service.js";
 import {
   getCachedMatchAnalysis,
   getCachedMatchMomentum,
@@ -54,6 +54,17 @@ export const buildMatchAnalysisEnvelope = (matchId, momentum, turningPoints) => 
 
   return {
     matchId,
+    teams: momentumEnvelope.teams,
+    momentum: momentumEnvelope,
+    momentumBuckets: momentumEnvelope.buckets,
+    turningPoints: turningPointEnvelope,
+    turningPointList: turningPointEnvelope.turningPoints,
+    liveStatus: "ready",
+    summary: {
+      totalMomentumWindows: momentumEnvelope.summary.totalBuckets,
+      totalTurningPoints: turningPointEnvelope.totalTurningPoints,
+      swingMoments: momentumEnvelope.summary.swingCount,
+    },
     overview: {
       teams: momentumEnvelope.teams,
       liveStatus: "ready",
@@ -61,8 +72,32 @@ export const buildMatchAnalysisEnvelope = (matchId, momentum, turningPoints) => 
       totalMomentumWindows: momentumEnvelope.summary.totalBuckets,
       swingMoments: momentumEnvelope.summary.swingCount,
     },
-    momentum: momentumEnvelope,
-    turningPoints: turningPointEnvelope,
+  };
+};
+
+export const buildMatchSimulationEnvelope = (matchId, simulation) => {
+  const timeline = [...(simulation.timeline || [])].sort((left, right) => {
+    const leftMinute = Number(left.minute || 0);
+    const rightMinute = Number(right.minute || 0);
+    if (leftMinute !== rightMinute) {
+      return leftMinute - rightMinute;
+    }
+
+    const leftSecond = Number(left.second || 0);
+    const rightSecond = Number(right.second || 0);
+    return leftSecond - rightSecond;
+  });
+
+  return {
+    ...simulation,
+    matchId,
+    timeline,
+    controls: ["start", "pause", "resume", "reset", "speed", "stop"],
+    summary: {
+      totalEvents: timeline.length,
+      firstMinute: timeline[0]?.minute ?? null,
+      lastMinute: timeline.at(-1)?.minute ?? null,
+    },
   };
 };
 
@@ -103,5 +138,19 @@ export const getMatchAnalysisData = async (matchId) => {
       fetchMatchTurningPoints(matchId),
     ]);
 
-  return buildMatchAnalysisEnvelope(matchId, momentum, turningPoints);
+    const envelope = buildMatchAnalysisEnvelope(matchId, momentum, turningPoints);
+    await saveMatchAnalysisCache(matchId, envelope, envelope.teams).catch(() => undefined);
+    return envelope;
+  } catch (error) {
+    const cached = await getCachedMatchAnalysis(matchId).catch(() => null);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+};
+
+export const getMatchSimulationData = async (matchId) => {
+  const simulation = await fetchMatchSimulation(matchId);
+  return buildMatchSimulationEnvelope(matchId, simulation);
 };

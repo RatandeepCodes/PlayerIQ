@@ -45,9 +45,25 @@ const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
     overallRating: rating.overallRating,
     attributes: rating.attributes,
     playstyle: playstyle.playstyle,
+    playstyleProfile: {
+      name: playstyle.playstyle,
+      clusterDistance: playstyle.clusterDistance,
+      supportingTraits: playstyle.supportingTraits,
+    },
     ppi: rating.ppi,
     pressureIndex: pressure.pressureIndex,
+    pressure: {
+      pressureIndex: pressure.pressureIndex,
+      pressureScore: pressure.pressureScore,
+      pressureEvents: pressure.pressureEvents,
+      interpretation: pressure.interpretation,
+    },
     summary: report.summary,
+    report: {
+      summary: report.summary,
+      strengths: report.strengths,
+      developmentAreas: report.developmentAreas,
+    },
   },
 });
 
@@ -66,10 +82,10 @@ export const fetchPlayerReport = async (playerId) =>
 export const fetchPlayerProfile = async (playerId) => {
   try {
     const [rating, playstyle, pressure, report] = await Promise.all([
-      fetchAiResource("get", `/rating/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/playstyle/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/pressure/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/report/${playerId}`, "Player profile unavailable from AI service"),
+      fetchPlayerRating(playerId),
+      fetchPlayerPlaystyle(playerId),
+      fetchPlayerPressure(playerId),
+      fetchPlayerReport(playerId),
     ]);
 
     return mapPlayerProfile(playerId, rating, playstyle, pressure, report);

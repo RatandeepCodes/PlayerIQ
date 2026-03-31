@@ -14,7 +14,12 @@ def compare_players(player1: str, player2: str) -> CompareResponse:
 
     left_score = left.overall_rating + left.ppi
     right_score = right.overall_rating + right.ppi
-    winner = left.player_name if left_score >= right_score else right.player_name
+    if left_score == right_score:
+        winner = None
+        opening = "The comparison is level on the combined rating and performance profile."
+    else:
+        winner = left.player_name if left_score > right_score else right.player_name
+        opening = f"{winner} edges the comparison through the stronger combined rating and performance profile."
 
     radar = [
         RadarPoint(metric="Shooting", player_one=left.attributes.shooting, player_two=right.attributes.shooting),
@@ -26,10 +31,10 @@ def compare_players(player1: str, player2: str) -> CompareResponse:
     ]
 
     summary = (
-        f"{winner} edges the comparison through the stronger combined rating and performance profile. "
+        f"{opening} "
         f"{left.player_name} profiles as a {left_playstyle.playstyle.lower()}, while "
         f"{right.player_name} leans toward a {right_playstyle.playstyle.lower()} role. "
-        f"Pressure impact reads {left_pressure.pressure_index} versus {right_pressure.pressure_index}."
+        f"Pressure impact reads {left_pressure.pressure_index:.2f} versus {right_pressure.pressure_index:.2f}."
     )
 
     return CompareResponse(

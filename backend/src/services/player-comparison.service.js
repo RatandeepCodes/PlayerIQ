@@ -40,7 +40,7 @@ export const shapePlayerComparisonData = (player1, player2, comparison) => {
       playerOne: buildPlayerSummary(player1, comparison.playerOne),
       playerTwo: buildPlayerSummary(player2, comparison.playerTwo),
     },
-    winner: buildPlayerSummary(winnerId, comparison.winner),
+    winner: comparison.winner ? buildPlayerSummary(winnerId, comparison.winner) : null,
     summary: comparison.summary,
     radar: comparison.radar,
     scorecards: {

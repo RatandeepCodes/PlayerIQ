@@ -11,6 +11,19 @@ export const getSimulationRoom = (matchId) => `simulation:${matchId}`;
 export const getPlaybackInterval = (playbackSpeed = 1) =>
   Math.max(200, Math.round(BASE_TICK_INTERVAL_MS / Math.max(Number(playbackSpeed) || 1, 0.1)));
 
+export const sortSimulationTimeline = (timeline = []) =>
+  [...timeline].sort((left, right) => {
+    const leftMinute = Number(left.minute || 0);
+    const rightMinute = Number(right.minute || 0);
+    if (leftMinute !== rightMinute) {
+      return leftMinute - rightMinute;
+    }
+
+    const leftSecond = Number(left.second || 0);
+    const rightSecond = Number(right.second || 0);
+    return leftSecond - rightSecond;
+  });
+
 export const createSimulationUpdatePayload = (state) => ({
   matchId: state.matchId,
   status: state.status,
@@ -18,6 +31,14 @@ export const createSimulationUpdatePayload = (state) => ({
   currentMinute: state.currentMinute,
   currentEvent: state.currentEvent,
   controls: state.controls,
+});
+
+export const buildSimulationUpdate = (matchId, event, index, totalEvents) => ({
+  matchId,
+  currentEvent: event,
+  currentIndex: index,
+  totalEvents,
+  progress: totalEvents === 0 ? 100 : Math.round((index / totalEvents) * 100),
 });
 
 export const createSimulationSocketRuntime = (
