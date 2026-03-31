@@ -1,34 +1,89 @@
+import { getStoredToken } from "../auth/session.js";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_TIMEOUT_MS = 12000;
+
+export class ApiError extends Error {
+  constructor(message, { statusCode = 500, requestId = null } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+    this.requestId = requestId;
+  }
+}
+
+async function apiRequest(path, { method = "GET", body, headers = {} } = {}) {
+  const token = getStoredToken();
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  let response;
+  let payload = null;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      payload = await response.json().catch(() => null);
+    } else {
+      const textPayload = await response.text().catch(() => "");
+      payload = textPayload ? { message: textPayload } : null;
+    }
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new ApiError("The request took too long. Check whether the backend is still running.", {
+        statusCode: 408,
+      });
+    }
+
+    throw new ApiError("Unable to reach the PlayerIQ backend. Check your API URL and server state.", {
+      statusCode: 503,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    throw new ApiError(payload?.message || payload?.detail || "Request failed", {
+      statusCode: response.status,
+      requestId: payload?.requestId || response.headers.get("x-request-id"),
+    });
+  }
+
+  return payload;
+}
 
 export async function getHealth() {
-  const response = await fetch(`${API_BASE_URL}/health`);
-  return response.json();
+  return apiRequest("/health");
+}
+
+export async function loginUser(credentials) {
+  return apiRequest("/auth/login", {
+    method: "POST",
+    body: credentials,
+  });
+}
+
+export async function registerUser(details) {
+  return apiRequest("/auth/register", {
+    method: "POST",
+    body: details,
+  });
+}
+
+export async function getCurrentUser() {
+  return apiRequest("/auth/me");
 }
 
 export async function getPlayerProfile(playerId) {
-  return {
-    player: {
-      playerId,
-      name: "Alex Mercer",
-      team: "Northbridge FC",
-      position: "CAM",
-    },
-    analytics: {
-      overallRating: 84,
-      attributes: {
-        shooting: 78,
-        passing: 88,
-        dribbling: 83,
-        defending: 65,
-        creativity: 90,
-        physical: 74,
-      },
-      playstyle: "Playmaker",
-      ppi: 86,
-      pressureIndex: 1.04,
-      summary:
-        "Alex Mercer is a high-involvement creator who sustains passing value, chance creation, and stable output late in close matches.",
-    },
-  };
+  return apiRequest(`/player/${playerId}/profile`);
 }
-

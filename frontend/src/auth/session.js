@@ -12,6 +12,19 @@ export function isAuthenticated() {
   return Boolean(getStoredToken());
 }
 
+export function setStoredToken(token) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!token) {
+    clearStoredToken();
+    return;
+  }
+
+  window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
 export function clearStoredToken() {
   if (typeof window === "undefined") {
     return;

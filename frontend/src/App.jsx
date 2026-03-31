@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import AppEntryRoute from "./components/AppEntryRoute.jsx";
 import Layout from "./components/Layout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import PublicOnlyRoute from "./components/PublicOnlyRoute.jsx";
@@ -10,12 +11,11 @@ import MatchAnalysisPage from "./pages/MatchAnalysisPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 import PlayerProfilePage from "./pages/PlayerProfilePage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-import { isAuthenticated } from "./auth/session.js";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated() ? "/dashboard" : "/login"} replace />} />
+      <Route path="/" element={<AppEntryRoute />} />
 
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
