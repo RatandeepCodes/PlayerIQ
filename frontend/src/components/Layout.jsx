@@ -4,21 +4,24 @@ import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useBackendHealth } from "../hooks/useBackendHealth.js";
 
-import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
-
 const navItems = [
-<<<<<<< HEAD
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Player Profile", to: `/player/${SHOWCASE_PLAYERS.primary.id}` },
-  { label: "Comparison", to: "/compare" },
-  { label: "Match Analysis", to: `/matches/${SHOWCASE_MATCH.id}` },
-=======
   { label: "Home", to: "/dashboard" },
   { label: "Player Profile", to: `/player/${SHOWCASE_PLAYERS.featured.id}` },
   { label: "Compare Players", to: "/compare" },
   { label: "Match Day", to: `/matches/${SHOWCASE_MATCH.id}` },
->>>>>>> BugsAndFixes
 ];
+
+const getServiceMessage = (status) => {
+  if (status === "online") {
+    return "Live data ready";
+  }
+
+  if (status === "degraded" || status === "checking") {
+    return "Updating live feed";
+  }
+
+  return "Offline mode";
+};
 
 export default function Layout() {
   const location = useLocation();
@@ -26,21 +29,10 @@ export default function Layout() {
   const { logout, user } = useAuth();
   const backendHealth = useBackendHealth(true);
   const pageTitle =
-    navItems.find((item) => location.pathname.startsWith(item.to.split("/:")[0]))?.label || "Workspace";
+    navItems.find((item) => location.pathname.startsWith(item.to.split("/:")[0]))?.label || "PlayerIQ";
 
   return (
     <div className="shell">
-<<<<<<< HEAD
-      <div className="shell-ambient shell-ambient-a" />
-      <div className="shell-ambient shell-ambient-b" />
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <p className="eyebrow">Football Intelligence</p>
-          <h1>PlayerIQ</h1>
-          <p className="sidebar-copy">
-            AI-driven player intelligence for scouting, coaching, and live match analysis.
-          </p>
-=======
       <header className="site-header">
         <div className="site-header-row">
           <div className="brand-block">
@@ -56,7 +48,6 @@ export default function Layout() {
             <strong>{SHOWCASE_PLAYERS.featured.name}</strong>
             <small>{SHOWCASE_PLAYERS.featured.team}</small>
           </div>
->>>>>>> BugsAndFixes
         </div>
 
         <nav className="top-nav">
@@ -70,34 +61,28 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-<<<<<<< HEAD
-
-        <button
-          className="sidebar-logout"
-          type="button"
-          onClick={() => {
-            logout();
-            navigate("/login", { replace: true });
-          }}
-        >
-          Sign out
-        </button>
-      </aside>
-=======
       </header>
->>>>>>> BugsAndFixes
 
       <main className="content">
         <header className="topbar">
           <div>
-            <p className="eyebrow">PlayerIQ Workspace</p>
+            <p className="eyebrow">PlayerIQ</p>
             <h2>{pageTitle}</h2>
-            <p className="topbar-copy">Production-ready analyst shell with protected routing, auth state, and backend health awareness.</p>
+            <p className="topbar-copy">A football-first view of form, match flow, and standout moments.</p>
           </div>
           <div className="topbar-meta">
-            <span className="pill user-pill">{user?.name || "Analyst"}</span>
-            <span className="pill">Protected Workspace</span>
-            <span className={`pill status-pill ${backendHealth.status}`}>{backendHealth.message}</span>
+            <span className="pill user-pill">{user?.name || "Football Fan"}</span>
+            <span className={`pill status-pill ${backendHealth.status}`}>{getServiceMessage(backendHealth.status)}</span>
+            <button
+              className="topbar-action"
+              type="button"
+              onClick={() => {
+                logout();
+                navigate("/login", { replace: true });
+              }}
+            >
+              Sign Out
+            </button>
           </div>
         </header>
         <Outlet />

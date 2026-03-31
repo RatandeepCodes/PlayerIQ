@@ -3,15 +3,6 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { SHOWCASE_MATCH } from "../config/showcase.js";
 
 const data = [
-<<<<<<< HEAD
-  { minute: 5, intensity: 20 },
-  { minute: 15, intensity: 44 },
-  { minute: 30, intensity: 36 },
-  { minute: 41, intensity: 62 },
-  { minute: 58, intensity: 52 },
-  { minute: 76, intensity: 85 },
-  { minute: 89, intensity: 71 },
-=======
   { minute: 5, intensity: 24 },
   { minute: 15, intensity: 48 },
   { minute: 30, intensity: 34 },
@@ -19,7 +10,6 @@ const data = [
   { minute: 58, intensity: 50 },
   { minute: 76, intensity: 83 },
   { minute: 89, intensity: 68 },
->>>>>>> BugsAndFixes
 ];
 
 export default function MomentumChart() {
@@ -27,15 +17,9 @@ export default function MomentumChart() {
     <div className="panel chart-panel">
       <div className="panel-header">
         <div>
-<<<<<<< HEAD
-          <p className="eyebrow">Live Match Flow</p>
-          <h2>Momentum Timeline</h2>
-          <p className="summary-copy">{SHOWCASE_MATCH.title} presentation feed</p>
-=======
           <p className="eyebrow">Match Flow</p>
           <h2>How the game moved</h2>
           <p className="summary-copy">{SHOWCASE_MATCH.title}</p>
->>>>>>> BugsAndFixes
         </div>
       </div>
 

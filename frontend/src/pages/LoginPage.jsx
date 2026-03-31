@@ -31,18 +31,17 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-panel">
         <p className="eyebrow">Welcome Back</p>
-<<<<<<< HEAD
-        <h1>Sign in to PlayerIQ</h1>
-        <p className="auth-subcopy">Use your analyst account to access protected player intelligence dashboards.</p>
-        {location.state?.from ? (
-          <p className="auth-hint">Sign in first to continue to your requested workspace page.</p>
-        ) : null}
+        <h1>Sign in and step back into the game</h1>
+        <p className="auth-subcopy">
+          Follow favourite players, revisit standout performances, and keep your football world in one place.
+        </p>
+        {location.state?.from ? <p className="auth-hint">Sign in to continue where you left off.</p> : null}
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Email
             <input
               type="email"
-              placeholder="analyst@playeriq.ai"
+              placeholder="you@example.com"
               value={formData.email}
               onChange={(event) => {
                 clearError();
@@ -63,26 +62,10 @@ export default function LoginPage() {
             />
           </label>
           {error ? <p className="auth-error">{error}</p> : null}
-          {errorMeta?.requestId ? <p className="auth-meta">Request ID: {errorMeta.requestId}</p> : null}
+          {errorMeta?.requestId ? <p className="auth-meta">Reference: {errorMeta.requestId}</p> : null}
           <button className="auth-submit" disabled={isLoading || !isFormValid} type="submit">
-            {isLoading ? "Signing in..." : "Login"}
+            {isLoading ? "Signing in..." : "Sign In"}
           </button>
-=======
-        <h1>Sign in and step back into the game</h1>
-        <p className="auth-subcopy">
-          Follow favourite players, revisit standout performances, and keep your football world in one place.
-        </p>
-        <form className="auth-form">
-          <label>
-            Email
-            <input type="email" placeholder="you@example.com" />
-          </label>
-          <label>
-            Password
-            <input type="password" placeholder="Enter your password" />
-          </label>
-          <button type="button">Sign In</button>
->>>>>>> BugsAndFixes
         </form>
         <p className="auth-link">
           Need an account? <Link to="/register">Create one</Link>

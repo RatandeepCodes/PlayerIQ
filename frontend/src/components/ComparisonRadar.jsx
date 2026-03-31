@@ -35,20 +35,6 @@ export default function ComparisonRadar() {
           <PolarAngleAxis dataKey="metric" tick={{ fill: "#f6ecd2", fontSize: 12 }} />
           <PolarRadiusAxis tick={false} axisLine={false} />
           <Radar
-<<<<<<< HEAD
-            name={SHOWCASE_PLAYERS.comparisonA.name}
-            dataKey="playerOne"
-            stroke="#88d498"
-            fill="#88d498"
-            fillOpacity={0.2}
-          />
-          <Radar
-            name={SHOWCASE_PLAYERS.comparisonB.name}
-            dataKey="playerTwo"
-            stroke="#ffb86b"
-            fill="#ffb86b"
-            fillOpacity={0.2}
-=======
             name={SHOWCASE_PLAYERS.compareA.name}
             dataKey="playerOne"
             stroke="#d7b26d"
@@ -61,7 +47,6 @@ export default function ComparisonRadar() {
             stroke="#b5442f"
             fill="#b5442f"
             fillOpacity={0.18}
->>>>>>> BugsAndFixes
           />
           <Legend />
         </RadarChart>
