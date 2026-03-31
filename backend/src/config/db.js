@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import { env } from "./env.js";
+import { logger } from "../utils/logger.js";
 
 mongoose.set("bufferCommands", false);
 
@@ -11,11 +12,11 @@ export const connectDatabase = async () => {
     await mongoose.connect(env.mongoUri, {
       serverSelectionTimeoutMS: 5000,
     });
-    console.log("MongoDB connected");
+    logger.info("MongoDB connected", { mongoUri: env.mongoUri });
   } catch (error) {
-    console.error("MongoDB connection failed", error.message);
+    logger.error("MongoDB connection failed", { message: error.message, mongoUri: env.mongoUri });
     if (env.nodeEnv !== "production") {
-      console.warn("Continuing without database connection in development mode");
+      logger.warn("Continuing without database connection in development mode");
       return;
     }
     throw error;

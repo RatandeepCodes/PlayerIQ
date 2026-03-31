@@ -1,4 +1,12 @@
 import { fetchMatchMomentum, fetchMatchTurningPoints } from "./ai.service.js";
+import {
+  getCachedMatchAnalysis,
+  getCachedMatchMomentum,
+  getCachedTurningPoints,
+  saveMatchAnalysisCache,
+  saveMatchMomentumCache,
+  saveTurningPointsCache,
+} from "./analytics-cache.service.js";
 
 const toMinuteRangeLabel = (bucket) => `${bucket.startMinute}'-${bucket.endMinute}'`;
 
@@ -59,35 +67,41 @@ export const buildMatchAnalysisEnvelope = (matchId, momentum, turningPoints) => 
 };
 
 export const getMatchMomentumData = async (matchId) => {
-  const momentum = await fetchMatchMomentum(matchId);
-  return buildMomentumEnvelope(matchId, momentum);
+  try {
+    const momentum = await fetchMatchMomentum(matchId);
+    const envelope = buildMomentumEnvelope(matchId, momentum);
+    await saveMatchMomentumCache(matchId, envelope, envelope.teams).catch(() => undefined);
+    return envelope;
+  } catch (error) {
+    const cached = await getCachedMatchMomentum(matchId).catch(() => null);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
 };
 
 export const getMatchTurningPointsData = async (matchId) => {
-  const turningPoints = await fetchMatchTurningPoints(matchId);
-  return buildTurningPointsEnvelope(matchId, turningPoints);
+  try {
+    const turningPoints = await fetchMatchTurningPoints(matchId);
+    const envelope = buildTurningPointsEnvelope(matchId, turningPoints);
+    await saveTurningPointsCache(matchId, envelope).catch(() => undefined);
+    return envelope;
+  } catch (error) {
+    const cached = await getCachedTurningPoints(matchId).catch(() => null);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
 };
 
 export const getMatchAnalysisData = async (matchId) => {
-  const [momentum, turningPoints] = await Promise.all([
-    fetchMatchMomentum(matchId),
-    fetchMatchTurningPoints(matchId),
-  ]);
+  try {
+    const [momentum, turningPoints] = await Promise.all([
+      fetchMatchMomentum(matchId),
+      fetchMatchTurningPoints(matchId),
+    ]);
 
-  return {
-    matchId,
-    teams: momentum.teams,
-    momentum: momentum.buckets,
-    turningPoints: turningPoints.turningPoints,
-    liveStatus: "ready",
-  };
-};
-
-export const getMatchSimulationData = async (matchId) => {
-  const simulation = await fetchMatchSimulation(matchId);
-
-  return {
-    ...simulation,
-    controls: ["start", "pause", "resume", "reset", "speed"],
-  };
+  return buildMatchAnalysisEnvelope(matchId, momentum, turningPoints);
 };

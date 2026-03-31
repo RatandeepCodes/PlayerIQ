@@ -6,6 +6,7 @@ import app from "./app.js";
 import { connectDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
 import { registerSimulationHandlers } from "./sockets/simulation.socket.js";
+import { logger } from "./utils/logger.js";
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -21,12 +22,18 @@ const startServer = async () => {
   await connectDatabase();
 
   httpServer.listen(env.port, () => {
-    console.log(`PlayerIQ backend listening on port ${env.port}`);
+    logger.info("PlayerIQ backend listening", {
+      port: env.port,
+      aiServiceUrl: env.aiServiceUrl,
+      clientOrigin: env.clientOrigin,
+    });
   });
 };
 
 startServer().catch((error) => {
-  console.error("Failed to start backend", error);
+  logger.error("Failed to start backend", {
+    message: error.message,
+    stack: error.stack,
+  });
   process.exit(1);
 });
-

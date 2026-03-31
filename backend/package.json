@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node tests/auth.test.js && node tests/player-profile.test.js && node tests/player-comparison.test.js && node tests/player-analytics-contract.test.js && node tests/match-analysis.test.js && node tests/match-realtime-contract.test.js && node tests/simulation-socket.test.js"
+    "test": "node tests/auth.test.js && node tests/player-profile.test.js && node tests/player-comparison.test.js && node tests/player-analytics-contract.test.js && node tests/match-analysis.test.js && node tests/match-realtime-contract.test.js && node tests/simulation-socket.test.js && node tests/player-persistence.test.js && node tests/persistence-contract.test.js"
   },
   "dependencies": {
     "axios": "^1.9.0",

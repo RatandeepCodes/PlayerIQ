@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { isDatabaseConnected } from "./config/db.js";
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
+import { attachRequestContext } from "./middleware/request-context.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import playerRoutes from "./routes/player.routes.js";
 import matchRoutes from "./routes/match.routes.js";
@@ -20,6 +21,7 @@ app.use(
 );
 app.use(helmet());
 app.use(express.json());
+app.use(attachRequestContext);
 app.use(morgan("dev"));
 
 app.get("/api/health", (_req, res) => {

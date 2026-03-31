@@ -1,4 +1,3 @@
-import Player from "../models/Player.js";
 import { getCachedPlayerProfile, savePlayerProfileCache } from "./analytics-cache.service.js";
 import {
   fetchPlayerPlaystyle,
@@ -6,6 +5,7 @@ import {
   fetchPlayerRating,
   fetchPlayerReport,
 } from "./ai.service.js";
+import { findStoredPlayerById, upsertStoredPlayer } from "../repositories/player.repository.js";
 import { createHttpError } from "../utils/http-error.js";
 
 const ATTRIBUTE_KEYS = ["shooting", "passing", "dribbling", "defending", "creativity", "physical"];
@@ -110,7 +110,7 @@ const buildStoredPlayerProfile = (storedPlayer) => buildProfileEnvelope({ stored
 
 export const getPlayerProfileData = async (playerId) => {
   const [storedPlayerResult, cachedProfileResult, ratingResult, playstyleResult, pressureResult, reportResult] = await Promise.allSettled([
-    Player.findOne({ playerId }).lean(),
+    findStoredPlayerById(playerId),
     getCachedPlayerProfile(playerId),
     fetchPlayerRating(playerId),
     fetchPlayerPlaystyle(playerId),
@@ -135,7 +135,7 @@ export const getPlayerProfileData = async (playerId) => {
       report,
       requestedPlayerId: playerId,
     });
-    await savePlayerProfileCache(profile).catch(() => undefined);
+    await Promise.allSettled([savePlayerProfileCache(profile), upsertStoredPlayer(profile)]);
     return profile;
   }
 
