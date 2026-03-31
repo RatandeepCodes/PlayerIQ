@@ -2,7 +2,7 @@ export default function PlayerCard({ player, analytics }) {
   return (
     <section className="player-card">
       <div>
-        <p className="eyebrow">Overall Rating</p>
+        <p className="eyebrow">Match Rating</p>
         <div className="player-rating">{analytics.overallRating}</div>
       </div>
 

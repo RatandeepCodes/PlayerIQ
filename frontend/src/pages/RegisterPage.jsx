@@ -30,6 +30,7 @@ export default function RegisterPage() {
     <div className="auth-page">
       <div className="auth-panel">
         <p className="eyebrow">Get Started</p>
+<<<<<<< HEAD
         <h1>Create your PlayerIQ account</h1>
         <p className="auth-subcopy">Create a user account to save access to the PlayerIQ football intelligence workspace.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -75,9 +76,29 @@ export default function RegisterPage() {
           <button className="auth-submit" disabled={isLoading || !isFormValid} type="submit">
             {isLoading ? "Creating account..." : "Register"}
           </button>
+=======
+        <h1>Create your football space</h1>
+        <p className="auth-subcopy">
+          Save the players you follow, compare stars across matches, and keep a closer eye on every big performance.
+        </p>
+        <form className="auth-form">
+          <label>
+            Name
+            <input type="text" placeholder="Your name" />
+          </label>
+          <label>
+            Email
+            <input type="email" placeholder="you@example.com" />
+          </label>
+          <label>
+            Password
+            <input type="password" placeholder="Choose a password" />
+          </label>
+          <button type="button">Create Account</button>
+>>>>>>> BugsAndFixes
         </form>
         <p className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>
     </div>

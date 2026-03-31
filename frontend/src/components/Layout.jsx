@@ -4,11 +4,20 @@ import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useBackendHealth } from "../hooks/useBackendHealth.js";
 
+import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
+
 const navItems = [
+<<<<<<< HEAD
   { label: "Dashboard", to: "/dashboard" },
   { label: "Player Profile", to: `/player/${SHOWCASE_PLAYERS.primary.id}` },
   { label: "Comparison", to: "/compare" },
   { label: "Match Analysis", to: `/matches/${SHOWCASE_MATCH.id}` },
+=======
+  { label: "Home", to: "/dashboard" },
+  { label: "Player Profile", to: `/player/${SHOWCASE_PLAYERS.featured.id}` },
+  { label: "Compare Players", to: "/compare" },
+  { label: "Match Day", to: `/matches/${SHOWCASE_MATCH.id}` },
+>>>>>>> BugsAndFixes
 ];
 
 export default function Layout() {
@@ -21,6 +30,7 @@ export default function Layout() {
 
   return (
     <div className="shell">
+<<<<<<< HEAD
       <div className="shell-ambient shell-ambient-a" />
       <div className="shell-ambient shell-ambient-b" />
       <aside className="sidebar">
@@ -30,9 +40,26 @@ export default function Layout() {
           <p className="sidebar-copy">
             AI-driven player intelligence for scouting, coaching, and live match analysis.
           </p>
+=======
+      <header className="site-header">
+        <div className="site-header-row">
+          <div className="brand-block">
+            <p className="eyebrow">For Fans And Analysts</p>
+            <h1>PlayerIQ</h1>
+            <p className="brand-copy">
+              Follow the players you love, track match stories as they unfold, and understand performances in a way that feels made for football.
+            </p>
+          </div>
+
+          <div className="header-highlight">
+            <span className="header-highlight-label">Featured Now</span>
+            <strong>{SHOWCASE_PLAYERS.featured.name}</strong>
+            <small>{SHOWCASE_PLAYERS.featured.team}</small>
+          </div>
+>>>>>>> BugsAndFixes
         </div>
 
-        <nav className="nav">
+        <nav className="top-nav">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -43,6 +70,7 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+<<<<<<< HEAD
 
         <button
           className="sidebar-logout"
@@ -55,6 +83,9 @@ export default function Layout() {
           Sign out
         </button>
       </aside>
+=======
+      </header>
+>>>>>>> BugsAndFixes
 
       <main className="content">
         <header className="topbar">
