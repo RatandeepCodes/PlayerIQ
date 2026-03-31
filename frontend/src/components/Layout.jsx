@@ -34,33 +34,43 @@ export default function Layout() {
   return (
     <div className="shell">
       <header className="site-header">
-        <div className="site-header-row">
-          <div className="brand-block">
-            <p className="eyebrow">For Fans And Analysts</p>
-            <h1>PlayerIQ</h1>
-            <p className="brand-copy">
-              Follow the players you love, track match stories as they unfold, and understand performances in a way that feels made for football.
-            </p>
-          </div>
+        <div className="site-header-inner">
+          <div className="site-header-row">
+            <div className="brand-block">
+              <p className="eyebrow">Football First</p>
+              <h1>PlayerIQ</h1>
+            </div>
 
-          <div className="header-highlight">
-            <span className="header-highlight-label">Featured Now</span>
-            <strong>{SHOWCASE_PLAYERS.featured.name}</strong>
-            <small>{SHOWCASE_PLAYERS.featured.team}</small>
+            <nav className="top-nav">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                  to={item.to}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="header-actions">
+              <div className="header-highlight">
+                <span className="header-highlight-label">Featured</span>
+                <strong>{SHOWCASE_PLAYERS.featured.name}</strong>
+              </div>
+              <button
+                className="header-signout"
+                type="button"
+                onClick={() => {
+                  logout();
+                  navigate("/login", { replace: true });
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
-
-        <nav className="top-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-              to={item.to}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
       </header>
 
       <main className="content">
@@ -73,16 +83,6 @@ export default function Layout() {
           <div className="topbar-meta">
             <span className="pill user-pill">{user?.name || "Football Fan"}</span>
             <span className={`pill status-pill ${backendHealth.status}`}>{getServiceMessage(backendHealth.status)}</span>
-            <button
-              className="topbar-action"
-              type="button"
-              onClick={() => {
-                logout();
-                navigate("/login", { replace: true });
-              }}
-            >
-              Sign Out
-            </button>
           </div>
         </header>
         <Outlet />
