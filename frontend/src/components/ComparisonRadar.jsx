@@ -8,6 +8,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { SHOWCASE_PLAYERS } from "../config/showcase.js";
+
 const data = [
   { metric: "Shooting", playerOne: 78, playerTwo: 86 },
   { metric: "Passing", playerOne: 88, playerTwo: 73 },
@@ -32,12 +34,23 @@ export default function ComparisonRadar() {
           <PolarGrid stroke="rgba(255,255,255,0.1)" />
           <PolarAngleAxis dataKey="metric" tick={{ fill: "#d7ddf0", fontSize: 12 }} />
           <PolarRadiusAxis tick={false} axisLine={false} />
-          <Radar name="Alex Mercer" dataKey="playerOne" stroke="#88d498" fill="#88d498" fillOpacity={0.2} />
-          <Radar name="Mateo Rios" dataKey="playerTwo" stroke="#ffb86b" fill="#ffb86b" fillOpacity={0.2} />
+          <Radar
+            name={SHOWCASE_PLAYERS.comparisonA.name}
+            dataKey="playerOne"
+            stroke="#88d498"
+            fill="#88d498"
+            fillOpacity={0.2}
+          />
+          <Radar
+            name={SHOWCASE_PLAYERS.comparisonB.name}
+            dataKey="playerTwo"
+            stroke="#ffb86b"
+            fill="#ffb86b"
+            fillOpacity={0.2}
+          />
           <Legend />
         </RadarChart>
       </ResponsiveContainer>
     </div>
   );
 }
-

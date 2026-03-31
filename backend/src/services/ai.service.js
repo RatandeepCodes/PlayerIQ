@@ -97,6 +97,9 @@ export const fetchPlayerProfile = async (playerId) => {
 export const fetchPlayerComparison = async (player1, player2) =>
   fetchAiResource("get", `/compare/${player1}/${player2}`, "Player comparison unavailable from AI service");
 
+export const fetchPlayerDirectory = async () =>
+  fetchAiResource("get", "/players", "Player directory unavailable from AI service");
+
 export const fetchMatchMomentum = async (matchId) =>
   fetchAiResource("get", `/match/${matchId}/momentum`, "Match momentum unavailable from AI service");
 

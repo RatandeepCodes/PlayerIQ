@@ -1,9 +1,10 @@
 import MomentumChart from "../components/MomentumChart.jsx";
+import { SHOWCASE_MATCH } from "../config/showcase.js";
 
 const turningPoints = [
-  { minute: 14, note: "Northbridge FC sustained pressure" },
-  { minute: 39, note: "Eastbay United transition surge" },
-  { minute: 76, note: "Late pressing regain sequence" },
+  { minute: 16, note: "Bengaluru FC found the breakthrough through a high-value final-third action." },
+  { minute: 39, note: "Kerala Blasters responded with a transition surge and better territorial control." },
+  { minute: 76, note: "Late pressing regain sequence swung momentum back toward Bengaluru FC." },
 ];
 
 export default function MatchAnalysisPage() {
@@ -13,12 +14,12 @@ export default function MatchAnalysisPage() {
         <div className="panel-header">
           <div>
             <p className="eyebrow">Match Analysis</p>
-            <h2>Simulated Real-Time Intelligence</h2>
+            <h2>{SHOWCASE_MATCH.title}</h2>
           </div>
           <div className="live-pill">Live Simulation</div>
         </div>
         <p className="summary-copy">
-          The live analysis surface is ready for event-stream updates, dynamic player ratings, and turning point annotations from the backend and AI service.
+          The live analysis surface is ready for event-stream updates, dynamic player ratings, and turning point annotations from the backend and AI service for {SHOWCASE_MATCH.competition} review demos.
         </p>
       </section>
 
@@ -44,4 +45,3 @@ export default function MatchAnalysisPage() {
     </div>
   );
 }
-

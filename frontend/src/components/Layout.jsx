@@ -1,13 +1,14 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
+import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useBackendHealth } from "../hooks/useBackendHealth.js";
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard" },
-  { label: "Player Profile", to: "/player/P101" },
+  { label: "Player Profile", to: `/player/${SHOWCASE_PLAYERS.primary.id}` },
   { label: "Comparison", to: "/compare" },
-  { label: "Match Analysis", to: "/matches/SB-1001" },
+  { label: "Match Analysis", to: `/matches/${SHOWCASE_MATCH.id}` },
 ];
 
 export default function Layout() {

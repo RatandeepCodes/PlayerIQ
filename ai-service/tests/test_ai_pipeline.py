@@ -31,6 +31,7 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         players = list_players()
         indian_players = [player for player in players.players if player.is_indian]
         self.assertGreaterEqual(len(indian_players), 4)
+        self.assertTrue(players.players[0].is_indian)
 
     def test_rating_output_is_bounded(self) -> None:
         rating = get_player_rating("P101")

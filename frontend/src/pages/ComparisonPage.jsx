@@ -1,4 +1,5 @@
 import ComparisonRadar from "../components/ComparisonRadar.jsx";
+import { SHOWCASE_PLAYERS } from "../config/showcase.js";
 
 export default function ComparisonPage() {
   return (
@@ -7,11 +8,14 @@ export default function ComparisonPage() {
         <div className="panel-header">
           <div>
             <p className="eyebrow">Player Comparison</p>
-            <h2>Alex Mercer vs Mateo Rios</h2>
+            <h2>
+              {SHOWCASE_PLAYERS.comparisonA.name} vs {SHOWCASE_PLAYERS.comparisonB.name}
+            </h2>
           </div>
         </div>
         <p className="summary-copy">
-          Alex Mercer leads on creation and passing control, while Mateo Rios offers the sharper direct threat through dribbling volume and shot output.
+          {SHOWCASE_PLAYERS.comparisonA.name} brings finishing instincts and leadership presence, while{" "}
+          {SHOWCASE_PLAYERS.comparisonB.name} offers wider progression, pace, and direct attacking threat.
         </p>
       </section>
 
@@ -19,4 +23,3 @@ export default function ComparisonPage() {
     </div>
   );
 }
-

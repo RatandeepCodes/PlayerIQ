@@ -130,7 +130,8 @@ def load_player_directory() -> pd.DataFrame:
         .reset_index()
     )
     grouped["is_indian"] = grouped["nationality"].str.casefold().eq("india")
-    return grouped.sort_values("player_name").reset_index(drop=True)
+    grouped["display_priority"] = grouped["is_indian"].astype(int)
+    return grouped.sort_values(["display_priority", "player_name"], ascending=[False, True]).reset_index(drop=True)
 
 
 def get_player_metadata(player_id: str) -> dict:

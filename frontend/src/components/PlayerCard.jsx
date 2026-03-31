@@ -9,11 +9,10 @@ export default function PlayerCard({ player, analytics }) {
       <div className="player-card-meta">
         <p className="player-name">{player.name}</p>
         <p>
-          {player.position} · {player.team}
+          {player.position} | {player.team}
         </p>
         <span className="pill">{analytics.playstyle}</span>
       </div>
     </section>
   );
 }
-
