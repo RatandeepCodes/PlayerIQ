@@ -13,7 +13,7 @@ export default function LoginPage() {
           </label>
           <label>
             Password
-            <input type="password" placeholder="••••••••" />
+            <input type="password" placeholder="Enter your password" />
           </label>
           <button type="button">Login</button>
         </form>
@@ -24,4 +24,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
