@@ -1,9 +1,10 @@
 import MomentumChart from "../components/MomentumChart.jsx";
+import { SHOWCASE_MATCH } from "../config/showcase.js";
 
 const turningPoints = [
-  { minute: 14, note: "Northbridge FC sustained pressure" },
-  { minute: 39, note: "Eastbay United transition surge" },
-  { minute: 76, note: "Late pressing regain sequence" },
+  { minute: 16, note: "Bengaluru FC found the first big opening and lifted the crowd." },
+  { minute: 39, note: "Kerala Blasters answered with a quick spell of pressure and sharper movement." },
+  { minute: 76, note: "A late burst of energy swung the game back toward Bengaluru FC." },
 ];
 
 export default function MatchAnalysisPage() {
@@ -12,13 +13,13 @@ export default function MatchAnalysisPage() {
       <section className="panel">
         <div className="panel-header">
           <div>
-            <p className="eyebrow">Match Analysis</p>
-            <h2>Simulated Real-Time Intelligence</h2>
+            <p className="eyebrow">Match Day</p>
+            <h2>{SHOWCASE_MATCH.title}</h2>
           </div>
-          <div className="live-pill">Live Simulation</div>
+          <div className="live-pill">{SHOWCASE_MATCH.competition}</div>
         </div>
         <p className="summary-copy">
-          The live analysis surface is ready for event-stream updates, dynamic player ratings, and turning point annotations from the backend and AI service.
+          Follow the flow of the game, spot the biggest swings, and understand how the match story changed minute by minute.
         </p>
       </section>
 
@@ -27,8 +28,8 @@ export default function MatchAnalysisPage() {
       <section className="panel">
         <div className="panel-header">
           <div>
-            <p className="eyebrow">Turning Points</p>
-            <h2>Detected Momentum Shifts</h2>
+            <p className="eyebrow">Key Moments</p>
+            <h2>Where the match changed</h2>
           </div>
         </div>
 
@@ -44,4 +45,3 @@ export default function MatchAnalysisPage() {
     </div>
   );
 }
-

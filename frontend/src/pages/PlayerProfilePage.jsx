@@ -15,7 +15,13 @@ export default function PlayerProfilePage() {
   }, [id]);
 
   if (!profile) {
-    return <div className="page">Loading player profile...</div>;
+    return (
+      <div className="page">
+        <section className="panel">
+          <p className="summary-copy">Loading player story...</p>
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -29,8 +35,8 @@ export default function PlayerProfilePage() {
         <div className="panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">AI Summary</p>
-              <h2>Performance Interpretation</h2>
+              <p className="eyebrow">Big Picture</p>
+              <h2>What stood out</h2>
             </div>
           </div>
           <p className="summary-copy">{profile.analytics.summary}</p>
@@ -39,4 +45,3 @@ export default function PlayerProfilePage() {
     </div>
   );
 }
-

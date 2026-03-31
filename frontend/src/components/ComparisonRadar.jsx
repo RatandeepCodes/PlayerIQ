@@ -8,13 +8,15 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { SHOWCASE_PLAYERS } from "../config/showcase.js";
+
 const data = [
-  { metric: "Shooting", playerOne: 78, playerTwo: 86 },
-  { metric: "Passing", playerOne: 88, playerTwo: 73 },
-  { metric: "Dribbling", playerOne: 83, playerTwo: 87 },
-  { metric: "Defending", playerOne: 65, playerTwo: 58 },
-  { metric: "Creativity", playerOne: 90, playerTwo: 70 },
-  { metric: "Physical", playerOne: 74, playerTwo: 79 },
+  { metric: "Finishing", playerOne: 84, playerTwo: 81 },
+  { metric: "Passing", playerOne: 77, playerTwo: 79 },
+  { metric: "Movement", playerOne: 76, playerTwo: 88 },
+  { metric: "Work Rate", playerOne: 71, playerTwo: 74 },
+  { metric: "Chance Threat", playerOne: 82, playerTwo: 85 },
+  { metric: "Big Match Feel", playerOne: 90, playerTwo: 79 },
 ];
 
 export default function ComparisonRadar() {
@@ -22,22 +24,33 @@ export default function ComparisonRadar() {
     <div className="panel chart-panel">
       <div className="panel-header">
         <div>
-          <p className="eyebrow">Comparison</p>
-          <h2>Radar Analytics</h2>
+          <p className="eyebrow">Head To Head</p>
+          <h2>Where each player stands out</h2>
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={340}>
         <RadarChart data={data}>
-          <PolarGrid stroke="rgba(255,255,255,0.1)" />
-          <PolarAngleAxis dataKey="metric" tick={{ fill: "#d7ddf0", fontSize: 12 }} />
+          <PolarGrid stroke="rgba(244, 226, 187, 0.12)" />
+          <PolarAngleAxis dataKey="metric" tick={{ fill: "#f6ecd2", fontSize: 12 }} />
           <PolarRadiusAxis tick={false} axisLine={false} />
-          <Radar name="Alex Mercer" dataKey="playerOne" stroke="#88d498" fill="#88d498" fillOpacity={0.2} />
-          <Radar name="Mateo Rios" dataKey="playerTwo" stroke="#ffb86b" fill="#ffb86b" fillOpacity={0.2} />
+          <Radar
+            name={SHOWCASE_PLAYERS.compareA.name}
+            dataKey="playerOne"
+            stroke="#d7b26d"
+            fill="#d7b26d"
+            fillOpacity={0.22}
+          />
+          <Radar
+            name={SHOWCASE_PLAYERS.compareB.name}
+            dataKey="playerTwo"
+            stroke="#b5442f"
+            fill="#b5442f"
+            fillOpacity={0.18}
+          />
           <Legend />
         </RadarChart>
       </ResponsiveContainer>
     </div>
   );
 }
-
