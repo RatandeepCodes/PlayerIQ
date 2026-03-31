@@ -102,6 +102,8 @@ export const initializeSimulationSession = async (matchId) => {
   return buildSimulationSessionPayload(session, { includeTimeline: true });
 };
 
+export const hasSimulationSession = (matchId) => simulationSessions.has(matchId);
+
 export const getSimulationSessionState = (matchId) => buildSimulationSessionPayload(getRequiredSession(matchId));
 
 export const controlSimulationSession = (matchId, action, speed) => {
@@ -142,6 +144,9 @@ export const controlSimulationSession = (matchId, action, speed) => {
       session.status = session.timeline.length === 0 ? "completed" : "ready";
       break;
     case "speed":
+      if (!Number.isFinite(Number(speed)) || Number(speed) <= 0) {
+        throw createHttpError(400, "Simulation speed must be a number greater than zero.");
+      }
       session.playbackSpeed = Number(speed);
       break;
     default:
