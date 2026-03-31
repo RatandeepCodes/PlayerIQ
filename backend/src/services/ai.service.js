@@ -45,19 +45,47 @@ const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
     overallRating: rating.overallRating,
     attributes: rating.attributes,
     playstyle: playstyle.playstyle,
+    playstyleProfile: {
+      name: playstyle.playstyle,
+      clusterDistance: playstyle.clusterDistance,
+      supportingTraits: playstyle.supportingTraits,
+    },
     ppi: rating.ppi,
     pressureIndex: pressure.pressureIndex,
+    pressure: {
+      pressureIndex: pressure.pressureIndex,
+      pressureScore: pressure.pressureScore,
+      pressureEvents: pressure.pressureEvents,
+      interpretation: pressure.interpretation,
+    },
     summary: report.summary,
+    report: {
+      summary: report.summary,
+      strengths: report.strengths,
+      developmentAreas: report.developmentAreas,
+    },
   },
 });
+
+export const fetchPlayerRating = async (playerId) =>
+  fetchAiResource("get", `/rating/${playerId}`, "Player rating unavailable from AI service");
+
+export const fetchPlayerPlaystyle = async (playerId) =>
+  fetchAiResource("get", `/playstyle/${playerId}`, "Player playstyle unavailable from AI service");
+
+export const fetchPlayerPressure = async (playerId) =>
+  fetchAiResource("get", `/pressure/${playerId}`, "Player pressure analytics unavailable from AI service");
+
+export const fetchPlayerReport = async (playerId) =>
+  fetchAiResource("get", `/report/${playerId}`, "Player report unavailable from AI service");
 
 export const fetchPlayerProfile = async (playerId) => {
   try {
     const [rating, playstyle, pressure, report] = await Promise.all([
-      fetchAiResource("get", `/rating/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/playstyle/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/pressure/${playerId}`, "Player profile unavailable from AI service"),
-      fetchAiResource("get", `/report/${playerId}`, "Player profile unavailable from AI service"),
+      fetchPlayerRating(playerId),
+      fetchPlayerPlaystyle(playerId),
+      fetchPlayerPressure(playerId),
+      fetchPlayerReport(playerId),
     ]);
     return mapPlayerProfile(playerId, rating, playstyle, pressure, report);
   } catch (error) {

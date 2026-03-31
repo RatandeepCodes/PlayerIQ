@@ -53,6 +53,7 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         comparison = compare_players("P001", "P101")
         self.assertIn(comparison.player_one, comparison.summary)
         self.assertIn(comparison.player_two, comparison.summary)
+        self.assertIn(comparison.winner, {comparison.player_one, comparison.player_two, None})
 
     def test_report_mentions_sources(self) -> None:
         report = generate_player_summary("P102")
