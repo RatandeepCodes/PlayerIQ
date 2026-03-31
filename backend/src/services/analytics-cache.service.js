@@ -1,7 +1,13 @@
 import { isDatabaseConnected } from "../config/db.js";
-import AnalyticsResult from "../models/AnalyticsResult.js";
-
-const buildComparisonCacheKey = (player1, player2) => [player1, player2].sort().join("::");
+import {
+  buildComparisonCacheKey,
+  findComparisonRecord,
+  findMatchSnapshotRecord,
+  findPlayerProfileRecord,
+  saveComparisonRecord,
+  saveMatchSnapshotRecord,
+  savePlayerProfileRecord,
+} from "../repositories/analytics.repository.js";
 
 const buildCachedMetadata = (record) => ({
   ...(record?.metadata || {}),
@@ -16,7 +22,7 @@ export const getCachedPlayerProfile = async (playerId) => {
     return null;
   }
 
-  const record = await AnalyticsResult.findOne({ playerId }).lean();
+  const record = await findPlayerProfileRecord(playerId);
   if (!record?.playerSnapshot || !record?.analytics) {
     return null;
   }
@@ -40,34 +46,16 @@ export const savePlayerProfileCache = async (profile) => {
     return;
   }
 
-  await AnalyticsResult.findOneAndUpdate(
-    { playerId: profile.player.playerId },
-    {
-      $set: {
-        playerSnapshot: profile.player,
-        overview: profile.overview,
-        analytics: profile.analytics,
-        metadata: {
-          ...(profile.metadata || {}),
-          cache: {
-            status: "fresh",
-            storedAt: new Date().toISOString(),
-          },
-        },
-        overallRating: profile.analytics.overallRating,
-        attributes: profile.analytics.attributes,
-        playstyle: profile.analytics.playstyle,
-        ppi: profile.analytics.ppi,
-        pressureIndex: profile.analytics.pressureIndex,
-        report: profile.analytics.summary,
+  await savePlayerProfileRecord({
+    ...profile,
+    metadata: {
+      ...(profile.metadata || {}),
+      cache: {
+        status: "fresh",
+        storedAt: new Date().toISOString(),
       },
     },
-    {
-      new: true,
-      upsert: true,
-      setDefaultsOnInsert: true,
-    },
-  );
+  });
 };
 
 export const getCachedComparison = async (player1, player2) => {
@@ -75,9 +63,8 @@ export const getCachedComparison = async (player1, player2) => {
     return null;
   }
 
-  const record = await AnalyticsResult.findOne({ playerId: player1 }).lean();
-  const key = buildComparisonCacheKey(player1, player2);
-  return record?.comparisonCache?.[key] || null;
+  const record = await findComparisonRecord(player1, player2);
+  return record?.payload || null;
 };
 
 export const saveComparisonCache = async (player1, player2, comparison) => {
@@ -94,23 +81,34 @@ export const saveComparisonCache = async (player1, player2, comparison) => {
     },
   };
 
-  const update = {
-    $set: {
-      [`comparisonCache.${key}`]: cachedPayload,
-    },
-  };
-
-  await Promise.all(
-    [player1, player2].map((playerId) =>
-      AnalyticsResult.findOneAndUpdate(
-        { playerId },
-        update,
-        {
-          new: true,
-          upsert: true,
-          setDefaultsOnInsert: true,
-        },
-      ),
-    ),
-  );
+  await saveComparisonRecord(player1, player2, cachedPayload);
 };
+
+const getCachedMatchSnapshot = async (matchId, snapshotType) => {
+  if (!isDatabaseConnected()) {
+    return null;
+  }
+
+  const record = await findMatchSnapshotRecord(matchId, snapshotType);
+  return record?.payload || null;
+};
+
+const saveCachedMatchSnapshot = async (matchId, snapshotType, payload, teams = []) => {
+  if (!isDatabaseConnected()) {
+    return;
+  }
+
+  await saveMatchSnapshotRecord(matchId, snapshotType, payload, teams);
+};
+
+export const getCachedMatchAnalysis = async (matchId) => getCachedMatchSnapshot(matchId, "analysis");
+export const saveMatchAnalysisCache = async (matchId, payload, teams = []) =>
+  saveCachedMatchSnapshot(matchId, "analysis", payload, teams);
+
+export const getCachedMatchMomentum = async (matchId) => getCachedMatchSnapshot(matchId, "momentum");
+export const saveMatchMomentumCache = async (matchId, payload, teams = []) =>
+  saveCachedMatchSnapshot(matchId, "momentum", payload, teams);
+
+export const getCachedTurningPoints = async (matchId) => getCachedMatchSnapshot(matchId, "turning-points");
+export const saveTurningPointsCache = async (matchId, payload, teams = []) =>
+  saveCachedMatchSnapshot(matchId, "turning-points", payload, teams);
