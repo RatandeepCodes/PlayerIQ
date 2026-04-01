@@ -8,18 +8,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { SHOWCASE_PLAYERS } from "../config/showcase.js";
-
-const data = [
-  { metric: "Finishing", playerOne: 84, playerTwo: 81 },
-  { metric: "Passing", playerOne: 77, playerTwo: 79 },
-  { metric: "Movement", playerOne: 76, playerTwo: 88 },
-  { metric: "Work Rate", playerOne: 71, playerTwo: 74 },
-  { metric: "Chance Threat", playerOne: 82, playerTwo: 85 },
-  { metric: "Big Match Feel", playerOne: 90, playerTwo: 79 },
-];
-
-export default function ComparisonRadar() {
+export default function ComparisonRadar({
+  radar = [],
+  playerOneName = "Player One",
+  playerTwoName = "Player Two",
+}) {
   return (
     <div className="panel chart-panel">
       <div className="panel-header">
@@ -29,28 +22,34 @@ export default function ComparisonRadar() {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={340}>
-        <RadarChart data={data}>
-          <PolarGrid stroke="rgba(244, 226, 187, 0.12)" />
-          <PolarAngleAxis dataKey="metric" tick={{ fill: "#f6ecd2", fontSize: 12 }} />
-          <PolarRadiusAxis tick={false} axisLine={false} />
-          <Radar
-            name={SHOWCASE_PLAYERS.compareA.name}
-            dataKey="playerOne"
-            stroke="#d7b26d"
-            fill="#d7b26d"
-            fillOpacity={0.22}
-          />
-          <Radar
-            name={SHOWCASE_PLAYERS.compareB.name}
-            dataKey="playerTwo"
-            stroke="#b5442f"
-            fill="#b5442f"
-            fillOpacity={0.18}
-          />
-          <Legend />
-        </RadarChart>
-      </ResponsiveContainer>
+      {radar.length ? (
+        <ResponsiveContainer width="100%" height={340}>
+          <RadarChart data={radar}>
+            <PolarGrid stroke="rgba(244, 226, 187, 0.12)" />
+            <PolarAngleAxis dataKey="metric" tick={{ fill: "#f6ecd2", fontSize: 12 }} />
+            <PolarRadiusAxis tick={false} axisLine={false} />
+            <Radar
+              name={playerOneName}
+              dataKey="playerOne"
+              stroke="#d7b26d"
+              fill="#d7b26d"
+              fillOpacity={0.22}
+            />
+            <Radar
+              name={playerTwoName}
+              dataKey="playerTwo"
+              stroke="#b5442f"
+              fill="#b5442f"
+              fillOpacity={0.18}
+            />
+            <Legend />
+          </RadarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="chart-empty-state">
+          <p className="summary-copy">Comparison radar will appear here once both live player profiles are loaded.</p>
+        </div>
+      )}
     </div>
   );
 }
