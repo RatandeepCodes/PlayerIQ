@@ -11,9 +11,9 @@ export default function StatGrid({ analytics }) {
   ];
 
   return (
-    <div className="stat-grid">
+    <div className="stat-grid profile-stat-grid">
       {stats.map(([label, value]) => (
-        <article key={label} className="stat-card">
+        <article key={label} className="stat-card profile-stat-card">
           <span>{label}</span>
           <strong>{value}</strong>
         </article>
@@ -21,4 +21,3 @@ export default function StatGrid({ analytics }) {
     </div>
   );
 }
-
