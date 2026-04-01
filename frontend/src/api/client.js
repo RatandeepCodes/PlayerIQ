@@ -87,3 +87,20 @@ export async function getCurrentUser() {
 export async function getPlayerProfile(playerId) {
   return apiRequest(`/player/${playerId}/profile`);
 }
+
+export async function getPlayers(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const query = searchParams.toString();
+  return apiRequest(`/player${query ? `?${query}` : ""}`);
+}
+
+export async function getMatchAnalysis(matchId) {
+  return apiRequest(`/matches/${matchId}/analysis`);
+}

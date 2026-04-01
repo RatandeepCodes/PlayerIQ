@@ -231,6 +231,191 @@ input {
     linear-gradient(180deg, rgba(16, 16, 16, 0.98), rgba(9, 9, 9, 0.96));
 }
 
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 24px;
+}
+
+.dashboard-hero-copy,
+.dashboard-feature-card {
+  background: rgba(12, 18, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-feature-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-feature-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -30px -60px auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 205, 96, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+.dashboard-feature-card h3,
+.dashboard-player-tile h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-feature-meta,
+.dashboard-player-header p,
+.dashboard-match-copy p {
+  color: #cbd5e7;
+}
+
+.dashboard-feature-stats,
+.dashboard-match-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.dashboard-feature-stats div,
+.dashboard-match-stats article {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-feature-stats span,
+.dashboard-match-stats span,
+.dashboard-player-stats span {
+  font-size: 0.88rem;
+  color: #bfc9db;
+}
+
+.dashboard-feature-summary {
+  margin: 18px 0 0;
+  max-width: 46ch;
+  color: #e2e8f4;
+}
+
+.dashboard-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.dashboard-overview-grid {
+  align-items: start;
+}
+
+.dashboard-stat-card strong {
+  color: #ffe08d;
+}
+
+.dashboard-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-filter-chip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #dbe2f1;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.dashboard-filter-chip:hover,
+.dashboard-filter-chip.active {
+  transform: translateY(-1px);
+  background: rgba(255, 205, 96, 0.14);
+  border-color: rgba(255, 205, 96, 0.35);
+}
+
+.dashboard-player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.dashboard-player-tile {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.dashboard-player-tile:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 205, 96, 0.32);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+.dashboard-player-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboard-score-badge {
+  display: grid;
+  place-items: center;
+  min-width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #10100c;
+  background: linear-gradient(180deg, #fff7dc, #ffcd60);
+}
+
+.dashboard-player-tags,
+.dashboard-player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-player-link {
+  width: fit-content;
+}
+
+.dashboard-match-panel .live-pill {
+  background: rgba(255, 205, 96, 0.14);
+  color: #ffe8b0;
+}
+
+.dashboard-match-copy {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+}
+
+.dashboard-meta-separator {
+  color: rgba(255, 255, 255, 0.28);
+}
+
 .hero-callout {
   display: flex;
   flex-wrap: wrap;
@@ -708,7 +893,8 @@ input {
 
   .page-grid,
   .two-column-list,
-  .player-card {
+  .player-card,
+  .dashboard-hero {
     grid-template-columns: 1fr;
   }
 
@@ -716,19 +902,5 @@ input {
   .topbar {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .top-nav {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .content {
-    width: min(calc(100% - 24px), 1180px);
   }
 }
