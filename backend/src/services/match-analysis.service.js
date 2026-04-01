@@ -1,16 +1,60 @@
 import { fetchMatchMomentum, fetchMatchSimulation, fetchMatchTurningPoints } from "./ai.service.js";
 
-export const buildMatchAnalysisEnvelope = (matchId, momentum, turningPoints) => ({
-  matchId,
-  teams: momentum.teams,
-  momentum: momentum.buckets,
-  turningPoints: turningPoints.turningPoints,
-  liveStatus: "ready",
-  summary: {
-    totalMomentumWindows: momentum.buckets.length,
-    totalTurningPoints: turningPoints.turningPoints.length,
-  },
-});
+const toMinuteRangeLabel = (bucket) => {
+  if (bucket?.label) {
+    return bucket.label;
+  }
+
+  const startMinute = bucket?.bucketStart ?? bucket?.startMinute ?? 0;
+  const endMinute = bucket?.bucketEnd ?? bucket?.endMinute ?? startMinute + 4;
+  return `${startMinute}-${endMinute}`;
+};
+
+const normalizeMomentumBucket = (bucket) => {
+  const normalizedScores = Array.isArray(bucket?.scores)
+    ? bucket.scores
+    : Object.entries(bucket?.scores || {}).map(([team, score]) => ({ team, score }));
+
+  return {
+    ...bucket,
+    bucketStart: bucket?.bucketStart ?? bucket?.startMinute ?? 0,
+    bucketEnd: bucket?.bucketEnd ?? bucket?.endMinute ?? 0,
+    label: toMinuteRangeLabel(bucket),
+    scores: normalizedScores,
+    isSwing: Boolean(bucket?.isSwing ?? bucket?.swing),
+    swingMagnitude: Number(bucket?.swingMagnitude ?? 0),
+  };
+};
+
+const countMomentumSwings = (buckets) => buckets.filter((bucket) => bucket.isSwing).length;
+
+export const buildMatchAnalysisEnvelope = (matchId, momentum, turningPoints) => {
+  const buckets = (momentum?.buckets || []).map(normalizeMomentumBucket);
+  const turningPointList = turningPoints?.turningPoints || [];
+  const teams = momentum?.teams || [];
+
+  return {
+    matchId,
+    teams,
+    momentum: buckets,
+    momentumBuckets: buckets,
+    turningPoints: turningPointList,
+    turningPointList,
+    liveStatus: "ready",
+    summary: {
+      totalMomentumWindows: buckets.length,
+      totalTurningPoints: turningPointList.length,
+      swingMoments: countMomentumSwings(buckets),
+    },
+    overview: {
+      teams,
+      liveStatus: "ready",
+      totalMomentumWindows: buckets.length,
+      totalTurningPoints: turningPointList.length,
+      swingMoments: countMomentumSwings(buckets),
+    },
+  };
+};
 
 export const buildMatchSimulationEnvelope = (matchId, simulation) => {
   const timeline = [...(simulation.timeline || [])].sort((left, right) => {
