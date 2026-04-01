@@ -9,7 +9,7 @@ import {
 
 export default function PlayerRadarChart({ analytics }) {
   const data = Object.entries(analytics.attributes).map(([metric, value]) => ({
-    metric,
+    metric: `${metric[0].toUpperCase()}${metric.slice(1)}`,
     value,
   }));
 
@@ -25,13 +25,13 @@ export default function PlayerRadarChart({ analytics }) {
       <ResponsiveContainer width="100%" height={320}>
         <RadarChart data={data}>
           <PolarGrid stroke="rgba(255,255,255,0.1)" />
-          <PolarAngleAxis dataKey="metric" tick={{ fill: "#d7ddf0", fontSize: 12 }} />
+          <PolarAngleAxis dataKey="metric" tick={{ fill: "#e7dcc0", fontSize: 12 }} />
           <PolarRadiusAxis tick={false} axisLine={false} />
           <Radar
             dataKey="value"
-            stroke="#88d498"
-            fill="#88d498"
-            fillOpacity={0.35}
+            stroke="#f7c534"
+            fill="#f7c534"
+            fillOpacity={0.28}
             strokeWidth={2}
           />
         </RadarChart>
@@ -39,4 +39,3 @@ export default function PlayerRadarChart({ analytics }) {
     </div>
   );
 }
-

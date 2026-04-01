@@ -88,6 +88,10 @@ export async function getPlayerProfile(playerId) {
   return apiRequest(`/player/${playerId}/profile`);
 }
 
+export async function getPlayerHistory(playerId) {
+  return apiRequest(`/player/${playerId}/history`);
+}
+
 export async function getPlayers(params = {}) {
   const searchParams = new URLSearchParams();
 
