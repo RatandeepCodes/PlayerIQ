@@ -109,6 +109,10 @@ export async function getMatchAnalysis(matchId) {
   return apiRequest(`/matches/${matchId}/analysis`);
 }
 
+export async function getMatches() {
+  return apiRequest("/matches");
+}
+
 export async function getPlayerComparison(player1, player2) {
   const searchParams = new URLSearchParams({
     player1,

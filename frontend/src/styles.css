@@ -1058,6 +1058,29 @@ input {
   color: #ffffff;
 }
 
+.entity-selector-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.entity-selector-row {
+  display: flex;
+  gap: 16px;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.entity-selector-field {
+  flex: 1 1 340px;
+}
+
+.entity-selector-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .comparison-swap {
   padding: 12px 16px;
   border-radius: 14px;
@@ -1405,6 +1428,8 @@ input {
 
   .dashboard-action-row,
   .action-row,
+  .entity-selector-row,
+  .entity-selector-actions,
   .simulation-control-row,
   .simulation-speed-options {
     flex-direction: column;
@@ -1412,6 +1437,7 @@ input {
 
   .dashboard-action-row a,
   .action-row a,
+  .entity-selector-actions a,
   .simulation-control-row .simulation-button,
   .simulation-speed-options button {
     width: 100%;

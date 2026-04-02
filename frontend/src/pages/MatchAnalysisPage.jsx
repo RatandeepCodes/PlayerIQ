@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import {
   controlMatchSimulation,
   getMatchAnalysis,
+  getMatches,
   getMatchSimulation,
   startMatchSimulation,
 } from "../api/client.js";
@@ -46,12 +47,41 @@ const formatFeedDetail = (event) =>
 
 export default function MatchAnalysisPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState(null);
   const [simulation, setSimulation] = useState(null);
+  const [matches, setMatches] = useState([]);
   const [socketError, setSocketError] = useState("");
   const [loading, setLoading] = useState(true);
   const [controlLoading, setControlLoading] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadMatchDirectory = async () => {
+      try {
+        const response = await getMatches();
+        if (!active) {
+          return;
+        }
+
+        setMatches(response.matches || []);
+      } catch (_error) {
+        if (!active) {
+          return;
+        }
+
+        setMatches([]);
+      }
+    };
+
+    loadMatchDirectory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -186,6 +216,7 @@ export default function MatchAnalysisPage() {
   const recentEvents = simulation?.recentEvents || [];
   const speedOptions = useMemo(() => [0.5, 1, 1.5, 2], []);
   const simulationStatusLabel = simulation?.status || "not started";
+  const selectedMatch = matches.find((match) => match.matchId === id);
 
   if (loading) {
     return (
@@ -220,6 +251,37 @@ export default function MatchAnalysisPage() {
 
   return (
     <div className="page match-analysis-page">
+      <section className="panel entity-selector-panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Match Selector</p>
+            <h2>Choose a match to follow live</h2>
+          </div>
+        </div>
+
+        <div className="entity-selector-row">
+          <label className="comparison-field entity-selector-field">
+            <span>Match</span>
+            <select value={id} onChange={(event) => navigate(`/matches/${event.target.value}`)} disabled={!matches.length}>
+              {matches.map((match) => (
+                <option key={match.matchId} value={match.matchId}>
+                  {match.title} - {match.competition}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="entity-selector-actions">
+            <Link className="secondary-link" to="/dashboard">
+              Back to dashboard
+            </Link>
+            <Link className="secondary-link" to={`/player/${SHOWCASE_PLAYERS.featured.id}`}>
+              Open player view
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="match-hero-grid">
         <article className="panel match-hero-copy">
           <div className="panel-header">
@@ -227,7 +289,7 @@ export default function MatchAnalysisPage() {
               <p className="eyebrow">Match Day</p>
               <h2>{title}</h2>
             </div>
-            <div className="live-pill">{SHOWCASE_MATCH.competition}</div>
+            <div className="live-pill">{selectedMatch?.competition || SHOWCASE_MATCH.competition}</div>
           </div>
 
           <p className="summary-copy">

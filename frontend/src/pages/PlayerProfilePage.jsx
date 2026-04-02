@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { getPlayerHistory, getPlayerProfile } from "../api/client.js";
+import { getPlayerHistory, getPlayerProfile, getPlayers } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import PlayerHistoryChart from "../components/PlayerHistoryChart.jsx";
@@ -16,10 +16,39 @@ const hasValue = (value) => value !== null && value !== undefined && value !== "
 
 export default function PlayerProfilePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState(null);
+  const [directory, setDirectory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadDirectory = async () => {
+      try {
+        const response = await getPlayers({ limit: 100 });
+        if (!active) {
+          return;
+        }
+
+        setDirectory(response.players || []);
+      } catch (_error) {
+        if (!active) {
+          return;
+        }
+
+        setDirectory([]);
+      }
+    };
+
+    loadDirectory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -117,9 +146,45 @@ export default function PlayerProfilePage() {
     (hasCoreNumbers
       ? "The main ratings are in place, and PlayerIQ is still enriching the story around the player."
       : "This player page is live, but the deeper numbers still need more match events before they become meaningful.");
+  const selectedPlayerId = profile?.player?.playerId || id;
 
   return (
     <div className="page profile-page">
+      <section className="panel entity-selector-panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Player Selector</p>
+            <h2>Switch to another player</h2>
+          </div>
+        </div>
+
+        <div className="entity-selector-row">
+          <label className="comparison-field entity-selector-field">
+            <span>Player</span>
+            <select
+              value={selectedPlayerId}
+              onChange={(event) => navigate(`/player/${event.target.value}`)}
+              disabled={!directory.length}
+            >
+              {directory.map((player) => (
+                <option key={player.playerId} value={player.playerId}>
+                  {player.name} - {player.team}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="entity-selector-actions">
+            <Link className="secondary-link" to="/compare">
+              Compare this player
+            </Link>
+            <Link className="secondary-link" to={`/matches/${SHOWCASE_MATCH.id}`}>
+              Open match view
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <PlayerCard player={profile.player} analytics={profile.analytics} />
 
       <section className="profile-overview-grid">

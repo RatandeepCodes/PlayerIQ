@@ -1,4 +1,4 @@
-import { fetchMatchMomentum, fetchMatchSimulation, fetchMatchTurningPoints } from "./ai.service.js";
+import { fetchMatchDirectory, fetchMatchMomentum, fetchMatchSimulation, fetchMatchTurningPoints } from "./ai.service.js";
 import {
   getCachedMatchAnalysis,
   getCachedMatchMomentum,
@@ -153,4 +153,18 @@ export const getMatchAnalysisData = async (matchId) => {
 export const getMatchSimulationData = async (matchId) => {
   const simulation = await fetchMatchSimulation(matchId);
   return buildMatchSimulationEnvelope(matchId, simulation);
+};
+
+export const getMatchDirectoryData = async () => {
+  const directory = await fetchMatchDirectory();
+  return {
+    matches: (directory.matches || []).map((match) => ({
+      matchId: match.matchId,
+      title: match.title,
+      teams: match.teams || [],
+      competition: match.competition,
+      season: match.season,
+      sources: match.sources || [],
+    })),
+  };
 };

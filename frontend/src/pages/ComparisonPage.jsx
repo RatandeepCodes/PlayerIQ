@@ -24,7 +24,7 @@ export default function ComparisonPage() {
 
     const loadDirectory = async () => {
       try {
-        const response = await getPlayers({ limit: 20 });
+        const response = await getPlayers({ limit: 100 });
         if (!active) {
           return;
         }
