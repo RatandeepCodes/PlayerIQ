@@ -13,10 +13,18 @@ import matchRoutes from "./routes/match.routes.js";
 import { getAiServiceHealth } from "./services/ai.service.js";
 
 const app = express();
+const allowedOrigins = [env.clientOrigin, "http://localhost:8080", "http://127.0.0.1:8080", "http://127.0.0.1:5173"];
 
 app.use(
   cors({
-    origin: env.clientOrigin,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("CORS origin not allowed"));
+    },
     credentials: true,
   }),
 );
