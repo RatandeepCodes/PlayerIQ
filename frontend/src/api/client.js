@@ -117,3 +117,23 @@ export async function getPlayerComparison(player1, player2) {
 
   return apiRequest(`/player/compare?${searchParams.toString()}`);
 }
+
+export async function startMatchSimulation(matchId) {
+  return apiRequest(`/matches/${matchId}/simulate`, {
+    method: "POST",
+  });
+}
+
+export async function getMatchSimulation(matchId) {
+  return apiRequest(`/matches/${matchId}/simulation`);
+}
+
+export async function controlMatchSimulation(matchId, action, speed) {
+  return apiRequest(`/matches/${matchId}/simulation/control`, {
+    method: "POST",
+    body: {
+      action,
+      ...(speed !== undefined ? { speed } : {}),
+    },
+  });
+}
