@@ -32,7 +32,7 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Home />} />
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
-              <Route path="/player" element={<Navigate to="/player/messi" replace />} />
+              <Route path="/player" element={<PlayerProfile />} />
               <Route path="/player/:id" element={<PlayerProfile />} />
               <Route path="/compare" element={<ComparePlayers />} />
               <Route path="/match" element={<Navigate to="/matches" replace />} />

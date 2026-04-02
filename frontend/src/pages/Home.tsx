@@ -1,14 +1,22 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Trophy, TrendingUp, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
+import { getMatchAnalysis, getMatches, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
 import MatchCard from "@/components/MatchCard";
 import Navbar from "@/components/Navbar";
 import PlayerCard from "@/components/PlayerCard";
 import SectionHeader from "@/components/SectionHeader";
 import StatCard from "@/components/StatCard";
-import { featuredStats, matches, players } from "@/data/mockData";
+import {
+  featuredStats as fallbackStats,
+  matches as fallbackMatches,
+  players as fallbackPlayers,
+  type Match,
+  type Player,
+} from "@/data/mockData";
 
 const editorialCards = [
   {
@@ -28,7 +36,161 @@ const editorialCards = [
   },
 ];
 
+const buildMatchCard = (
+  liveMatch: {
+    matchId: string;
+    title?: string;
+    teams?: string[];
+    competition?: string;
+  },
+  fallbackMatch: Match | undefined,
+  analysis: {
+    overview?: {
+      teams?: string[];
+    };
+  } | null = null,
+): Match => {
+  const fallback = fallbackMatch || fallbackMatches[0];
+  const liveTeams = analysis?.overview?.teams?.length ? analysis.overview.teams : liveMatch.teams || [];
+
+  return {
+    ...fallback,
+    id: liveMatch.matchId || fallback.id,
+    homeTeam: liveTeams[0] || fallback.homeTeam,
+    awayTeam: liveTeams[1] || fallback.awayTeam,
+    competition: liveMatch.competition || fallback.competition,
+  };
+};
+
+const buildPlayerCard = (
+  livePlayer: {
+    playerId: string;
+    name?: string;
+    team?: string;
+    position?: string;
+    nationality?: string;
+  },
+  profile: any,
+  fallbackPlayer: Player | undefined,
+): Player => {
+  const fallback = fallbackPlayer || fallbackPlayers[0];
+  const analyticsAttributes = profile?.analytics?.attributes || {};
+
+  return {
+    ...fallback,
+    id: livePlayer.playerId || fallback.id,
+    name: livePlayer.name || fallback.name,
+    club: livePlayer.team || fallback.club,
+    position: livePlayer.position || fallback.position,
+    nationality: livePlayer.nationality || fallback.nationality,
+    rating: profile?.overview?.overallRating ?? fallback.rating,
+    summary: profile?.overview?.reportSummary || fallback.summary,
+    playstyle: profile?.overview?.playstyle || fallback.playstyle,
+    pressureRating:
+      profile?.overview?.pressureIndex !== null && profile?.overview?.pressureIndex !== undefined
+        ? Math.round(Number(profile.overview.pressureIndex) * 100)
+        : fallback.pressureRating,
+    strengths: profile?.analytics?.report?.strengths?.length
+      ? profile.analytics.report.strengths
+      : fallback.strengths,
+    growthAreas: profile?.analytics?.report?.developmentAreas?.length
+      ? profile.analytics.report.developmentAreas
+      : fallback.growthAreas,
+    attributes: {
+      pace: fallback.attributes.pace,
+      shooting: analyticsAttributes.shooting ?? fallback.attributes.shooting,
+      passing: analyticsAttributes.passing ?? fallback.attributes.passing,
+      dribbling: analyticsAttributes.dribbling ?? fallback.attributes.dribbling,
+      defending: analyticsAttributes.defending ?? fallback.attributes.defending,
+      physical: analyticsAttributes.physical ?? fallback.attributes.physical,
+    },
+  };
+};
+
 const Home = () => {
+  const [homeMatches, setHomeMatches] = useState<Match[]>(fallbackMatches);
+  const [spotlightPlayers, setSpotlightPlayers] = useState<Player[]>(fallbackPlayers.slice(0, 6));
+  const [heroMatchId, setHeroMatchId] = useState<string>(fallbackMatches[0].id);
+  const [stats, setStats] = useState(fallbackStats);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadHomeData = async () => {
+      const [matchesResult, playersResult] = await Promise.allSettled([
+        getMatches(),
+        getPlayers({ limit: 6 }),
+      ]);
+
+      const liveMatches = matchesResult.status === "fulfilled" ? matchesResult.value.matches || [] : [];
+      const livePlayers = playersResult.status === "fulfilled" ? playersResult.value.players || [] : [];
+
+      let featuredAnalysis = null;
+      if (liveMatches[0]?.matchId) {
+        try {
+          featuredAnalysis = await getMatchAnalysis(liveMatches[0].matchId);
+        } catch (_error) {
+          featuredAnalysis = null;
+        }
+      }
+
+      let liveSpotlightProfiles: any[] = [];
+      if (livePlayers.length) {
+        const profileResults = await Promise.allSettled(
+          livePlayers.slice(0, 6).map((player: { playerId: string }) => getPlayerProfile(player.playerId)),
+        );
+        liveSpotlightProfiles = profileResults.map((result) => (result.status === "fulfilled" ? result.value : null));
+      }
+
+      if (!active) {
+        return;
+      }
+
+      const mappedMatches = liveMatches.length
+        ? liveMatches.slice(0, 6).map((match: any, index: number) =>
+            buildMatchCard(match, fallbackMatches[index], index === 0 ? featuredAnalysis : null),
+          )
+        : fallbackMatches;
+
+      const mappedPlayers = livePlayers.length
+        ? livePlayers.slice(0, 6).map((player: any, index: number) =>
+            buildPlayerCard(player, liveSpotlightProfiles[index], fallbackPlayers[index]),
+          )
+        : fallbackPlayers.slice(0, 6);
+
+      setHomeMatches(mappedMatches);
+      setSpotlightPlayers(mappedPlayers);
+      setHeroMatchId(mappedMatches[0]?.id || fallbackMatches[0].id);
+      setStats([
+        {
+          label: "Players Profiled",
+          value: String(playersResult.status === "fulfilled" ? livePlayers.length || fallbackPlayers.length : fallbackPlayers.length),
+        },
+        {
+          label: "Matches Available",
+          value: String(matchesResult.status === "fulfilled" ? liveMatches.length || fallbackMatches.length : fallbackMatches.length),
+        },
+        {
+          label: "Momentum Windows",
+          value: String(featuredAnalysis?.summary?.totalMomentumWindows ?? fallbackStats[2].value),
+        },
+        {
+          label: "Turning Points",
+          value: String(featuredAnalysis?.summary?.totalTurningPoints ?? fallbackStats[3].value),
+        },
+      ]);
+    };
+
+    loadHomeData();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const featuredMatch = useMemo(() => homeMatches[0] || fallbackMatches[0], [homeMatches]);
+  const featuredPlayer = useMemo(() => spotlightPlayers[0] || fallbackPlayers[0], [spotlightPlayers]);
+
   return (
     <div className="min-h-screen bg-background bg-noise">
       <Navbar />
@@ -55,13 +217,13 @@ const Home = () => {
             </p>
             <div className="mt-8 flex items-center justify-center gap-4">
               <Link
-                to={`/player/${players[0].id}`}
+                to={`/player/${featuredPlayer.id}`}
                 className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-body font-medium text-primary-foreground transition-colors hover:bg-foreground/90"
               >
                 Explore Players <ArrowRight size={14} />
               </Link>
               <Link
-                to={`/matches/${matches[0].id}`}
+                to={`/matches/${heroMatchId}`}
                 className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-body font-medium text-foreground transition-colors hover:bg-accent"
               >
                 Match Day
@@ -73,7 +235,7 @@ const Home = () => {
 
       <section className="border-y border-border bg-card/50">
         <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-border px-4 sm:grid-cols-4">
-          {featuredStats.map((stat, index) => (
+          {stats.map((stat, index) => (
             <StatCard key={stat.label} label={stat.label} value={stat.value} index={index} />
           ))}
         </div>
@@ -81,13 +243,13 @@ const Home = () => {
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <SectionHeader title="Featured Match" subtitle="The latest marquee matchup" />
-        <MatchCard match={matches[0]} featured />
+        <MatchCard match={featuredMatch} featured />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <SectionHeader title="Matches to Watch" subtitle="Recent results from elite competitions" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {matches.map((match, index) => (
+          {homeMatches.map((match, index) => (
             <MatchCard key={match.id} match={match} index={index} />
           ))}
         </div>
@@ -97,13 +259,13 @@ const Home = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader title="Player Spotlight" subtitle="Elite performers under the microscope" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {players.slice(0, 6).map((player, index) => (
+            {spotlightPlayers.map((player, index) => (
               <PlayerCard key={player.id} player={player} index={index} />
             ))}
           </div>
           <div className="mt-8 text-center">
             <Link
-              to={`/player/${players[0].id}`}
+              to={`/player/${featuredPlayer.id}`}
               className="inline-flex items-center gap-2 text-sm font-body text-muted-foreground transition-colors hover:text-foreground"
             >
               View all players <ArrowRight size={14} />
