@@ -12,6 +12,13 @@ const FILTER_OPTIONS = [
 ];
 
 const formatMetric = (value) => (value === null || value === undefined ? "--" : value);
+const formatText = (value, fallback) => {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  return value;
+};
 
 const getProfileScore = (profile, key) => Number(profile?.overview?.[key] ?? -1);
 
@@ -44,7 +51,7 @@ export default function DashboardPage() {
         const directoryPlayers = directoryResult.status === "fulfilled" ? directoryResult.value.players || [] : [];
         const matchAnalysis = analysisResult.status === "fulfilled" ? analysisResult.value : null;
 
-        const playerIds = [SHOWCASE_PLAYERS.primary.id, ...directoryPlayers.map((player) => player.playerId)]
+        const playerIds = [SHOWCASE_PLAYERS.featured.id, ...directoryPlayers.map((player) => player.playerId)]
           .filter(Boolean)
           .filter((value, index, array) => array.indexOf(value) === index)
           .slice(0, 6);
@@ -64,7 +71,7 @@ export default function DashboardPage() {
           players: directoryPlayers,
           profiles,
           featuredProfile:
-            profiles.find((profile) => profile.player.playerId === SHOWCASE_PLAYERS.primary.id) ||
+            profiles.find((profile) => profile.player.playerId === SHOWCASE_PLAYERS.featured.id) ||
             profiles[0] ||
             null,
           topRatedProfile: pickTopProfile(profiles, "overallRating"),
@@ -155,8 +162,8 @@ export default function DashboardPage() {
   const topCards = [
     {
       label: "Featured Name",
-      value: featuredProfile?.player?.name || SHOWCASE_PLAYERS.primary.name,
-      note: featuredProfile?.player?.team || SHOWCASE_PLAYERS.primary.team,
+      value: featuredProfile?.player?.name || SHOWCASE_PLAYERS.featured.name,
+      note: featuredProfile?.player?.team || SHOWCASE_PLAYERS.featured.team,
     },
     {
       label: "Best Rating In View",
@@ -186,7 +193,7 @@ export default function DashboardPage() {
             match pulse all come from the PlayerIQ stack instead of static scaffold content.
           </p>
           <div className="dashboard-action-row">
-            <Link className="primary-link" to={`/player/${featuredProfile?.player?.playerId || SHOWCASE_PLAYERS.primary.id}`}>
+            <Link className="primary-link" to={`/player/${featuredProfile?.player?.playerId || SHOWCASE_PLAYERS.featured.id}`}>
               Open featured player
             </Link>
             <Link className="secondary-link" to={`/matches/${SHOWCASE_MATCH.id}`}>
@@ -197,9 +204,9 @@ export default function DashboardPage() {
 
         <article className="dashboard-feature-card">
           <p className="eyebrow">Featured Player</p>
-          <h3>{featuredProfile?.player?.name || SHOWCASE_PLAYERS.primary.name}</h3>
+          <h3>{featuredProfile?.player?.name || SHOWCASE_PLAYERS.featured.name}</h3>
           <p className="dashboard-feature-meta">
-            {(featuredProfile?.player?.team || SHOWCASE_PLAYERS.primary.team)}{" "}
+            {(featuredProfile?.player?.team || SHOWCASE_PLAYERS.featured.team)}{" "}
             <span className="dashboard-meta-separator">|</span>{" "}
             {featuredProfile?.player?.nationality || "India"}
           </p>
@@ -210,7 +217,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <span>Playstyle</span>
-              <strong>{featuredProfile?.overview?.playstyle || "Waiting"}</strong>
+              <strong>{formatText(featuredProfile?.overview?.playstyle, "Building live profile")}</strong>
             </div>
             <div>
               <span>Pressure</span>
@@ -218,7 +225,8 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="dashboard-feature-summary">
-            {featuredProfile?.overview?.reportSummary || "Live profile summary will appear here as soon as the profile loads."}
+            {featuredProfile?.overview?.reportSummary ||
+              "PlayerIQ is still filling out the full player story. Ratings and match-day clues will appear here as live sections land."}
           </p>
         </article>
       </section>
@@ -271,7 +279,7 @@ export default function DashboardPage() {
                     <div className="dashboard-score-badge">{formatMetric(overview.overallRating)}</div>
                   </div>
                   <div className="dashboard-player-tags">
-                    <span className="pill">{overview.playstyle || player.nationality || "Football"}</span>
+                    <span className="pill">{formatText(overview.playstyle, "Live story building")}</span>
                     <span className="pill">{player.nationality || "Global"}</span>
                   </div>
                   <div className="dashboard-player-stats">

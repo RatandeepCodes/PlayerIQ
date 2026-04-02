@@ -111,8 +111,20 @@ export default function ComparisonPage() {
     );
   }
 
+  if (!directory.length && error) {
+    return (
+      <AppStatusScreen
+        eyebrow="Comparison"
+        title="The comparison board is unavailable right now"
+        message={error}
+        tone="error"
+      />
+    );
+  }
+
   const playerOne = comparison?.players?.playerOne;
   const playerTwo = comparison?.players?.playerTwo;
+  const sameSelection = Boolean(selection.player1 && selection.player1 === selection.player2);
 
   return (
     <div className="page comparison-page">
@@ -131,6 +143,7 @@ export default function ComparisonPage() {
             <select
               value={selection.player1}
               onChange={(event) => setSelection((current) => ({ ...current, player1: event.target.value }))}
+              disabled={!directory.length}
             >
               {directory.map((player) => (
                 <option key={player.playerId} value={player.playerId}>
@@ -144,6 +157,7 @@ export default function ComparisonPage() {
             className="comparison-swap"
             type="button"
             onClick={() => setSelection((current) => ({ player1: current.player2, player2: current.player1 }))}
+            disabled={!selection.player1 || !selection.player2}
           >
             Swap
           </button>
@@ -153,6 +167,7 @@ export default function ComparisonPage() {
             <select
               value={selection.player2}
               onChange={(event) => setSelection((current) => ({ ...current, player2: event.target.value }))}
+              disabled={!directory.length}
             >
               {directory.map((player) => (
                 <option key={player.playerId} value={player.playerId}>
@@ -164,6 +179,9 @@ export default function ComparisonPage() {
         </div>
 
         {error ? <p className="auth-error comparison-inline-error">{error}</p> : null}
+        {sameSelection ? (
+          <p className="comparison-helper-copy">Pick two different players to unlock the live head-to-head view.</p>
+        ) : null}
       </section>
 
       {comparison ? (
@@ -290,7 +308,9 @@ export default function ComparisonPage() {
         <section className="panel empty-state">
           <p className="eyebrow">Comparison</p>
           <h2>Choose two different players to begin.</h2>
-          <p className="summary-copy">The live radar and category winners appear as soon as both selections are ready.</p>
+          <p className="summary-copy">
+            The live radar, headline edge, and category winners will appear as soon as both players are ready.
+          </p>
         </section>
       )}
     </div>

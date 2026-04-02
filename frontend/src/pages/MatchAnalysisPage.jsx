@@ -29,7 +29,7 @@ const formatEventLabel = (event) => {
     return "No live event yet";
   }
 
-  return `${event.minute}' ${event.player_name || event.playerName || "Player"} · ${event.event_type || event.eventType || "event"}`;
+  return `${event.minute}' ${event.player_name || event.playerName || "Player"} | ${event.event_type || event.eventType || "event"}`;
 };
 
 const formatEventDescription = (event) => {
@@ -37,8 +37,12 @@ const formatEventDescription = (event) => {
     return "Start the simulation to begin the live event stream.";
   }
 
-  return `${event.team || "Team"} against ${event.opponent || "their opponent"}${event.outcome ? ` · ${event.outcome}` : ""}`;
+  return `${event.team || "Team"} against ${event.opponent || "their opponent"}${event.outcome ? ` | ${event.outcome}` : ""}`;
 };
+
+const formatFeedTitle = (event) => `${event.player_name || event.playerName || "Player"} | ${event.team || "Team"}`;
+const formatFeedDetail = (event) =>
+  `${(event.event_type || event.eventType || "event").toUpperCase()}${event.outcome ? ` | ${event.outcome}` : ""}`;
 
 export default function MatchAnalysisPage() {
   const { id } = useParams();
@@ -180,8 +184,8 @@ export default function MatchAnalysisPage() {
   const turningPoints = analysis?.turningPointList || [];
   const peakWindow = analysis?.momentum?.summary?.peakWindow;
   const recentEvents = simulation?.recentEvents || [];
-
   const speedOptions = useMemo(() => [0.5, 1, 1.5, 2], []);
+  const simulationStatusLabel = simulation?.status || "not started";
 
   if (loading) {
     return (
@@ -227,7 +231,8 @@ export default function MatchAnalysisPage() {
           </div>
 
           <p className="summary-copy">
-            Follow the flow of the game, see where control changed hands, and understand the biggest moments that shaped the result.
+            Follow the flow of the game, see where control changed hands, and understand the biggest moments that shaped
+            the result.
           </p>
 
           <div className="match-summary-grid">
@@ -274,7 +279,7 @@ export default function MatchAnalysisPage() {
               <p className="eyebrow">Live Simulation</p>
               <h2>Control the match feed</h2>
             </div>
-            <span className="pill">{simulation?.status || "ready"}</span>
+            <span className="pill">{simulationStatusLabel}</span>
           </div>
 
           <div className="simulation-current-event">
@@ -291,6 +296,12 @@ export default function MatchAnalysisPage() {
               <div className="simulation-progress-fill" style={{ width: `${simulation?.progress ?? 0}%` }} />
             </div>
           </div>
+
+          {!simulation ? (
+            <p className="simulation-helper-copy">
+              Create a live session first, then use the controls below to start, pause, or step through the match.
+            </p>
+          ) : null}
 
           <div className="simulation-control-row">
             {!simulation ? (
@@ -310,9 +321,7 @@ export default function MatchAnalysisPage() {
                     key={action}
                     className={`simulation-button ${action === "reset" ? "secondary-link" : "primary-link"}`}
                     type="button"
-                    onClick={() =>
-                      action === "start" ? handleStartSimulation() : handleControl(action)
-                    }
+                    onClick={() => (action === "start" ? handleStartSimulation() : handleControl(action))}
                     disabled={Boolean(controlLoading)}
                   >
                     {controlLoading === action ? "Updating..." : controlLabels[action] || action}
@@ -358,11 +367,8 @@ export default function MatchAnalysisPage() {
                 <article key={`${event.minute}-${event.second}-${event.player_id || index}`} className="simulation-event-item">
                   <strong>{event.minute}'</strong>
                   <div>
-                    <span>{event.player_name || event.playerName || "Player"} · {event.team || "Team"}</span>
-                    <p>
-                      {(event.event_type || event.eventType || "event").toUpperCase()}
-                      {event.outcome ? ` · ${event.outcome}` : ""}
-                    </p>
+                    <span>{formatFeedTitle(event)}</span>
+                    <p>{formatFeedDetail(event)}</p>
                   </div>
                 </article>
               ))

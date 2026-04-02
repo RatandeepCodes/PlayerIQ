@@ -12,6 +12,7 @@ import { SHOWCASE_MATCH } from "../config/showcase.js";
 const normalizeList = (items) => (Array.isArray(items) ? items.filter(Boolean) : []);
 
 const formatValue = (value) => (value === null || value === undefined ? "--" : value);
+const hasValue = (value) => value !== null && value !== undefined && value !== "";
 
 export default function PlayerProfilePage() {
   const { id } = useParams();
@@ -98,6 +99,24 @@ export default function PlayerProfilePage() {
   const supportingTraits = normalizeList(profile.analytics.playstyleProfile?.supportingTraits);
   const availability = profile.analytics.availability || {};
   const historySnapshots = history?.snapshots || [];
+  const pressureEvents = Number(profile.analytics.pressure?.pressureEvents || 0);
+  const hasCoreNumbers =
+    hasValue(profile.overview.overallRating) || hasValue(profile.overview.ppi) || hasValue(profile.overview.pressureIndex);
+  const hasStyleProfile = hasValue(profile.analytics.playstyleProfile?.name) || supportingTraits.length > 0;
+  const hasReportNotes = strengths.length > 0 || developmentAreas.length > 0 || hasValue(profile.overview.reportSummary);
+  const liveReadinessLabel = availability.isPartial || !hasCoreNumbers || !hasStyleProfile
+    ? "Live profile still filling in"
+    : "Live profile ready";
+  const styleSummary =
+    profile.analytics.pressure?.interpretation ||
+    (hasStyleProfile
+      ? "This player already has a recognisable style footprint in the current match sample."
+      : "Style and pressure notes will become more detailed as more match events are reviewed.");
+  const profileSummary =
+    profile.overview.reportSummary ||
+    (hasCoreNumbers
+      ? "The main ratings are in place, and PlayerIQ is still enriching the story around the player."
+      : "This player page is live, but the deeper numbers still need more match events before they become meaningful.");
 
   return (
     <div className="page profile-page">
@@ -112,8 +131,7 @@ export default function PlayerProfilePage() {
             </div>
           </div>
           <p className="summary-copy">
-            {profile.overview.reportSummary ||
-              "This page will surface the biggest talking points around form, playing style, and match-day impact."}
+            {profileSummary}
           </p>
 
           <div className="profile-quick-pulse">
@@ -152,19 +170,14 @@ export default function PlayerProfilePage() {
                 </span>
               ))
             ) : (
-              <span className="pill">Live profile</span>
+              <span className="pill">Style notes still building</span>
             )}
           </div>
 
-          <p className="summary-copy">
-            {profile.analytics.pressure?.interpretation ||
-              "Pressure and style details will appear here as the player profile fills out."}
-          </p>
+          <p className="summary-copy">{styleSummary}</p>
 
           <div className="profile-status-row">
-            <span className="profile-status-pill">
-              {availability.isPartial ? "Some live sections are still filling in" : "Full live profile ready"}
-            </span>
+            <span className="profile-status-pill">{liveReadinessLabel}</span>
           </div>
         </article>
       </section>
@@ -194,7 +207,11 @@ export default function PlayerProfilePage() {
                 </div>
               ))
             ) : (
-              <p className="summary-copy">Strength notes will appear here when the live report adds them.</p>
+              <p className="summary-copy">
+                {hasReportNotes
+                  ? "The current report has not surfaced standout strengths yet."
+                  : "Strength notes will appear here once the player report has enough live detail."}
+              </p>
             )}
           </div>
         </article>
@@ -216,7 +233,11 @@ export default function PlayerProfilePage() {
                 </div>
               ))
             ) : (
-              <p className="summary-copy">Growth notes will appear here when the live report adds them.</p>
+              <p className="summary-copy">
+                {hasReportNotes
+                  ? "No clear growth areas have been highlighted in the current report."
+                  : "Growth notes will appear here once the player report has enough live detail."}
+              </p>
             )}
           </div>
         </article>
@@ -234,7 +255,11 @@ export default function PlayerProfilePage() {
           <article>
             <span>Pressure score</span>
             <strong>{formatValue(profile.analytics.pressure?.pressureScore)}</strong>
-            <p>{profile.analytics.pressure?.pressureEvents || 0} pressure moments reviewed</p>
+            <p>
+              {pressureEvents
+                ? `${pressureEvents} pressure moments reviewed`
+                : "Not enough late, close-game pressure moments in the current sample yet."}
+            </p>
           </article>
           <article>
             <span>Snapshot history</span>
