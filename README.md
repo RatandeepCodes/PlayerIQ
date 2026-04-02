@@ -17,14 +17,15 @@ PlayerIQ/
 
 ## Quick Start
 
-### Backend
+### 1. Backend
 ```powershell
 cd backend
 npm install
+Copy-Item .env.example .env
 npm run dev
 ```
 
-### AI Service
+### 2. AI Service
 ```powershell
 cd ai-service
 python -m venv .venv
@@ -33,10 +34,11 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
+### 3. Frontend
 ```powershell
 cd frontend
 npm install
+Copy-Item .env.example .env
 npm run dev
 ```
 
@@ -48,5 +50,43 @@ npm run dev
 
 ## Current Status
 
-This repository currently includes the initial project scaffold, service boundaries, starter routes, placeholder analytics logic, and a dashboard shell ready for feature implementation.
+PlayerIQ now includes:
 
+- a FastAPI AI service for ratings, playstyles, pressure analytics, reports, momentum, turning points, and simulated live match feeds
+- an Express backend with auth, player analytics routes, match analysis routes, simulation orchestration, persistence hooks, and runtime health reporting
+- a React frontend with auth, dashboard, player profile, comparison, match analysis, and realtime simulation controls
+
+## Environment Files
+
+- `backend/.env.example`
+- `ai-service/.env.example`
+- `frontend/.env.example`
+
+Important:
+- set a real `JWT_SECRET` in backend `.env`
+- keep backend `AI_SERVICE_URL` aligned with the AI service host/port
+- keep frontend `VITE_API_BASE_URL` and `VITE_SOCKET_URL` aligned with the backend host/port
+
+## Verification
+
+Frontend:
+```powershell
+cd frontend
+npm run build
+```
+
+Backend:
+```powershell
+cd backend
+npm test
+```
+
+AI service:
+```powershell
+cd ai-service
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+```
+
+## Deployment Notes
+
+Deployment guidance and production checklist are in `docs/DEPLOYMENT.md`.
