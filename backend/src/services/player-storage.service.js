@@ -91,15 +91,26 @@ const mapAiDirectoryPlayer = (player) => ({
   },
 });
 
-const applyDirectoryFilters = (players, { team, nationality, limit }) => {
+const applyDirectoryFilters = (players, { team, nationality, limit, search }) => {
   const normalizedNationality = nationality?.trim().toLowerCase();
+  const normalizedSearch = search?.trim().toLowerCase();
   return normalizePlayerCollection(
     players.filter((player) => {
       const matchesTeam = team ? player.team === team : true;
       const matchesNationality = normalizedNationality
         ? String(player.nationality || "").toLowerCase() === normalizedNationality
         : true;
-      return matchesTeam && matchesNationality;
+      const haystack = [
+        player.name,
+        player.team,
+        player.position,
+        player.nationality,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
+      return matchesTeam && matchesNationality && matchesSearch;
     }),
   ).slice(0, Number(limit) || 50);
 };
@@ -126,7 +137,7 @@ const mergePlayerCollections = (storedPlayers = [], aiPlayers = []) => {
   return [...merged.values()];
 };
 
-export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}) => {
+export const getStoredPlayerDirectory = async ({ team, nationality, limit, search } = {}) => {
   const storedPlayers = await listStoredPlayers({ team, nationality, limit });
   let players = normalizePlayerCollection(storedPlayers);
   let source = storedPlayers.length ? "database" : "showcase";
@@ -135,11 +146,11 @@ export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}
     const aiDirectory = await fetchPlayerDirectory();
     const aiPlayers = (aiDirectory.players || []).map(mapAiDirectoryPlayer);
     const mergedPlayers = mergePlayerCollections(storedPlayers, aiPlayers);
-    players = applyDirectoryFilters(mergedPlayers, { team, nationality, limit });
+    players = applyDirectoryFilters(mergedPlayers, { team, nationality, limit, search });
     source = storedPlayers.length ? "database+ai-service" : "ai-service";
   } catch (_error) {
     if (!players.length) {
-      players = applyDirectoryFilters(SHOWCASE_DIRECTORY, { team, nationality, limit });
+      players = applyDirectoryFilters(SHOWCASE_DIRECTORY, { team, nationality, limit, search });
       source = "showcase";
     }
   }
@@ -153,6 +164,7 @@ export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}
       filters: {
         team: team || null,
         nationality: nationality || null,
+        search: search || null,
         limit: Number(limit) || 50,
       },
     },
