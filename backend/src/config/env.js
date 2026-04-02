@@ -12,3 +12,17 @@ export const env = {
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
 };
 
+export const isDefaultJwtSecret = () => env.jwtSecret === "change-me";
+
+export const getRuntimeWarnings = () => {
+  const warnings = [];
+
+  if (isDefaultJwtSecret()) {
+    warnings.push({
+      code: "default-jwt-secret",
+      message: "JWT secret is using the development fallback value.",
+    });
+  }
+
+  return warnings;
+};

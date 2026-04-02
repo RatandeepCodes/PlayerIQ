@@ -24,13 +24,18 @@ after(async () => {
 });
 
 describe("Auth routes", () => {
-  it("returns health with database status", async () => {
+  it("returns health with dependency and config status", async () => {
     const response = await fetch(`${baseUrl}/api/health`);
     assert.equal(response.status, 200);
 
     const payload = await response.json();
-    assert.equal(payload.status, "ok");
+    assert.ok(["ok", "degraded"].includes(payload.status));
     assert.ok(["connected", "disconnected"].includes(payload.database));
+    assert.ok(["online", "offline"].includes(payload.aiService));
+    assert.equal(payload.services.backend, "online");
+    assert.ok(Array.isArray(payload.config.warnings));
+    assert.equal(typeof payload.uptimeSeconds, "number");
+    assert.equal(typeof payload.timestamp, "string");
   });
 
   it("requires authentication for current-user route", async () => {

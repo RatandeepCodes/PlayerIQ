@@ -33,6 +33,32 @@ const fetchAiResource = async (method, path, fallbackMessage) => {
   }
 };
 
+export const getAiServiceHealth = async () => {
+  try {
+    const response = await aiClient.get("/health");
+    return {
+      status: "online",
+      detail: response.data,
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return {
+        status: "offline",
+        detail: {
+          message: error.response?.data?.detail || error.message || "AI service unavailable",
+        },
+      };
+    }
+
+    return {
+      status: "offline",
+      detail: {
+        message: "AI service unavailable",
+      },
+    };
+  }
+};
+
 const mapPlayerProfile = (playerId, rating, playstyle, pressure, report) => ({
   player: {
     playerId,

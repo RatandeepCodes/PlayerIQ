@@ -4,12 +4,13 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import { isDatabaseConnected } from "./config/db.js";
-import { env } from "./config/env.js";
+import { env, getRuntimeWarnings } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js";
 import { attachRequestContext } from "./middleware/request-context.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import playerRoutes from "./routes/player.routes.js";
 import matchRoutes from "./routes/match.routes.js";
+import { getAiServiceHealth } from "./services/ai.service.js";
 
 const app = express();
 
@@ -24,11 +25,28 @@ app.use(express.json());
 app.use(attachRequestContext);
 app.use(morgan("dev"));
 
-app.get("/api/health", (_req, res) => {
+app.get("/api/health", async (_req, res) => {
+  const warnings = getRuntimeWarnings();
+  const aiHealth = await getAiServiceHealth();
+  const database = isDatabaseConnected() ? "connected" : "disconnected";
+  const status = database === "connected" && aiHealth.status === "online" && warnings.length === 0 ? "ok" : "degraded";
+
   res.json({
-    status: "ok",
+    status,
     service: "playeriq-backend",
-    database: isDatabaseConnected() ? "connected" : "disconnected",
+    database,
+    aiService: aiHealth.status,
+    services: {
+      backend: "online",
+      database,
+      aiService: aiHealth.status,
+    },
+    config: {
+      hasWarnings: warnings.length > 0,
+      warnings,
+    },
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
   });
 });
 

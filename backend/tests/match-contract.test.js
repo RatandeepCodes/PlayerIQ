@@ -9,7 +9,16 @@ describe("Match service shaping", () => {
       "SB-1001",
       {
         teams: ["Liverpool", "Manchester City"],
-        buckets: [{ startMinute: 0, endMinute: 5, swing: true, scores: { Liverpool: 4, "Manchester City": 2 } }],
+        buckets: [
+          {
+            startMinute: 0,
+            endMinute: 5,
+            isSwing: true,
+            swingMagnitude: 2,
+            leadingTeam: "Liverpool",
+            scores: { Liverpool: 4, "Manchester City": 2 },
+          },
+        ],
       },
       {
         turningPoints: [{ minute: 21 }],
@@ -21,7 +30,7 @@ describe("Match service shaping", () => {
     assert.equal(payload.summary.swingMoments, 1);
     assert.equal(payload.liveStatus, "ready");
     assert.deepEqual(payload.overview.teams, ["Liverpool", "Manchester City"]);
-    assert.equal(payload.momentumBuckets[0].label, "0-5");
+    assert.equal(payload.momentumBuckets[0].label, "0'-5'");
   });
 
   it("sorts simulation timelines and adds summary controls", () => {

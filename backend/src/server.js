@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 
 import app from "./app.js";
 import { connectDatabase } from "./config/db.js";
-import { env } from "./config/env.js";
+import { env, getRuntimeWarnings } from "./config/env.js";
 import { registerSimulationHandlers } from "./sockets/simulation.socket.js";
 import { logger } from "./utils/logger.js";
 
@@ -19,6 +19,11 @@ const io = new Server(httpServer, {
 registerSimulationHandlers(io);
 
 const startServer = async () => {
+  const runtimeWarnings = getRuntimeWarnings();
+  runtimeWarnings.forEach((warning) => {
+    logger.warn("Backend runtime warning", warning);
+  });
+
   await connectDatabase();
 
   httpServer.listen(env.port, () => {
