@@ -100,7 +100,7 @@ export default function DashboardPage() {
     },
     {
       label: "Swing Moments",
-      value: formatMetric(matchSummary?.totalTurningPoints),
+      value: formatMetric(matchSummary?.swingMoments),
       note: matchOverview?.teams?.join(" vs ") || SHOWCASE_MATCH.title,
     },
   ];
@@ -112,7 +112,7 @@ export default function DashboardPage() {
           <p className="eyebrow">Home</p>
           <h2>Follow the biggest match stories in one place.</h2>
           <p className="summary-copy">
-            Open any match, follow the momentum, and jump straight into the live event feed.
+            Open any match, follow the momentum, and see where the key moments shaped the story.
           </p>
           <div className="dashboard-action-row">
             <Link className="secondary-link" to={`/matches/${SHOWCASE_MATCH.id}`}>
@@ -135,12 +135,12 @@ export default function DashboardPage() {
               <strong>{formatMetric(matchSummary?.totalTurningPoints)}</strong>
             </div>
             <div>
-              <span>Live Feed</span>
-              <strong>Ready</strong>
+              <span>Swing Moments</span>
+              <strong>{formatMetric(matchSummary?.swingMoments)}</strong>
             </div>
           </div>
           <p className="dashboard-feature-summary">
-            Start in the match centre to see momentum swings, turning points, and the live event feed in one screen.
+            Start in the match centre to see momentum swings and turning points in one focused match story.
           </p>
         </article>
       </section>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
               <p className="eyebrow">Match Centre</p>
               <h2>Matches to follow</h2>
             </div>
-            <div className="live-pill">Ready for live feed</div>
+            <div className="live-pill">Analysis ready</div>
           </div>
 
           <div className="dashboard-match-stats">
@@ -195,11 +195,11 @@ export default function DashboardPage() {
           <div className="dashboard-match-copy">
             <p>
               {matchOverview?.teams?.length
-                ? `${matchOverview.teams.join(" vs ")} is ready for a full match breakdown, key turning points, and a live event feed.`
-                : `${SHOWCASE_MATCH.title} is ready for a full match breakdown, key turning points, and a live event feed.`}
+                ? `${matchOverview.teams.join(" vs ")} is ready for a full match breakdown and key turning points.`
+                : `${SHOWCASE_MATCH.title} is ready for a full match breakdown and key turning points.`}
             </p>
             <p>
-              Jump into any available game to switch between matches, start a simulation, and follow the momentum chart live.
+              Jump into any available game to switch between matches and follow the momentum chart window by window.
             </p>
           </div>
 
