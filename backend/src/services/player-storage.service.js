@@ -104,18 +104,41 @@ const applyDirectoryFilters = (players, { team, nationality, limit }) => {
   ).slice(0, Number(limit) || 50);
 };
 
+const mergePlayerCollections = (storedPlayers = [], aiPlayers = []) => {
+  const merged = new Map();
+
+  for (const player of aiPlayers) {
+    merged.set(player.playerId, player);
+  }
+
+  for (const player of storedPlayers) {
+    const existing = merged.get(player.playerId) || {};
+    merged.set(player.playerId, {
+      ...existing,
+      ...player,
+      metadata: {
+        ...(existing.metadata || {}),
+        ...(player.metadata || {}),
+      },
+    });
+  }
+
+  return [...merged.values()];
+};
+
 export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}) => {
   const storedPlayers = await listStoredPlayers({ team, nationality, limit });
   let players = normalizePlayerCollection(storedPlayers);
-  let source = "database";
+  let source = storedPlayers.length ? "database" : "showcase";
 
-  if (!players.length) {
-    try {
-      const aiDirectory = await fetchPlayerDirectory();
-      const aiPlayers = (aiDirectory.players || []).map(mapAiDirectoryPlayer);
-      players = applyDirectoryFilters(aiPlayers, { team, nationality, limit });
-      source = "ai-service";
-    } catch (_error) {
+  try {
+    const aiDirectory = await fetchPlayerDirectory();
+    const aiPlayers = (aiDirectory.players || []).map(mapAiDirectoryPlayer);
+    const mergedPlayers = mergePlayerCollections(storedPlayers, aiPlayers);
+    players = applyDirectoryFilters(mergedPlayers, { team, nationality, limit });
+    source = storedPlayers.length ? "database+ai-service" : "ai-service";
+  } catch (_error) {
+    if (!players.length) {
       players = applyDirectoryFilters(SHOWCASE_DIRECTORY, { team, nationality, limit });
       source = "showcase";
     }

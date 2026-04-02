@@ -317,6 +317,12 @@ input {
   align-items: start;
 }
 
+.dashboard-home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+}
+
 .dashboard-stat-card strong {
   color: #ffe08d;
 }
@@ -1147,7 +1153,7 @@ input {
   top: calc(100% + 10px);
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: 80;
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -1213,6 +1219,13 @@ input {
 .entity-selector-panel {
   display: grid;
   gap: 18px;
+  overflow: visible;
+  z-index: 8;
+}
+
+.comparison-selector-panel {
+  overflow: visible;
+  z-index: 8;
 }
 
 .entity-selector-row {

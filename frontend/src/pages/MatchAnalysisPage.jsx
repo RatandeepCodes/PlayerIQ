@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
@@ -49,6 +49,7 @@ const formatFeedDetail = (event) =>
 export default function MatchAnalysisPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const socketRef = useRef(null);
   const [analysis, setAnalysis] = useState(null);
   const [simulation, setSimulation] = useState(null);
   const [matches, setMatches] = useState([]);
@@ -135,6 +136,7 @@ export default function MatchAnalysisPage() {
     const socket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
     });
+    socketRef.current = socket;
 
     socket.on("connect", () => {
       setSocketError("");
@@ -144,6 +146,7 @@ export default function MatchAnalysisPage() {
 
     socket.on("simulation:state", (payload) => {
       if (payload?.matchId === id) {
+        setControlLoading("");
         setSimulation(payload);
       }
     });
@@ -164,6 +167,7 @@ export default function MatchAnalysisPage() {
             }
           : payload,
       );
+      setControlLoading("");
     });
 
     socket.on("simulation:error", (payload) => {
@@ -172,6 +176,7 @@ export default function MatchAnalysisPage() {
       }
 
       if (!payload?.matchId || payload.matchId === id) {
+        setControlLoading("");
         setSocketError(payload?.message || "Simulation socket error");
       }
     });
@@ -181,6 +186,7 @@ export default function MatchAnalysisPage() {
     });
 
     return () => {
+      socketRef.current = null;
       socket.disconnect();
     };
   }, [id]);
@@ -188,6 +194,11 @@ export default function MatchAnalysisPage() {
   const handleStartSimulation = async () => {
     setControlLoading("start");
     setSocketError("");
+
+    if (socketRef.current?.connected) {
+      socketRef.current.emit("simulation:start", { matchId: id });
+      return;
+    }
 
     try {
       if (!simulation) {
@@ -206,6 +217,11 @@ export default function MatchAnalysisPage() {
   const handleControl = async (action, speed) => {
     setControlLoading(action);
     setSocketError("");
+
+    if (socketRef.current?.connected) {
+      socketRef.current.emit("simulation:control", { matchId: id, action, speed });
+      return;
+    }
 
     try {
       const session = await controlMatchSimulation(id, action, speed);
