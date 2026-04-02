@@ -79,6 +79,7 @@ export default function MatchAnalysisPage() {
       active = false;
     };
   }, [id]);
+
   const teams = analysis?.overview?.teams || analysis?.teams || [];
   const title = teams.length ? teams.join(" vs ") : fallbackMatchTitle(id);
   const turningPoints = analysis?.turningPointList || [];
@@ -158,7 +159,7 @@ export default function MatchAnalysisPage() {
       <section className="match-hero-grid">
         <article className="panel match-hero-copy">
           <div className="panel-header">
-          <div>
+            <div>
               <p className="eyebrow">Match Day</p>
               <h2>{title}</h2>
             </div>
@@ -243,7 +244,7 @@ export default function MatchAnalysisPage() {
 
           <div className="match-window-list">
             {(analysis.momentumBuckets || []).slice(0, 8).map((bucket, index) => (
-              <article key={bucket.label} className="match-window-item">
+              <article key={bucket.label || `window-${index + 1}`} className="match-window-item">
                 <div className="match-window-header">
                   <strong>{bucket.label || `Window ${index + 1}`}</strong>
                   <span>{bucket.leadingTeam || "Even spell"}</span>

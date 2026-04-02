@@ -247,16 +247,39 @@ def list_players() -> PlayerListResponse:
 
 
 def list_matches() -> MatchListResponse:
-    directory = load_match_directory()
-    matches = [
-        MatchListItem(
-            match_id=str(row.match_id),
-            title=str(row.title),
-            teams=list(row.teams),
-            competition=str(row.competition),
-            season=str(row.season),
-            sources=list(row.sources),
+    events = load_all_events()
+    grouped = (
+        events.groupby("match_id")
+        .agg(
+            competition=("competition", "last"),
+            season=("season", "last"),
+            teams=("team", lambda values: sorted({value for value in values if value})),
+            opponents=("opponent", lambda values: sorted({value for value in values if value})),
+            sources=("source", lambda values: sorted(set(values))),
         )
-        for row in directory.itertuples(index=False)
-    ]
+        .reset_index()
+    )
+
+    matches = []
+    for row in grouped.itertuples(index=False):
+        teams = sorted({*row.teams, *row.opponents})
+        if len(teams) >= 2:
+            title = f"{teams[0]} vs {teams[1]}"
+        elif teams:
+            title = teams[0]
+        else:
+            title = str(row.match_id)
+
+        matches.append(
+            MatchListItem(
+                match_id=str(row.match_id),
+                title=title,
+                competition=str(row.competition),
+                season=str(row.season),
+                teams=list(teams),
+                sources=list(row.sources),
+            )
+        )
+
+    matches.sort(key=lambda item: (item.competition, item.title, item.match_id))
     return MatchListResponse(matches=matches)

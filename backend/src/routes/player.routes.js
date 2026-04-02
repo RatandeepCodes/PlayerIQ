@@ -31,6 +31,7 @@ router.get(
     query("search").optional().trim(),
     query("team").optional().trim(),
     query("nationality").optional().trim(),
+    query("search").optional().trim(),
     validateRequest,
   ],
   listPlayers,

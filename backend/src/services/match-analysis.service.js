@@ -8,6 +8,25 @@ import {
   saveTurningPointsCache,
 } from "./analytics-cache.service.js";
 
+const SHOWCASE_MATCH_DIRECTORY = [
+  {
+    matchId: "ISL-2001",
+    title: "Bengaluru FC vs Kerala Blasters",
+    competition: "Indian Super League",
+    season: "2025-26",
+    teams: ["Bengaluru FC", "Kerala Blasters"],
+    sources: ["kaggle_indian_players"],
+  },
+  {
+    matchId: "SB-1001",
+    title: "Barcelona vs Real Madrid",
+    competition: "La Liga Showcase",
+    season: "2025-26",
+    teams: ["Barcelona", "Real Madrid"],
+    sources: ["statsbomb_open_data"],
+  },
+];
+
 const normalizeBucketScores = (scores = []) => {
   if (Array.isArray(scores)) {
     return Object.fromEntries(scores.map((entry) => [entry.team, Number(entry.score || 0)]));
@@ -168,21 +187,28 @@ export const getMatchAnalysisData = async (matchId) => {
   }
 };
 
+export const getMatchDirectoryData = async () => {
+  try {
+    const directory = await fetchMatchDirectory();
+    return {
+      matches: directory.matches || [],
+      metadata: {
+        source: "ai-service",
+        total: (directory.matches || []).length,
+      },
+    };
+  } catch (_error) {
+    return {
+      matches: SHOWCASE_MATCH_DIRECTORY,
+      metadata: {
+        source: "showcase",
+        total: SHOWCASE_MATCH_DIRECTORY.length,
+      },
+    };
+  }
+};
+
 export const getMatchSimulationData = async (matchId) => {
   const simulation = await fetchMatchSimulation(matchId);
   return buildMatchSimulationEnvelope(matchId, simulation);
-};
-
-export const getMatchDirectoryData = async () => {
-  const directory = await fetchMatchDirectory();
-  return {
-    matches: (directory.matches || []).map((match) => ({
-      matchId: match.matchId,
-      title: match.title,
-      teams: match.teams || [],
-      competition: match.competition,
-      season: match.season,
-      sources: match.sources || [],
-    })),
-  };
 };

@@ -21,8 +21,8 @@ export const getMatchAnalysis = async (req, res, next) => {
 
 export const listMatches = async (_req, res, next) => {
   try {
-    const matches = await getMatchDirectoryData();
-    res.json(matches);
+    const directory = await getMatchDirectoryData();
+    res.json(directory);
   } catch (error) {
     next(error);
   }

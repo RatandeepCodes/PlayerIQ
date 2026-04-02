@@ -151,7 +151,7 @@ export default function PlayerProfilePage() {
   const playerOptions = directory.map((player) => ({
     value: player.playerId,
     label: player.name,
-    meta: [player.team, player.position].filter(Boolean).join(" · "),
+    meta: [player.team, player.position].filter(Boolean).join(" | "),
   }));
 
   return (
@@ -198,9 +198,7 @@ export default function PlayerProfilePage() {
               <h2>What stands out right now</h2>
             </div>
           </div>
-          <p className="summary-copy">
-            {profileSummary}
-          </p>
+          <p className="summary-copy">{profileSummary}</p>
 
           <div className="profile-quick-pulse">
             <article>

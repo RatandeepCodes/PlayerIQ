@@ -115,6 +115,19 @@ class MatchMomentumResponse(APIModel):
     buckets: list[MomentumBucket]
 
 
+class MatchListItem(APIModel):
+    match_id: str = Field(serialization_alias="matchId")
+    title: str
+    competition: str
+    season: str
+    teams: list[str]
+    sources: list[str]
+
+
+class MatchListResponse(APIModel):
+    matches: list[MatchListItem]
+
+
 class DatasetSummaryResponse(APIModel):
     total_events: int = Field(serialization_alias="totalEvents")
     total_players: int = Field(serialization_alias="totalPlayers")

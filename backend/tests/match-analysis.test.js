@@ -41,6 +41,11 @@ after(async () => {
 });
 
 describe("Match analysis routes", () => {
+  it("requires authentication for match directory", async () => {
+    const response = await fetch(`${baseUrl}/api/matches`);
+    assert.equal(response.status, 401);
+  });
+
   it("requires authentication for match analysis", async () => {
     const response = await fetch(`${baseUrl}/api/matches/SB-1001/analysis`);
     assert.equal(response.status, 401);
@@ -115,6 +120,18 @@ describe("Match analysis routes", () => {
     assert.equal(response.status, 502);
     const payload = await response.json();
     assert.equal(payload.message, "Match simulation unavailable from AI service");
+  });
+
+  it("returns a match directory even when the AI service is offline", async () => {
+    const response = await fetch(`${baseUrl}/api/matches`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.ok(payload.matches.length >= 1);
   });
 
   it("returns not found for simulation status before a session is started", async () => {
