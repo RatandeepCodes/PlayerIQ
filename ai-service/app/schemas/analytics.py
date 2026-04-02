@@ -135,3 +135,16 @@ class PlayerListItem(APIModel):
 
 class PlayerListResponse(APIModel):
     players: list[PlayerListItem]
+
+
+class MatchListItem(APIModel):
+    match_id: str = Field(serialization_alias="matchId")
+    title: str
+    teams: list[str]
+    competition: str
+    season: str
+    sources: list[str]
+
+
+class MatchListResponse(APIModel):
+    matches: list[MatchListItem]

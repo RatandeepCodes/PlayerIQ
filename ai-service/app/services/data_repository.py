@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.core.config import settings
-from app.schemas.analytics import DatasetSummaryResponse, PlayerListItem, PlayerListResponse
+from app.schemas.analytics import DatasetSummaryResponse, MatchListItem, MatchListResponse, PlayerListItem, PlayerListResponse
 
 REQUIRED_EVENT_COLUMNS = [
     "source",
@@ -159,6 +159,23 @@ def load_player_directory() -> pd.DataFrame:
     return grouped.sort_values(["display_priority", "player_name"], ascending=[False, True]).reset_index(drop=True)
 
 
+@lru_cache(maxsize=1)
+def load_match_directory() -> pd.DataFrame:
+    events = load_all_events()
+    grouped = (
+        events.groupby("match_id")
+        .agg(
+            competition=("competition", "last"),
+            season=("season", "last"),
+            teams=("team", lambda values: sorted(set(value for value in values if value))),
+            sources=("source", lambda values: sorted(set(values))),
+        )
+        .reset_index()
+    )
+    grouped["title"] = grouped["teams"].apply(lambda teams: " vs ".join(teams[:2]) if teams else "Match")
+    return grouped.sort_values(["competition", "title"]).reset_index(drop=True)
+
+
 def get_player_metadata(player_id: str) -> dict:
     directory = load_player_directory()
     player_rows = directory.loc[directory["player_id"] == player_id]
@@ -227,3 +244,19 @@ def list_players() -> PlayerListResponse:
         for row in directory.itertuples(index=False)
     ]
     return PlayerListResponse(players=players)
+
+
+def list_matches() -> MatchListResponse:
+    directory = load_match_directory()
+    matches = [
+        MatchListItem(
+            match_id=str(row.match_id),
+            title=str(row.title),
+            teams=list(row.teams),
+            competition=str(row.competition),
+            season=str(row.season),
+            sources=list(row.sources),
+        )
+        for row in directory.itertuples(index=False)
+    ]
+    return MatchListResponse(matches=matches)
