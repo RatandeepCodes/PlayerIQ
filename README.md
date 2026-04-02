@@ -90,3 +90,10 @@ cd ai-service
 ## Deployment Notes
 
 Deployment guidance and production checklist are in `docs/DEPLOYMENT.md`.
+
+Deployment files included:
+
+- `frontend/vercel.json`
+- `render.yaml`
+- `backend/Dockerfile`
+- `ai-service/Dockerfile`

@@ -7,6 +7,13 @@
 - AI Service: Railway
 - Database: MongoDB Atlas
 
+Deployment files included in the repo:
+
+- `frontend/vercel.json`
+- `render.yaml`
+- `backend/Dockerfile`
+- `ai-service/Dockerfile`
+
 ## Frontend
 
 Required environment variables:
@@ -21,6 +28,11 @@ Build command:
 ```bash
 npm run build
 ```
+
+Vercel notes:
+
+- set project root to `frontend`
+- use `frontend/vercel.json` for SPA rewrites
 
 ## Backend
 
@@ -43,6 +55,12 @@ Readiness checks:
 - `aiService` should be `online`
 - `config.warnings` should be empty in production
 
+Render notes:
+
+- use the repo root `render.yaml` blueprint
+- the backend service root is `backend`
+- `backend/Dockerfile` is included if you prefer Docker-based deployment instead
+
 ## AI Service
 
 Required environment variables:
@@ -59,6 +77,11 @@ Readiness checks:
 - `/health` should return `ok` or a clearly explained `degraded` state
 - source files should appear in `sources.available_sources`
 - `warnings` should be empty for a fully healthy deployment
+
+Railway notes:
+
+- set service root to `ai-service`
+- `ai-service/Dockerfile` is included for container-based deploys
 
 ## Final Pre-Deploy Checklist
 
