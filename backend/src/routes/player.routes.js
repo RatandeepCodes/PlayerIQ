@@ -28,6 +28,7 @@ router.get(
   requireAuth,
   [
     query("limit").optional().isInt({ min: 1, max: 100 }).withMessage("limit must be between 1 and 100"),
+    query("search").optional().trim(),
     query("team").optional().trim(),
     query("nationality").optional().trim(),
     validateRequest,

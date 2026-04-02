@@ -238,15 +238,36 @@ const ComparePlayers = () => {
     return "Dead even on overall rating";
   }, [comparisonPayload?.summary, leftPlayer.name, leftPlayer.rating, rightPlayer.name, rightPlayer.rating]);
 
+  const categoryWinners = useMemo(() => {
+    if (comparisonPayload?.categoryWinners?.length) {
+      return comparisonPayload.categoryWinners.map((item: any) => ({
+        label: metricLabelToAttributeKey(item.metric),
+        winner:
+          item.winner === "playerOne"
+            ? leftPlayer.name
+            : item.winner === "playerTwo"
+              ? rightPlayer.name
+              : "Tie",
+      }));
+    }
+
+    return attrs.map((attr) => {
+      const leftValue = Number(leftPlayer.attributes[attr]);
+      const rightValue = Number(rightPlayer.attributes[attr]);
+
+      return {
+        label: attr,
+        winner: leftValue > rightValue ? leftPlayer.name : rightValue > leftValue ? rightPlayer.name : "Tie",
+      };
+    });
+  }, [attrs, comparisonPayload?.categoryWinners, leftPlayer.attributes, leftPlayer.name, rightPlayer.attributes, rightPlayer.name]);
+
   return (
     <div className="min-h-screen bg-background bg-noise">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
-        <SectionHeader
-          title="Compare Players"
-          subtitle="Head-to-head analysis of elite talent"
-        />
+        <SectionHeader title="Compare Players" subtitle="Head-to-head analysis of elite talent" />
       </div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
@@ -345,18 +366,12 @@ const ComparePlayers = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <SectionHeader title="Category Winners" />
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {attrs.map((attr) => {
-            const leftValue = Number(leftPlayer.attributes[attr]);
-            const rightValue = Number(rightPlayer.attributes[attr]);
-            const winnerName = leftValue > rightValue ? leftPlayer.name : rightValue > leftValue ? rightPlayer.name : "Tie";
-
-            return (
-              <div key={attr} className="glass-card rounded-xl p-4 text-center">
-                <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mb-1 capitalize">{attr}</p>
-                <p className="font-display text-sm text-foreground tracking-wide">{winnerName}</p>
-              </div>
-            );
-          })}
+          {categoryWinners.map((item) => (
+            <div key={item.label} className="glass-card rounded-xl p-4 text-center">
+              <p className="text-[10px] font-body text-muted-foreground uppercase tracking-widest mb-1 capitalize">{item.label}</p>
+              <p className="font-display text-sm text-foreground tracking-wide">{item.winner}</p>
+            </div>
+          ))}
         </div>
       </section>
 
