@@ -20,6 +20,7 @@ export default function PlayerProfilePage() {
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState(null);
   const [directory, setDirectory] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -147,6 +148,11 @@ export default function PlayerProfilePage() {
       ? "The main ratings are in place, and PlayerIQ is still enriching the story around the player."
       : "This player page is live, but the deeper numbers still need more match events before they become meaningful.");
   const selectedPlayerId = profile?.player?.playerId || id;
+  const filteredDirectory = directory.filter((player) =>
+    [player.name, player.team, player.position, player.nationality]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(search.trim().toLowerCase())),
+  );
 
   return (
     <div className="page profile-page">
@@ -160,13 +166,24 @@ export default function PlayerProfilePage() {
 
         <div className="entity-selector-row">
           <label className="comparison-field entity-selector-field">
+            <span>Search</span>
+            <input
+              className="selector-search-input"
+              type="text"
+              placeholder="Search player, club, or position"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+
+          <label className="comparison-field entity-selector-field">
             <span>Player</span>
             <select
               value={selectedPlayerId}
               onChange={(event) => navigate(`/player/${event.target.value}`)}
-              disabled={!directory.length}
+              disabled={!filteredDirectory.length}
             >
-              {directory.map((player) => (
+              {filteredDirectory.map((player) => (
                 <option key={player.playerId} value={player.playerId}>
                   {player.name} - {player.team}
                 </option>

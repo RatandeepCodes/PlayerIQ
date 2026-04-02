@@ -23,3 +23,22 @@ kaggle_indian_players,ISL-2002,Indian Super League,2024-25,46,5,00:46:05,Mumbai 
 kaggle_indian_players,ISL-2002,Indian Super League,2024-25,77,43,01:17:43,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,dribble,success,0,0,0,1,0,0,1
 kaggle_indian_players,ISL-2002,Indian Super League,2024-25,83,59,01:23:59,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,shot,success,0.2,0,0,0,1,1,1
 kaggle_indian_players,ISL-2002,Indian Super League,2024-25,89,7,01:29:07,Mumbai City,Bengaluru FC,P104,Lallianzuala Chhangte,India,LW,pass,success,0,1,1,0,0,0,1
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,17,25,00:17:25,FC Goa,Mohun Bagan SG,P105,Brandon Fernandes,India,CAM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,34,41,00:34:41,FC Goa,Mohun Bagan SG,P105,Brandon Fernandes,India,CAM,shot,success,0.09,0,0,0,1,0,0
+kaggle_indian_players,ISL-2005,Indian Super League,2024-25,72,14,01:12:14,FC Goa,Kerala Blasters,P105,Brandon Fernandes,India,CAM,pass,success,0,1,1,0,0,0,1
+kaggle_indian_players,ISL-2005,Indian Super League,2024-25,84,18,01:24:18,FC Goa,Kerala Blasters,P105,Brandon Fernandes,India,CAM,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2001,Indian Super League,2024-25,20,34,00:20:34,Bengaluru FC,Kerala Blasters,P106,Rahul Bheke,India,CB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2001,Indian Super League,2024-25,51,7,00:51:07,Bengaluru FC,Kerala Blasters,P106,Rahul Bheke,India,CB,clearance,success,0,0,0,0,0,0,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,67,29,01:07:29,Bengaluru FC,Mumbai City,P106,Rahul Bheke,India,CB,interception,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,86,54,01:26:54,Bengaluru FC,Mumbai City,P106,Rahul Bheke,India,CB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,14,48,00:14:48,Mohun Bagan SG,FC Goa,P107,Manvir Singh,India,ST,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2003,Indian Super League,2024-25,28,11,00:28:11,Mohun Bagan SG,FC Goa,P107,Manvir Singh,India,ST,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2004,Indian Super League,2024-25,76,40,01:16:40,Mohun Bagan SG,Odisha FC,P107,Manvir Singh,India,ST,shot,success,0.22,0,0,0,1,1,1
+kaggle_indian_players,ISL-2004,Indian Super League,2024-25,88,9,01:28:09,Mohun Bagan SG,Odisha FC,P107,Manvir Singh,India,ST,pass,success,0,1,1,0,0,0,1
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,18,16,00:18:16,Mumbai City,Bengaluru FC,P108,Lalengmawia Ralte,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2002,Indian Super League,2024-25,44,54,00:44:54,Mumbai City,Bengaluru FC,P108,Lalengmawia Ralte,India,CM,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2006,Indian Super League,2024-25,61,18,01:01:18,Mumbai City,Odisha FC,P108,Lalengmawia Ralte,India,CM,pass,success,0,1,1,0,0,0,1
+kaggle_indian_players,ISL-2006,Indian Super League,2024-25,82,22,01:22:22,Mumbai City,Odisha FC,P108,Lalengmawia Ralte,India,CM,interception,success,0,0,0,0,0,0,1
+kaggle_indian_players,ISL-2006,Indian Super League,2024-25,15,39,00:15:39,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,shot,success,0.18,0,0,0,1,1,0
+kaggle_indian_players,ISL-2006,Indian Super League,2024-25,35,47,00:35:47,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2006,Indian Super League,2024-25,79,31,01:19:31,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,shot,fail,0.11,0,0,0,0,0,-1

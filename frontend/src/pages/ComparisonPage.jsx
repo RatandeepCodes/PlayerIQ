@@ -15,6 +15,7 @@ export default function ComparisonPage() {
   const [directory, setDirectory] = useState([]);
   const [selection, setSelection] = useState(defaultSelection);
   const [comparison, setComparison] = useState(null);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [error, setError] = useState("");
@@ -100,6 +101,18 @@ export default function ComparisonPage() {
       ),
     [directory],
   );
+  const filteredDirectory = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return directory;
+    }
+
+    return directory.filter((player) =>
+      [player.name, player.team, player.position, player.nationality]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    );
+  }, [directory, search]);
 
   if (loading && !comparison) {
     return (
@@ -138,14 +151,25 @@ export default function ComparisonPage() {
         </div>
 
         <div className="comparison-selector-grid">
+          <label className="comparison-field comparison-search-field">
+            <span>Search players</span>
+            <input
+              className="selector-search-input"
+              type="text"
+              placeholder="Search by name, club, or position"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+
           <label className="comparison-field">
             <span>Player One</span>
             <select
               value={selection.player1}
               onChange={(event) => setSelection((current) => ({ ...current, player1: event.target.value }))}
-              disabled={!directory.length}
+              disabled={!filteredDirectory.length}
             >
-              {directory.map((player) => (
+              {filteredDirectory.map((player) => (
                 <option key={player.playerId} value={player.playerId}>
                   {player.name} - {player.team}
                 </option>
@@ -167,9 +191,9 @@ export default function ComparisonPage() {
             <select
               value={selection.player2}
               onChange={(event) => setSelection((current) => ({ ...current, player2: event.target.value }))}
-              disabled={!directory.length}
+              disabled={!filteredDirectory.length}
             >
-              {directory.map((player) => (
+              {filteredDirectory.map((player) => (
                 <option key={player.playerId} value={player.playerId}>
                   {player.name} - {player.team}
                 </option>

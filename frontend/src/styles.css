@@ -412,6 +412,43 @@ input {
   margin-top: 18px;
 }
 
+.dashboard-match-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dashboard-match-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.dashboard-match-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 205, 96, 0.28);
+  background: rgba(255, 205, 96, 0.08);
+}
+
+.dashboard-match-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.dashboard-match-item p {
+  margin: 0;
+  color: #cbd5e7;
+}
+
 .dashboard-meta-separator {
   color: rgba(255, 255, 255, 0.28);
 }
@@ -1039,6 +1076,10 @@ input {
   align-items: end;
 }
 
+.comparison-search-field {
+  grid-column: 1 / -1;
+}
+
 .comparison-field {
   display: grid;
   gap: 8px;
@@ -1056,6 +1097,28 @@ input {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
+  appearance: none;
+  outline: none;
+}
+
+.selector-search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  outline: none;
+}
+
+.selector-search-input::placeholder {
+  color: rgba(219, 226, 241, 0.56);
+}
+
+.comparison-field select:focus,
+.selector-search-input:focus {
+  border-color: rgba(255, 205, 96, 0.36);
+  box-shadow: 0 0 0 3px rgba(255, 205, 96, 0.08);
 }
 
 .entity-selector-panel {
@@ -1079,6 +1142,7 @@ input {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .comparison-swap {
@@ -1088,6 +1152,18 @@ input {
   background: rgba(255, 255, 255, 0.04);
   color: #ffe08d;
   cursor: pointer;
+  min-width: 108px;
+  align-self: end;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.comparison-swap:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 205, 96, 0.34);
+  background: rgba(255, 205, 96, 0.1);
 }
 
 .comparison-inline-error {

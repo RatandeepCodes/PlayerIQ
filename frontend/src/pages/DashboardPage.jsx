@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getMatchAnalysis, getPlayerProfile, getPlayers } from "../api/client.js";
+import { getMatchAnalysis, getMatches, getPlayerProfile, getPlayers } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
 
 const FILTER_OPTIONS = [
   { label: "All Players", value: "all" },
-  { label: "Indian Names First", value: "india" },
-  { label: "Global Names", value: "global" },
+  { label: "Attack", value: "attack" },
+  { label: "Midfield", value: "midfield" },
+  { label: "Defence", value: "defence" },
 ];
 
 const formatMetric = (value) => (value === null || value === undefined ? "--" : value);
@@ -25,11 +26,29 @@ const getProfileScore = (profile, key) => Number(profile?.overview?.[key] ?? -1)
 const pickTopProfile = (profiles, key) =>
   [...profiles].sort((left, right) => getProfileScore(right, key) - getProfileScore(left, key))[0] || null;
 
+const isInFilter = (position = "", filter) => {
+  const normalized = String(position).toUpperCase();
+  if (filter === "attack") {
+    return ["ST", "CF", "LW", "RW", "FW"].some((value) => normalized.includes(value));
+  }
+
+  if (filter === "midfield") {
+    return ["CM", "CAM", "CDM", "AM", "DM", "LM", "RM"].some((value) => normalized.includes(value));
+  }
+
+  if (filter === "defence") {
+    return ["CB", "LB", "RB", "WB", "GK"].some((value) => normalized.includes(value));
+  }
+
+  return true;
+};
+
 export default function DashboardPage() {
   const [dashboard, setDashboard] = useState({
     loading: true,
     error: null,
     players: [],
+    matches: [],
     profiles: [],
     featuredProfile: null,
     topRatedProfile: null,
@@ -43,18 +62,20 @@ export default function DashboardPage() {
 
     const loadDashboard = async () => {
       try {
-        const [directoryResult, analysisResult] = await Promise.allSettled([
-          getPlayers({ limit: 8 }),
+        const [directoryResult, matchesResult, analysisResult] = await Promise.allSettled([
+          getPlayers({ limit: 12 }),
+          getMatches(),
           getMatchAnalysis(SHOWCASE_MATCH.id),
         ]);
 
         const directoryPlayers = directoryResult.status === "fulfilled" ? directoryResult.value.players || [] : [];
+        const matches = matchesResult.status === "fulfilled" ? matchesResult.value.matches || [] : [];
         const matchAnalysis = analysisResult.status === "fulfilled" ? analysisResult.value : null;
 
         const playerIds = [SHOWCASE_PLAYERS.featured.id, ...directoryPlayers.map((player) => player.playerId)]
           .filter(Boolean)
           .filter((value, index, array) => array.indexOf(value) === index)
-          .slice(0, 6);
+          .slice(0, 8);
 
         const profileResults = await Promise.allSettled(playerIds.map((playerId) => getPlayerProfile(playerId)));
         const profiles = profileResults
@@ -69,6 +90,7 @@ export default function DashboardPage() {
           loading: false,
           error: !directoryPlayers.length && !profiles.length ? "The dashboard could not load player stories right now." : null,
           players: directoryPlayers,
+          matches,
           profiles,
           featuredProfile:
             profiles.find((profile) => profile.player.playerId === SHOWCASE_PLAYERS.featured.id) ||
@@ -124,30 +146,14 @@ export default function DashboardPage() {
   const matchOverview = dashboard.matchAnalysis?.overview;
 
   const visibleProfiles = dashboard.profiles.filter((profile) => {
-    if (filter === "india") {
-      return String(profile.player.nationality || "").toLowerCase() === "india";
-    }
-
-    if (filter === "global") {
-      return String(profile.player.nationality || "").toLowerCase() !== "india";
-    }
-
-    return true;
+    return isInFilter(profile.player.position, filter);
   });
 
   const visiblePlayers = visibleProfiles.length
     ? visibleProfiles
     : dashboard.players
         .filter((player) => {
-          if (filter === "india") {
-            return String(player.nationality || "").toLowerCase() === "india";
-          }
-
-          if (filter === "global") {
-            return String(player.nationality || "").toLowerCase() !== "india";
-          }
-
-          return true;
+          return isInFilter(player.position, filter);
         })
         .map((player) => ({
           player,
@@ -161,22 +167,22 @@ export default function DashboardPage() {
 
   const topCards = [
     {
-      label: "Featured Name",
+      label: "Player To Watch",
       value: featuredProfile?.player?.name || SHOWCASE_PLAYERS.featured.name,
       note: featuredProfile?.player?.team || SHOWCASE_PLAYERS.featured.team,
     },
     {
-      label: "Best Rating In View",
+      label: "Top Rating",
       value: formatMetric(dashboard.topRatedProfile?.overview?.overallRating),
-      note: dashboard.topRatedProfile?.player?.name || "Waiting for live ratings",
+      note: dashboard.topRatedProfile?.player?.name || "Latest ratings on the way",
     },
     {
-      label: "Clutch Performer",
+      label: "Big-Game Rating",
       value: formatMetric(dashboard.pressureProfile?.overview?.pressureIndex),
-      note: dashboard.pressureProfile?.player?.name || "Waiting for pressure profile",
+      note: dashboard.pressureProfile?.player?.name || "Standout performer loading",
     },
     {
-      label: "Match Pulse",
+      label: "Match Centre",
       value: formatMetric(matchSummary?.totalTurningPoints),
       note: matchOverview?.teams?.join(" vs ") || SHOWCASE_MATCH.title,
     },
@@ -186,29 +192,28 @@ export default function DashboardPage() {
     <div className="page dashboard-page">
       <section className="dashboard-hero">
         <div className="dashboard-hero-copy">
-          <p className="eyebrow">Matchday Dashboard</p>
-          <h2>Football stories, player form, and live match pulse in one place.</h2>
+          <p className="eyebrow">Home</p>
+          <h2>Follow the biggest player stories and match moments in one place.</h2>
           <p className="summary-copy">
-            The dashboard now reads from your live backend: player directory, individual ratings, and the featured
-            match pulse all come from the PlayerIQ stack instead of static scaffold content.
+            Track form, compare standout names, and jump straight into match analysis without digging through menus.
           </p>
           <div className="dashboard-action-row">
             <Link className="primary-link" to={`/player/${featuredProfile?.player?.playerId || SHOWCASE_PLAYERS.featured.id}`}>
-              Open featured player
+              Open player profile
             </Link>
             <Link className="secondary-link" to={`/matches/${SHOWCASE_MATCH.id}`}>
-              View match story
+              Open match centre
             </Link>
           </div>
         </div>
 
         <article className="dashboard-feature-card">
-          <p className="eyebrow">Featured Player</p>
+          <p className="eyebrow">Spotlight</p>
           <h3>{featuredProfile?.player?.name || SHOWCASE_PLAYERS.featured.name}</h3>
           <p className="dashboard-feature-meta">
             {(featuredProfile?.player?.team || SHOWCASE_PLAYERS.featured.team)}{" "}
             <span className="dashboard-meta-separator">|</span>{" "}
-            {featuredProfile?.player?.nationality || "India"}
+            {featuredProfile?.player?.nationality || "Nationality pending"}
           </p>
           <div className="dashboard-feature-stats">
             <div>
@@ -226,7 +231,7 @@ export default function DashboardPage() {
           </div>
           <p className="dashboard-feature-summary">
             {featuredProfile?.overview?.reportSummary ||
-              "PlayerIQ is still filling out the full player story. Ratings and match-day clues will appear here as live sections land."}
+              "This profile is still building. The latest story, ratings, and match-day clues will appear here as more actions are reviewed."}
           </p>
         </article>
       </section>
@@ -246,7 +251,7 @@ export default function DashboardPage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Players To Watch</p>
-              <h2>Fan-facing player board</h2>
+              <h2>Shortlist for today</h2>
             </div>
             <div className="dashboard-filter-row" role="tablist" aria-label="Player dashboard filters">
               {FILTER_OPTIONS.map((option) => (
@@ -298,8 +303,8 @@ export default function DashboardPage() {
         <section className="panel dashboard-match-panel">
           <div className="panel-header">
             <div>
-              <p className="eyebrow">Match Pulse</p>
-              <h2>{SHOWCASE_MATCH.title}</h2>
+              <p className="eyebrow">Match Centre</p>
+              <h2>Matches to follow</h2>
             </div>
             <div className="live-pill">Ready for live feed</div>
           </div>
@@ -319,15 +324,26 @@ export default function DashboardPage() {
             </article>
           </div>
 
+          <div className="dashboard-match-list">
+            {(dashboard.matches.length ? dashboard.matches : [SHOWCASE_MATCH]).slice(0, 4).map((match) => (
+              <Link key={match.matchId || match.id} className="dashboard-match-item" to={`/matches/${match.matchId || match.id}`}>
+                <div>
+                  <strong>{match.title}</strong>
+                  <p>{match.competition}</p>
+                </div>
+                <span className="pill">Open</span>
+              </Link>
+            ))}
+          </div>
+
           <div className="dashboard-match-copy">
             <p>
               {matchOverview?.teams?.length
-                ? `${matchOverview.teams.join(" vs ")} is ready for live breakdown, key swing moments, and fan-friendly review cards.`
-                : `${SHOWCASE_MATCH.title} is ready for live breakdown, key swing moments, and fan-friendly review cards.`}
+                ? `${matchOverview.teams.join(" vs ")} is ready for a full match breakdown, key turning points, and a live event feed.`
+                : `${SHOWCASE_MATCH.title} is ready for a full match breakdown, key turning points, and a live event feed.`}
             </p>
             <p>
-              Use this panel as the quick pulse before jumping into the full match page for momentum charts and turning
-              point details.
+              Jump into any available game to switch between matches, start a simulation, and follow the momentum chart live.
             </p>
           </div>
 
@@ -336,7 +352,7 @@ export default function DashboardPage() {
               Open match analysis
             </Link>
             <Link className="secondary-link" to="/compare">
-              Compare featured names
+              Compare players
             </Link>
           </div>
         </section>

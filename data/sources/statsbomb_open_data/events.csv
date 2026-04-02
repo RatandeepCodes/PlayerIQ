@@ -29,3 +29,25 @@ statsbomb_open_data,SB-1005,La Liga,2023-24,49,28,00:49:28,Real Madrid,Barcelona
 statsbomb_open_data,SB-1006,La Liga,2023-24,64,12,01:04:12,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,interception,success,0,0,0,0,0,0,0
 statsbomb_open_data,SB-1006,La Liga,2023-24,78,47,01:18:47,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,dribble,success,0,0,0,1,0,0,1
 statsbomb_open_data,SB-1006,La Liga,2023-24,85,15,01:25:15,Real Madrid,Atletico Madrid,P005,Jude Bellingham,England,CM,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1005,La Liga,2023-24,18,9,00:18:09,Real Madrid,Barcelona,P006,Vinicius Junior,Brazil,LW,dribble,success,0,0,0,1,0,0,0
+statsbomb_open_data,SB-1005,La Liga,2023-24,43,27,00:43:27,Real Madrid,Barcelona,P006,Vinicius Junior,Brazil,LW,shot,success,0.21,0,0,0,1,0,0
+statsbomb_open_data,SB-1006,La Liga,2023-24,70,41,01:10:41,Real Madrid,Atletico Madrid,P006,Vinicius Junior,Brazil,LW,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1006,La Liga,2023-24,84,22,01:24:22,Real Madrid,Atletico Madrid,P006,Vinicius Junior,Brazil,LW,dribble,success,0,0,0,1,0,0,1
+statsbomb_open_data,SB-1001,Premier League,2023-24,21,6,00:21:06,Manchester City,Liverpool,P007,Rodri,Spain,CDM,pass,success,0,1,1,0,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,47,33,00:47:33,Manchester City,Liverpool,P007,Rodri,Spain,CDM,interception,success,0,0,0,0,0,0,0
+statsbomb_open_data,SB-1002,Premier League,2023-24,68,48,01:08:48,Manchester City,Arsenal,P007,Rodri,Spain,CDM,tackle,success,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,89,12,01:29:12,Manchester City,Arsenal,P007,Rodri,Spain,CDM,pass,success,0,0,1,0,0,0,1
+statsbomb_open_data,SB-1001,Premier League,2023-24,16,57,00:16:57,Liverpool,Manchester City,P008,Mohamed Salah,Egypt,RW,dribble,success,0,0,0,1,0,0,0
+statsbomb_open_data,SB-1001,Premier League,2023-24,38,26,00:38:26,Liverpool,Manchester City,P008,Mohamed Salah,Egypt,RW,shot,success,0.19,0,0,0,1,0,0
+statsbomb_open_data,SB-1003,Premier League,2023-24,63,29,01:03:29,Liverpool,Chelsea,P008,Mohamed Salah,Egypt,RW,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1003,Premier League,2023-24,86,18,01:26:18,Liverpool,Chelsea,P008,Mohamed Salah,Egypt,RW,shot,fail,0.12,0,0,0,0,0,1
+statsbomb_open_data,SB-1002,Premier League,2023-24,17,40,00:17:40,Arsenal,Manchester City,P009,Martin Odegaard,Norway,CAM,pass,success,0,1,1,0,0,0,0
+statsbomb_open_data,SB-1002,Premier League,2023-24,54,11,00:54:11,Arsenal,Manchester City,P009,Martin Odegaard,Norway,CAM,shot,success,0.11,0,0,0,1,0,0
+statsbomb_open_data,SB-1004,Premier League,2023-24,66,7,01:06:07,Arsenal,Tottenham,P009,Martin Odegaard,Norway,CAM,pass,success,0,1,1,0,0,0,1
+statsbomb_open_data,SB-1004,Premier League,2023-24,81,45,01:21:45,Arsenal,Tottenham,P009,Martin Odegaard,Norway,CAM,interception,success,0,0,0,0,0,0,1
+statsbomb_open_data,SB-1007,La Liga,2023-24,12,8,00:12:08,Barcelona,Girona,P010,Robert Lewandowski,Poland,ST,shot,success,0.24,0,0,0,1,1,0
+statsbomb_open_data,SB-1007,La Liga,2023-24,29,36,00:29:36,Barcelona,Girona,P010,Robert Lewandowski,Poland,ST,pass,success,0,0,1,0,0,0,1
+statsbomb_open_data,SB-1007,La Liga,2023-24,74,14,01:14:14,Barcelona,Girona,P010,Robert Lewandowski,Poland,ST,shot,fail,0.17,0,0,0,0,0,1
+statsbomb_open_data,SB-1007,La Liga,2023-24,15,21,00:15:21,Girona,Barcelona,P011,Savio,Brazil,RW,dribble,success,0,0,0,1,0,0,0
+statsbomb_open_data,SB-1007,La Liga,2023-24,41,52,00:41:52,Girona,Barcelona,P011,Savio,Brazil,RW,pass,success,0,1,1,0,0,0,0
+statsbomb_open_data,SB-1007,La Liga,2023-24,78,8,01:18:08,Girona,Barcelona,P011,Savio,Brazil,RW,shot,success,0.13,0,0,0,1,0,0

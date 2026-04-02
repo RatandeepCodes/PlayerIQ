@@ -51,6 +51,7 @@ export default function MatchAnalysisPage() {
   const [analysis, setAnalysis] = useState(null);
   const [simulation, setSimulation] = useState(null);
   const [matches, setMatches] = useState([]);
+  const [search, setSearch] = useState("");
   const [socketError, setSocketError] = useState("");
   const [loading, setLoading] = useState(true);
   const [controlLoading, setControlLoading] = useState("");
@@ -217,6 +218,11 @@ export default function MatchAnalysisPage() {
   const speedOptions = useMemo(() => [0.5, 1, 1.5, 2], []);
   const simulationStatusLabel = simulation?.status || "not started";
   const selectedMatch = matches.find((match) => match.matchId === id);
+  const filteredMatches = matches.filter((match) =>
+    [match.title, match.competition, ...(match.teams || [])]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(search.trim().toLowerCase())),
+  );
 
   if (loading) {
     return (
@@ -261,9 +267,20 @@ export default function MatchAnalysisPage() {
 
         <div className="entity-selector-row">
           <label className="comparison-field entity-selector-field">
+            <span>Search</span>
+            <input
+              className="selector-search-input"
+              type="text"
+              placeholder="Search match or competition"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+
+          <label className="comparison-field entity-selector-field">
             <span>Match</span>
-            <select value={id} onChange={(event) => navigate(`/matches/${event.target.value}`)} disabled={!matches.length}>
-              {matches.map((match) => (
+            <select value={id} onChange={(event) => navigate(`/matches/${event.target.value}`)} disabled={!filteredMatches.length}>
+              {filteredMatches.map((match) => (
                 <option key={match.matchId} value={match.matchId}>
                   {match.title} - {match.competition}
                 </option>
