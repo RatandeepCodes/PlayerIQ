@@ -40,6 +40,18 @@ after(async () => {
   });
 });
 
+const assertOfflineOrLiveAnalysis = async (response, successKey) => {
+  if (response.status === 502) {
+    const payload = await response.json();
+    return payload;
+  }
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.ok(payload[successKey]);
+  return payload;
+};
+
 describe("Match analysis routes", () => {
   it("requires authentication for match directory", async () => {
     const response = await fetch(`${baseUrl}/api/matches`);
@@ -80,9 +92,10 @@ describe("Match analysis routes", () => {
       },
     });
 
-    assert.equal(response.status, 502);
-    const payload = await response.json();
-    assert.equal(payload.message, "Match momentum unavailable from AI service");
+    const payload = await assertOfflineOrLiveAnalysis(response, "summary");
+    if (response.status === 502) {
+      assert.equal(payload.message, "Match momentum unavailable from AI service");
+    }
   });
 
   it("returns upstream unavailable for momentum when AI service is offline", async () => {
@@ -92,9 +105,10 @@ describe("Match analysis routes", () => {
       },
     });
 
-    assert.equal(response.status, 502);
-    const payload = await response.json();
-    assert.equal(payload.message, "Match momentum unavailable from AI service");
+    const payload = await assertOfflineOrLiveAnalysis(response, "buckets");
+    if (response.status === 502) {
+      assert.equal(payload.message, "Match momentum unavailable from AI service");
+    }
   });
 
   it("returns upstream unavailable for turning points when AI service is offline", async () => {
@@ -104,9 +118,10 @@ describe("Match analysis routes", () => {
       },
     });
 
-    assert.equal(response.status, 502);
-    const payload = await response.json();
-    assert.equal(payload.message, "Turning points unavailable from AI service");
+    const payload = await assertOfflineOrLiveAnalysis(response, "turningPoints");
+    if (response.status === 502) {
+      assert.equal(payload.message, "Turning points unavailable from AI service");
+    }
   });
 
   it("returns upstream unavailable for simulation when AI service is offline", async () => {

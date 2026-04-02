@@ -10,6 +10,7 @@ export const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   aiServiceUrl: process.env.AI_SERVICE_URL || "http://127.0.0.1:8000",
   clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+  footballDataApiToken: process.env.FOOTBALL_DATA_API_TOKEN || "",
 };
 
 export const isDefaultJwtSecret = () => env.jwtSecret === "change-me";

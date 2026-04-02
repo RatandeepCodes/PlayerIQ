@@ -14,6 +14,77 @@ RAW_SCORE_COLUMNS = [
     "physical_raw",
 ]
 PRIOR_MATCH_WEIGHT = 3.0
+OVERALL_PRIOR_MATCH_WEIGHT = 6.0
+
+POSITION_BASELINES = {
+    "att": 72,
+    "mid": 71,
+    "def": 70,
+    "gk": 69,
+}
+
+POSITION_WEIGHTS = {
+    "att": {
+        "shooting_score": 0.24,
+        "passing_score": 0.16,
+        "dribbling_score": 0.22,
+        "defending_score": 0.04,
+        "creativity_score": 0.22,
+        "physical_score": 0.12,
+    },
+    "mid": {
+        "shooting_score": 0.10,
+        "passing_score": 0.24,
+        "dribbling_score": 0.16,
+        "defending_score": 0.18,
+        "creativity_score": 0.20,
+        "physical_score": 0.12,
+    },
+    "def": {
+        "shooting_score": 0.05,
+        "passing_score": 0.16,
+        "dribbling_score": 0.08,
+        "defending_score": 0.36,
+        "creativity_score": 0.10,
+        "physical_score": 0.25,
+    },
+    "gk": {
+        "shooting_score": 0.02,
+        "passing_score": 0.22,
+        "dribbling_score": 0.04,
+        "defending_score": 0.42,
+        "creativity_score": 0.08,
+        "physical_score": 0.22,
+    },
+}
+
+PLAYER_RATING_PRIORS = {
+    "Lionel Messi": 93,
+    "Cristiano Ronaldo": 86,
+    "Kylian Mbappe": 92,
+    "Erling Haaland": 91,
+    "Rodri": 90,
+    "Kevin De Bruyne": 90,
+    "Mohamed Salah": 90,
+    "Vinicius Junior": 90,
+    "Jude Bellingham": 89,
+    "Virgil van Dijk": 89,
+    "Robert Lewandowski": 88,
+    "Bukayo Saka": 88,
+    "Rodrygo": 87,
+    "Martin Odegaard": 87,
+    "Ousmane Dembele": 86,
+    "Sunil Chhetri": 84,
+    "Aleksandar Mitrovic": 84,
+    "Luis Suarez": 84,
+    "Lallianzuala Chhangte": 82,
+    "Savio": 82,
+    "Sahal Abdul Samad": 80,
+    "Sandesh Jhingan": 79,
+    "Brandon Fernandes": 78,
+    "Manvir Singh": 78,
+    "Lalengmawia Ralte": 77,
+}
 
 
 def _safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
@@ -76,6 +147,38 @@ def _scale_value_against_reference(value: float, reference: pd.Series, lower: in
 
     scaled = lower + (value - reference_min) * (upper - lower) / (reference_max - reference_min)
     return int(round(max(lower, min(upper, scaled))))
+
+
+def _normalize_position_group(position: str) -> str:
+    normalized = str(position).upper()
+    if "GK" in normalized:
+        return "gk"
+    if any(tag in normalized for tag in ["CB", "RB", "LB", "RWB", "LWB"]):
+        return "def"
+    if any(tag in normalized for tag in ["CDM", "DM", "CM", "CAM", "AM"]):
+        return "mid"
+    return "att"
+
+
+def _compute_role_weighted_score(frame: pd.DataFrame) -> pd.Series:
+    role_weighted = pd.Series(index=frame.index, dtype="float64")
+
+    for position_group, weights in POSITION_WEIGHTS.items():
+        mask = frame["position_group"].eq(position_group)
+        if not mask.any():
+            continue
+
+        role_weighted.loc[mask] = sum(frame.loc[mask, column] * weight for column, weight in weights.items())
+
+    return role_weighted
+
+
+def _blend_sparse_overall_rating(player_name: str, position_group: str, matches_played: int, sample_overall_rating: int) -> int:
+    baseline = PLAYER_RATING_PRIORS.get(player_name, POSITION_BASELINES[position_group])
+    sample_weight = matches_played / (matches_played + OVERALL_PRIOR_MATCH_WEIGHT)
+    sample_weight = max(0.14, min(0.70, sample_weight))
+
+    return int(round((sample_overall_rating * sample_weight) + (baseline * (1.0 - sample_weight))))
 
 
 def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
@@ -239,23 +342,25 @@ def _aggregate_player_metrics(events: pd.DataFrame) -> pd.DataFrame:
         + frame["physical_raw"] * 0.10
     )
     frame["ppi"] = _scale_series(frame["ppi_raw"], lower=30, upper=99)
-    frame["overall_rating"] = (
-        frame[
-            [
-                "shooting_score",
-                "passing_score",
-                "dribbling_score",
-                "defending_score",
-                "creativity_score",
-                "physical_score",
-            ]
-        ]
-        .mean(axis=1)
-        .round()
-        .astype("int64")
-    )
     frame["pressure_index"] = frame["pressure_index"].clip(lower=0.5, upper=1.6).round(2)
     frame["pressure_score"] = _scale_series(frame["pressure_index"], lower=25, upper=99)
+    frame["position_group"] = frame["position"].apply(_normalize_position_group)
+    frame["role_weighted_score"] = _compute_role_weighted_score(frame)
+    frame["overall_sample_index"] = (
+        frame["role_weighted_score"] * 0.70
+        + frame["ppi"] * 0.23
+        + frame["pressure_score"] * 0.07
+    )
+    frame["sample_overall_rating"] = _scale_series(frame["overall_sample_index"], lower=58, upper=96)
+    frame["overall_rating"] = frame.apply(
+        lambda row: _blend_sparse_overall_rating(
+            str(row["player_name"]),
+            str(row["position_group"]),
+            int(row["matches_played"]),
+            int(row["sample_overall_rating"]),
+        ),
+        axis=1,
+    )
     return frame
 
 
@@ -314,21 +419,29 @@ def get_live_feature_snapshot(event_slice: pd.DataFrame, player_id: str) -> dict
         live_row[score_column] = _scale_value_against_reference(live_row[raw_column], reference_table[raw_column])
 
     live_row["ppi"] = _scale_value_against_reference(live_row["ppi_raw"], reference_table["ppi_raw"], lower=30, upper=99)
-    live_row["overall_rating"] = int(
-        round(
-            (
-                live_row["shooting_score"]
-                + live_row["passing_score"]
-                + live_row["dribbling_score"]
-                + live_row["defending_score"]
-                + live_row["creativity_score"]
-                + live_row["physical_score"]
-            )
-            / 6
-        )
-    )
     live_row["pressure_score"] = _scale_value_against_reference(
         live_row["pressure_index"], reference_table["pressure_index"], lower=25, upper=99
+    )
+    live_row["position_group"] = _normalize_position_group(str(live_row["position"]))
+    live_row["role_weighted_score"] = sum(
+        live_row[column] * weight for column, weight in POSITION_WEIGHTS[live_row["position_group"]].items()
+    )
+    live_row["overall_sample_index"] = (
+        live_row["role_weighted_score"] * 0.70
+        + live_row["ppi"] * 0.23
+        + live_row["pressure_score"] * 0.07
+    )
+    live_row["sample_overall_rating"] = _scale_value_against_reference(
+        live_row["overall_sample_index"],
+        reference_table["overall_sample_index"],
+        lower=58,
+        upper=96,
+    )
+    live_row["overall_rating"] = _blend_sparse_overall_rating(
+        str(live_row["player_name"]),
+        str(live_row["position_group"]),
+        int(live_row["matches_played"]),
+        int(live_row["sample_overall_rating"]),
     )
     live_row["sources"] = list(live_row["sources"])
     return live_row

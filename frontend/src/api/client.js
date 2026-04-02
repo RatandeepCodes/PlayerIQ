@@ -109,6 +109,10 @@ export async function getMatches() {
   return apiRequest("/matches");
 }
 
+export async function getHomeMatchFeed() {
+  return apiRequest("/matches/live-feed/home");
+}
+
 export async function getMatchAnalysis(matchId) {
   return apiRequest(`/matches/${matchId}/analysis`);
 }

@@ -60,6 +60,16 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertEqual(rating.nationality, "India")
         self.assertIn("kaggle_indian_players", rating.sources)
 
+    def test_sparse_sample_star_ratings_are_stabilized(self) -> None:
+        messi = get_player_rating("P012")
+        ronaldo = get_player_rating("P014")
+        sunil = get_player_rating("P101")
+
+        self.assertGreaterEqual(messi.overall_rating, 90)
+        self.assertGreaterEqual(ronaldo.overall_rating, 84)
+        self.assertGreaterEqual(sunil.overall_rating, 82)
+        self.assertGreater(messi.overall_rating, sunil.overall_rating)
+
     def test_playstyle_returns_supported_role(self) -> None:
         playstyle = get_playstyle_profile("P001")
         self.assertIn(playstyle.playstyle, {"Playmaker", "Striker", "Defender", "Box-to-box", "Winger"})

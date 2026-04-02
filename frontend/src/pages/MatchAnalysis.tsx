@@ -62,9 +62,14 @@ const findFallbackMatch = (teams: string[] = []) =>
       normalizeLabel(candidate.awayTeam) === normalizeLabel(teams[1]),
   ) || null;
 
-const buildMomentumPoints = (buckets: any[], homeTeam: string, awayTeam: string): MatchMomentumPoint[] => {
+const buildMomentumPoints = (
+  buckets: any[],
+  homeTeam: string,
+  awayTeam: string,
+  fallbackMomentum: MatchMomentumPoint[] = [],
+): MatchMomentumPoint[] => {
   if (!buckets.length) {
-    return defaultFallbackMatch.momentum || [];
+    return fallbackMomentum;
   }
 
   return buckets.map((bucket: any, index: number) => {
@@ -80,7 +85,10 @@ const buildMomentumPoints = (buckets: any[], homeTeam: string, awayTeam: string)
   });
 };
 
-const buildTurningPoints = (analysis: any, fallbackMatch: (typeof fallbackMatches)[number]): MatchTurningPoint[] => {
+const buildTurningPoints = (
+  analysis: any,
+  fallbackTurningPoints: MatchTurningPoint[] = [],
+): MatchTurningPoint[] => {
   if (analysis?.turningPointList?.length) {
     return analysis.turningPointList.map((point: any) => ({
       minute: toNumber(point.minute),
@@ -89,10 +97,10 @@ const buildTurningPoints = (analysis: any, fallbackMatch: (typeof fallbackMatche
     }));
   }
 
-  return fallbackMatch.turningPoints || [];
+  return fallbackTurningPoints;
 };
 
-const buildPhases = (buckets: any[], fallbackMatch: (typeof fallbackMatches)[number]): MatchPhase[] => {
+const buildPhases = (buckets: any[], fallbackPhases: MatchPhase[] = []): MatchPhase[] => {
   if (buckets.length) {
     return buckets.slice(0, 6).map((bucket: any, index: number) => {
       const bucketStart = toNumber(bucket.bucketStart ?? bucket.startMinute, index * 5);
@@ -106,12 +114,18 @@ const buildPhases = (buckets: any[], fallbackMatch: (typeof fallbackMatches)[num
     });
   }
 
-  return fallbackMatch.phases || [];
+  return fallbackPhases;
 };
 
-const buildStats = (buckets: any[], momentum: MatchMomentumPoint[], homeTeam: string, awayTeam: string): MatchStat[] => {
+const buildStats = (
+  buckets: any[],
+  momentum: MatchMomentumPoint[],
+  homeTeam: string,
+  awayTeam: string,
+  fallbackStats: MatchStat[] = [],
+): MatchStat[] => {
   if (!momentum.length) {
-    return defaultFallbackMatch.stats || [];
+    return fallbackStats;
   }
 
   const totals = momentum.reduce(
@@ -186,27 +200,31 @@ const buildMatchFromAnalysis = ({
     : directoryMatch?.teams?.length
       ? directoryMatch.teams
       : [];
-  const fallbackMatch = findFallbackMatch(teams) || defaultFallbackMatch;
-  const homeTeam = teams[0] || fallbackMatch.homeTeam;
-  const awayTeam = teams[1] || fallbackMatch.awayTeam;
+  const matchedFallback = findFallbackMatch(teams);
+  const shouldUseFallbackStory = Boolean(matchedFallback) || (!directoryMatch && !teams.length);
+  const fallbackMatch = matchedFallback || (shouldUseFallbackStory ? defaultFallbackMatch : null);
+  const homeTeam = teams[0] || fallbackMatch?.homeTeam || "Home";
+  const awayTeam = teams[1] || fallbackMatch?.awayTeam || "Away";
   const buckets = analysis?.momentumBuckets || [];
-  const momentum = buildMomentumPoints(buckets, homeTeam, awayTeam);
+  const momentum = buildMomentumPoints(buckets, homeTeam, awayTeam, fallbackMatch?.momentum || []);
 
   return {
-    ...fallbackMatch,
+    ...(fallbackMatch || {}),
     id: matchId,
     homeTeam,
     awayTeam,
-    homeScore: fallbackMatch.homeScore ?? 0,
-    awayScore: fallbackMatch.awayScore ?? 0,
-    competition: directoryMatch?.competition || fallbackMatch.competition,
-    date: directoryMatch?.season || fallbackMatch.date,
-    venue: fallbackMatch.venue,
-    metaLine: [fallbackMatch.venue, directoryMatch?.season || fallbackMatch.date].filter(Boolean).join(" | "),
+    homeScore: fallbackMatch?.homeScore ?? 0,
+    awayScore: fallbackMatch?.awayScore ?? 0,
+    competition: directoryMatch?.competition || fallbackMatch?.competition || "Competition",
+    date: directoryMatch?.season || fallbackMatch?.date || "Season pending",
+    venue: fallbackMatch?.venue || "Venue pending",
+    metaLine: [fallbackMatch?.venue || "Venue pending", directoryMatch?.season || fallbackMatch?.date || "Season pending"]
+      .filter(Boolean)
+      .join(" | "),
     momentum,
-    turningPoints: buildTurningPoints(analysis, fallbackMatch),
-    phases: buildPhases(buckets, fallbackMatch),
-    stats: buildStats(buckets, momentum, homeTeam, awayTeam),
+    turningPoints: buildTurningPoints(analysis, fallbackMatch?.turningPoints || []),
+    phases: buildPhases(buckets, fallbackMatch?.phases || []),
+    stats: buildStats(buckets, momentum, homeTeam, awayTeam, fallbackMatch?.stats || []),
   };
 };
 

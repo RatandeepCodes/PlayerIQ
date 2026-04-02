@@ -13,7 +13,7 @@ const normalizeAiError = (error, fallbackMessage) => {
     const statusCode = error.response?.status;
     const message = error.response?.data?.detail || error.response?.data?.message || fallbackMessage;
 
-    if (statusCode) {
+    if (statusCode && statusCode < 500) {
       throw createHttpError(statusCode, message);
     }
   }

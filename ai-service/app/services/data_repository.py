@@ -1,3 +1,4 @@
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -34,6 +35,14 @@ REQUIRED_EVENT_COLUMNS = [
 SOURCE_FILES = {
     "statsbomb_open_data": settings.data_path / "sources" / "statsbomb_open_data" / "events.csv",
     "kaggle_indian_players": settings.data_path / "sources" / "kaggle_indian_players" / "events.csv",
+}
+
+OPTIONAL_PLAYER_DIRECTORY_FILES = {
+    "statsbomb_open_data": settings.data_path / "sources" / "statsbomb_open_data" / "player_directory.csv",
+}
+
+OPTIONAL_MATCH_DIRECTORY_FILES = {
+    "statsbomb_open_data": settings.data_path / "sources" / "statsbomb_open_data" / "match_directory.csv",
 }
 
 NUMERIC_DEFAULTS = {
@@ -109,6 +118,141 @@ def _read_source_csv(source_name: str, source_file: Path) -> pd.DataFrame:
     return _normalize_frame(frame, source_name)
 
 
+def _deserialize_list(value: object) -> list[str]:
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+
+    text = str(value).strip()
+    if not text:
+        return []
+
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+    except json.JSONDecodeError:
+        pass
+
+    return [item.strip() for item in text.split("|") if item.strip()]
+
+
+def _read_optional_directory_csv(source_name: str, source_file: Path, required_columns: list[str]) -> pd.DataFrame:
+    if not source_file.exists():
+        return pd.DataFrame(columns=required_columns)
+
+    frame = pd.read_csv(source_file)
+    for column in required_columns:
+        if column not in frame.columns:
+            frame[column] = "[]" if column in {"sources", "teams"} else ""
+
+    frame = frame[required_columns].copy()
+    for column in {"player_id", "player_name", "team", "nationality", "position", "match_id", "title", "competition", "season"}:
+        if column in frame.columns:
+            frame[column] = frame[column].fillna("").astype(str).str.strip()
+
+    if "sources" in frame.columns:
+        frame["sources"] = frame["sources"].apply(lambda value: _deserialize_list(value) or [source_name])
+
+    if "teams" in frame.columns:
+        frame["teams"] = frame["teams"].apply(_deserialize_list)
+
+    return frame
+
+
+def _sort_player_directory(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return frame
+
+    sorted_frame = frame.copy()
+    sorted_frame["display_priority"] = sorted_frame["is_indian"].astype(int)
+    return sorted_frame.sort_values(["display_priority", "player_name"], ascending=[False, True]).reset_index(drop=True)
+
+
+def _merge_player_frames(primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.DataFrame:
+    if secondary.empty:
+        return _sort_player_directory(primary)
+
+    merged: dict[str, dict] = {}
+    combined = pd.concat(
+        [
+            primary.assign(_priority=1),
+            secondary.assign(_priority=0),
+        ],
+        ignore_index=True,
+    ).sort_values(["_priority", "is_indian", "player_name"], ascending=[False, False, True])
+
+    for row in combined.itertuples(index=False):
+        current = merged.get(row.player_id)
+        row_sources = sorted(set(getattr(row, "sources", []) or []))
+        if current is None:
+            merged[row.player_id] = {
+                "player_id": row.player_id,
+                "player_name": row.player_name,
+                "team": row.team,
+                "nationality": row.nationality,
+                "position": row.position,
+                "sources": row_sources,
+                "is_indian": bool(row.is_indian),
+            }
+            continue
+
+        current["sources"] = sorted(set(current["sources"]) | set(row_sources))
+        current["is_indian"] = current["is_indian"] or bool(row.is_indian)
+        for column in ["player_name", "team", "nationality", "position"]:
+            if not current[column] and getattr(row, column):
+                current[column] = getattr(row, column)
+
+    return _sort_player_directory(pd.DataFrame.from_records(list(merged.values())))
+
+
+def _merge_match_frames(primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.DataFrame:
+    if secondary.empty:
+        sorted_primary = primary.copy()
+        if "has_events" not in sorted_primary.columns:
+            sorted_primary["has_events"] = True
+        return sorted_primary.sort_values(["has_events", "competition", "title", "match_id"], ascending=[False, True, True, True]).reset_index(drop=True)
+
+    merged: dict[str, dict] = {}
+    combined = pd.concat(
+        [
+            primary.assign(_priority=1),
+            secondary.assign(_priority=0),
+        ],
+        ignore_index=True,
+    ).sort_values(["_priority", "competition", "title"], ascending=[False, True, True])
+
+    for row in combined.itertuples(index=False):
+        current = merged.get(row.match_id)
+        row_sources = sorted(set(getattr(row, "sources", []) or []))
+        row_teams = list(dict.fromkeys(getattr(row, "teams", []) or []))
+        if current is None:
+            merged[row.match_id] = {
+                "match_id": row.match_id,
+                "title": row.title,
+                "competition": row.competition,
+                "season": row.season,
+                "teams": row_teams,
+                "sources": row_sources,
+                "has_events": bool(getattr(row, "has_events", False)),
+            }
+            continue
+
+        current["sources"] = sorted(set(current["sources"]) | set(row_sources))
+        current["teams"] = list(dict.fromkeys([*current["teams"], *row_teams]))
+        current["has_events"] = current["has_events"] or bool(getattr(row, "has_events", False))
+        for column in ["title", "competition", "season"]:
+            if not current[column] and getattr(row, column):
+                current[column] = getattr(row, column)
+
+    return pd.DataFrame.from_records(list(merged.values())).sort_values(
+        ["has_events", "competition", "title", "match_id"],
+        ascending=[False, True, True, True],
+    ).reset_index(drop=True)
+
+
 @lru_cache(maxsize=1)
 def get_source_file_status() -> dict:
     available_sources: list[str] = []
@@ -143,7 +287,7 @@ def load_all_events() -> pd.DataFrame:
 @lru_cache(maxsize=1)
 def load_player_directory() -> pd.DataFrame:
     events = load_all_events()
-    grouped = (
+    event_directory = (
         events.groupby("player_id")
         .agg(
             player_name=("player_name", "last"),
@@ -154,15 +298,27 @@ def load_player_directory() -> pd.DataFrame:
         )
         .reset_index()
     )
-    grouped["is_indian"] = grouped["nationality"].str.casefold().eq("india")
-    grouped["display_priority"] = grouped["is_indian"].astype(int)
-    return grouped.sort_values(["display_priority", "player_name"], ascending=[False, True]).reset_index(drop=True)
+    event_directory["is_indian"] = event_directory["nationality"].str.casefold().eq("india")
+
+    extra_frames = [
+        _read_optional_directory_csv(
+            source_name,
+            source_file,
+            ["player_id", "player_name", "team", "nationality", "position", "sources"],
+        )
+        for source_name, source_file in OPTIONAL_PLAYER_DIRECTORY_FILES.items()
+    ]
+    extra_directory = pd.concat(extra_frames, ignore_index=True) if extra_frames else pd.DataFrame()
+    if not extra_directory.empty:
+        extra_directory["is_indian"] = extra_directory["nationality"].str.casefold().eq("india")
+
+    return _merge_player_frames(event_directory, extra_directory)
 
 
 @lru_cache(maxsize=1)
 def load_match_directory() -> pd.DataFrame:
     events = load_all_events()
-    grouped = (
+    event_directory = (
         events.groupby("match_id")
         .agg(
             competition=("competition", "last"),
@@ -172,8 +328,22 @@ def load_match_directory() -> pd.DataFrame:
         )
         .reset_index()
     )
-    grouped["title"] = grouped["teams"].apply(lambda teams: " vs ".join(teams[:2]) if teams else "Match")
-    return grouped.sort_values(["competition", "title"]).reset_index(drop=True)
+    event_directory["title"] = event_directory["teams"].apply(lambda teams: " vs ".join(teams[:2]) if teams else "Match")
+    event_directory["has_events"] = True
+
+    extra_frames = [
+        _read_optional_directory_csv(
+            source_name,
+            source_file,
+            ["match_id", "title", "competition", "season", "teams", "sources"],
+        )
+        for source_name, source_file in OPTIONAL_MATCH_DIRECTORY_FILES.items()
+    ]
+    extra_directory = pd.concat(extra_frames, ignore_index=True) if extra_frames else pd.DataFrame()
+    if not extra_directory.empty:
+        extra_directory["has_events"] = False
+
+    return _merge_match_frames(event_directory, extra_directory)
 
 
 def get_player_metadata(player_id: str) -> dict:
@@ -247,22 +417,10 @@ def list_players() -> PlayerListResponse:
 
 
 def list_matches() -> MatchListResponse:
-    events = load_all_events()
-    grouped = (
-        events.groupby("match_id")
-        .agg(
-            competition=("competition", "last"),
-            season=("season", "last"),
-            teams=("team", lambda values: sorted({value for value in values if value})),
-            opponents=("opponent", lambda values: sorted({value for value in values if value})),
-            sources=("source", lambda values: sorted(set(values))),
-        )
-        .reset_index()
-    )
-
+    grouped = load_match_directory()
     matches = []
     for row in grouped.itertuples(index=False):
-        teams = sorted({*row.teams, *row.opponents})
+        teams = list(row.teams)
         if len(teams) >= 2:
             title = f"{teams[0]} vs {teams[1]}"
         elif teams:

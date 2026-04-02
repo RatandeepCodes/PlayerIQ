@@ -42,3 +42,87 @@ kaggle_indian_players,ISL-2006,Indian Super League,2024-25,82,22,01:22:22,Mumbai
 kaggle_indian_players,ISL-2006,Indian Super League,2024-25,15,39,00:15:39,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,shot,success,0.18,0,0,0,1,1,0
 kaggle_indian_players,ISL-2006,Indian Super League,2024-25,35,47,00:35:47,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,pass,success,0,0,1,0,0,0,0
 kaggle_indian_players,ISL-2006,Indian Super League,2024-25,79,31,01:19:31,Odisha FC,Mumbai City,P109,Roy Krishna,Fiji,ST,shot,fail,0.11,0,0,0,0,0,-1
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,5,22,00:05:22,Bengaluru FC,Mumbai City,P110,Gurpreet Singh Sandhu,India,GK,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,26,48,00:26:48,Bengaluru FC,Mumbai City,P110,Gurpreet Singh Sandhu,India,GK,pass,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,57,9,00:57:09,Bengaluru FC,Mumbai City,P110,Gurpreet Singh Sandhu,India,GK,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,18,31,00:18:31,Bengaluru FC,FC Goa,P110,Gurpreet Singh Sandhu,India,GK,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,48,12,00:48:12,Bengaluru FC,FC Goa,P110,Gurpreet Singh Sandhu,India,GK,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,84,3,01:24:03,Bengaluru FC,FC Goa,P110,Gurpreet Singh Sandhu,India,GK,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,7,36,00:07:36,Mumbai City,Bengaluru FC,P111,Akash Mishra,India,LB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,34,10,00:34:10,Mumbai City,Bengaluru FC,P111,Akash Mishra,India,LB,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,61,44,01:01:44,Mumbai City,Bengaluru FC,P111,Akash Mishra,India,LB,interception,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,24,5,00:24:05,Mumbai City,Mohun Bagan SG,P111,Akash Mishra,India,LB,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,68,29,01:08:29,Mumbai City,Mohun Bagan SG,P111,Akash Mishra,India,LB,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,82,16,01:22:16,Mumbai City,Mohun Bagan SG,P111,Akash Mishra,India,LB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,11,18,00:11:18,Mohun Bagan SG,East Bengal,P112,Liston Colaco,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,29,46,00:29:46,Mohun Bagan SG,East Bengal,P112,Liston Colaco,India,LW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,63,12,01:03:12,Mohun Bagan SG,East Bengal,P112,Liston Colaco,India,LW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,17,9,00:17:09,Mohun Bagan SG,Mumbai City,P112,Liston Colaco,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,56,33,00:56:33,Mohun Bagan SG,Mumbai City,P112,Liston Colaco,India,LW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,81,24,01:21:24,Mohun Bagan SG,Mumbai City,P112,Liston Colaco,India,LW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,9,14,00:09:14,Mohun Bagan SG,East Bengal,P113,Anirudh Thapa,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,31,27,00:31:27,Mohun Bagan SG,East Bengal,P113,Anirudh Thapa,India,CM,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,52,41,00:52:41,Mohun Bagan SG,East Bengal,P113,Anirudh Thapa,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,18,8,00:18:08,Mohun Bagan SG,Mumbai City,P113,Anirudh Thapa,India,CM,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,47,55,00:47:55,Mohun Bagan SG,Mumbai City,P113,Anirudh Thapa,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,76,19,01:16:19,Mohun Bagan SG,Mumbai City,P113,Anirudh Thapa,India,CM,shot,fail,0.08,0,0,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,9,14,00:09:14,East Bengal,Mohun Bagan SG,P114,Jeakson Singh,India,CDM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,31,27,00:31:27,East Bengal,Mohun Bagan SG,P114,Jeakson Singh,India,CDM,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,52,41,00:52:41,East Bengal,Mohun Bagan SG,P114,Jeakson Singh,India,CDM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,18,8,00:18:08,East Bengal,Odisha FC,P114,Jeakson Singh,India,CDM,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,47,55,00:47:55,East Bengal,Odisha FC,P114,Jeakson Singh,India,CDM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,76,19,01:16:19,East Bengal,Odisha FC,P114,Jeakson Singh,India,CDM,shot,fail,0.08,0,0,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,11,18,00:11:18,Mumbai City,Bengaluru FC,P115,Bipin Singh,India,RW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,29,46,00:29:46,Mumbai City,Bengaluru FC,P115,Bipin Singh,India,RW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,63,12,01:03:12,Mumbai City,Bengaluru FC,P115,Bipin Singh,India,RW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,17,9,00:17:09,Mumbai City,Mohun Bagan SG,P115,Bipin Singh,India,RW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,56,33,00:56:33,Mumbai City,Mohun Bagan SG,P115,Bipin Singh,India,RW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,81,24,01:21:24,Mumbai City,Mohun Bagan SG,P115,Bipin Singh,India,RW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,7,36,00:07:36,Mohun Bagan SG,East Bengal,P116,Subhasish Bose,India,CB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,34,10,00:34:10,Mohun Bagan SG,East Bengal,P116,Subhasish Bose,India,CB,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,61,44,01:01:44,Mohun Bagan SG,East Bengal,P116,Subhasish Bose,India,CB,interception,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,24,5,00:24:05,Mohun Bagan SG,Mumbai City,P116,Subhasish Bose,India,CB,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,68,29,01:08:29,Mohun Bagan SG,Mumbai City,P116,Subhasish Bose,India,CB,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2012,Indian Super League,2025-26,82,16,01:22:16,Mohun Bagan SG,Mumbai City,P116,Subhasish Bose,India,CB,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,9,14,00:09:14,Bengaluru FC,Mumbai City,P117,Suresh Singh Wangjam,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,31,27,00:31:27,Bengaluru FC,Mumbai City,P117,Suresh Singh Wangjam,India,CM,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,52,41,00:52:41,Bengaluru FC,Mumbai City,P117,Suresh Singh Wangjam,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,18,8,00:18:08,Bengaluru FC,FC Goa,P117,Suresh Singh Wangjam,India,CM,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,47,55,00:47:55,Bengaluru FC,FC Goa,P117,Suresh Singh Wangjam,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,76,19,01:16:19,Bengaluru FC,FC Goa,P117,Suresh Singh Wangjam,India,CM,shot,fail,0.08,0,0,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,11,18,00:11:18,Kerala Blasters,Odisha FC,P118,Rahul KP,India,RW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,29,46,00:29:46,Kerala Blasters,Odisha FC,P118,Rahul KP,India,RW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,63,12,01:03:12,Kerala Blasters,Odisha FC,P118,Rahul KP,India,RW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,17,9,00:17:09,Kerala Blasters,Chennaiyin FC,P118,Rahul KP,India,RW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,56,33,00:56:33,Kerala Blasters,Chennaiyin FC,P118,Rahul KP,India,RW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,81,24,01:21:24,Kerala Blasters,Chennaiyin FC,P118,Rahul KP,India,RW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,11,18,00:11:18,Bengaluru FC,Mumbai City,P119,Ashique Kuruniyan,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,29,46,00:29:46,Bengaluru FC,Mumbai City,P119,Ashique Kuruniyan,India,LW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2007,Indian Super League,2025-26,63,12,01:03:12,Bengaluru FC,Mumbai City,P119,Ashique Kuruniyan,India,LW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,17,9,00:17:09,Bengaluru FC,FC Goa,P119,Ashique Kuruniyan,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,56,33,00:56:33,Bengaluru FC,FC Goa,P119,Ashique Kuruniyan,India,LW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2011,Indian Super League,2025-26,81,24,01:21:24,Bengaluru FC,FC Goa,P119,Ashique Kuruniyan,India,LW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,11,18,00:11:18,East Bengal,Mohun Bagan SG,P120,Naorem Mahesh Singh,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,29,46,00:29:46,East Bengal,Mohun Bagan SG,P120,Naorem Mahesh Singh,India,LW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2008,Indian Super League,2025-26,63,12,01:03:12,East Bengal,Mohun Bagan SG,P120,Naorem Mahesh Singh,India,LW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,17,9,00:17:09,East Bengal,Odisha FC,P120,Naorem Mahesh Singh,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,56,33,00:56:33,East Bengal,Odisha FC,P120,Naorem Mahesh Singh,India,LW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,81,24,01:21:24,East Bengal,Odisha FC,P120,Naorem Mahesh Singh,India,LW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2010,Indian Super League,2025-26,11,18,00:11:18,Chennaiyin FC,Jamshedpur FC,P121,Nandhakumar Sekar,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2010,Indian Super League,2025-26,29,46,00:29:46,Chennaiyin FC,Jamshedpur FC,P121,Nandhakumar Sekar,India,LW,dribble,success,0,0,0,1,0,0,0
+kaggle_indian_players,ISL-2010,Indian Super League,2025-26,63,12,01:03:12,Chennaiyin FC,Jamshedpur FC,P121,Nandhakumar Sekar,India,LW,shot,success,0.16,0,0,0,1,0,0
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,17,9,00:17:09,Chennaiyin FC,Kerala Blasters,P121,Nandhakumar Sekar,India,LW,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,56,33,00:56:33,Chennaiyin FC,Kerala Blasters,P121,Nandhakumar Sekar,India,LW,shot,success,0.21,0,0,0,1,1,1
+kaggle_indian_players,ISL-2014,Indian Super League,2025-26,81,24,01:21:24,Chennaiyin FC,Kerala Blasters,P121,Nandhakumar Sekar,India,LW,dribble,success,0,0,0,1,0,0,1
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,5,22,00:05:22,Odisha FC,Kerala Blasters,P122,Amrinder Singh,India,GK,pass,success,0,0,1,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,26,48,00:26:48,Odisha FC,Kerala Blasters,P122,Amrinder Singh,India,GK,pass,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,57,9,00:57:09,Odisha FC,Kerala Blasters,P122,Amrinder Singh,India,GK,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,18,31,00:18:31,Odisha FC,East Bengal,P122,Amrinder Singh,India,GK,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,48,12,00:48:12,Odisha FC,East Bengal,P122,Amrinder Singh,India,GK,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,84,3,01:24:03,Odisha FC,East Bengal,P122,Amrinder Singh,India,GK,clearance,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,9,14,00:09:14,Odisha FC,Kerala Blasters,P123,Apuia,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,31,27,00:31:27,Odisha FC,Kerala Blasters,P123,Apuia,India,CM,tackle,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2009,Indian Super League,2025-26,52,41,00:52:41,Odisha FC,Kerala Blasters,P123,Apuia,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,18,8,00:18:08,Odisha FC,East Bengal,P123,Apuia,India,CM,recovery,success,0,0,0,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,47,55,00:47:55,Odisha FC,East Bengal,P123,Apuia,India,CM,pass,success,0,1,1,0,0,0,0
+kaggle_indian_players,ISL-2013,Indian Super League,2025-26,76,19,01:16:19,Odisha FC,East Bengal,P123,Apuia,India,CM,shot,fail,0.08,0,0,0,0,0,0

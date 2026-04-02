@@ -3,6 +3,7 @@ import { body, param } from "express-validator";
 
 import {
   controlMatchSimulation,
+  getHomeMatchFeed,
   getMatchAnalysis,
   listMatches,
   getMatchMomentum,
@@ -29,6 +30,7 @@ const simulationControlValidation = [
 ];
 
 router.get("/", requireAuth, listMatches);
+router.get("/live-feed/home", requireAuth, getHomeMatchFeed);
 router.get("/:id/analysis", requireAuth, matchIdValidation, getMatchAnalysis);
 router.get("/:id/momentum", requireAuth, matchIdValidation, getMatchMomentum);
 router.get("/:id/turning-points", requireAuth, matchIdValidation, getMatchTurningPoints);

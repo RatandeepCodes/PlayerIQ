@@ -4,6 +4,7 @@ import {
   getMatchMomentumData,
   getMatchTurningPointsData,
 } from "../services/match-analysis.service.js";
+import { getHomeLiveMatchFeed } from "../services/live-match-feed.service.js";
 import {
   controlSimulationSession,
   getSimulationSessionState,
@@ -23,6 +24,15 @@ export const listMatches = async (_req, res, next) => {
   try {
     const directory = await getMatchDirectoryData();
     res.json(directory);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getHomeMatchFeed = async (_req, res, next) => {
+  try {
+    const feed = await getHomeLiveMatchFeed();
+    res.json(feed);
   } catch (error) {
     next(error);
   }

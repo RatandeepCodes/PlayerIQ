@@ -3,7 +3,7 @@ import { ArrowRight, Trophy, TrendingUp, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { getMatchAnalysis, getMatches, getPlayerProfile, getPlayers } from "@/api/client.js";
+import { getHomeMatchFeed, getMatchAnalysis, getMatches, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
 import MatchCard from "@/components/MatchCard";
 import Navbar from "@/components/Navbar";
@@ -108,6 +108,57 @@ const buildPlayerCard = (
   };
 };
 
+const formatHomeMatchDate = (value?: string) => {
+  if (!value) {
+    return "Date pending";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const buildLiveFeedMatch = (
+  liveMatch: {
+    id: string;
+    homeTeam?: string;
+    awayTeam?: string;
+    homeScore?: number;
+    awayScore?: number;
+    competition?: string;
+    date?: string;
+    venue?: string;
+    status?: "completed" | "upcoming" | "live";
+  } | null | undefined,
+  fallbackMatch: Match,
+): Match | null => {
+  if (!liveMatch) {
+    return null;
+  }
+
+  return {
+    ...fallbackMatch,
+    id: liveMatch.id || fallbackMatch.id,
+    homeTeam: liveMatch.homeTeam || fallbackMatch.homeTeam,
+    awayTeam: liveMatch.awayTeam || fallbackMatch.awayTeam,
+    homeScore: Number(liveMatch.homeScore ?? fallbackMatch.homeScore),
+    awayScore: Number(liveMatch.awayScore ?? fallbackMatch.awayScore),
+    competition: liveMatch.competition || fallbackMatch.competition,
+    date: formatHomeMatchDate(liveMatch.date),
+    venue: liveMatch.venue || fallbackMatch.venue,
+    status: liveMatch.status || fallbackMatch.status,
+  };
+};
+
 const isIndianPlayer = (player: { nationality?: string } | null | undefined) =>
   String(player?.nationality || "").trim().toLowerCase() === "india";
 
@@ -151,6 +202,8 @@ const selectSpotlightDirectory = <
 const Home = () => {
   const [homeMatches, setHomeMatches] = useState<Match[]>(fallbackMatches);
   const [spotlightPlayers, setSpotlightPlayers] = useState<Player[]>(fallbackSpotlightPlayers);
+  const [recentMatch, setRecentMatch] = useState<Match | null>(null);
+  const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
   const [heroMatchId, setHeroMatchId] = useState<string>(fallbackMatches[0].id);
   const [stats, setStats] = useState(fallbackStats);
 
@@ -158,14 +211,16 @@ const Home = () => {
     let active = true;
 
     const loadHomeData = async () => {
-      const [matchesResult, playersResult] = await Promise.allSettled([
+      const [matchesResult, playersResult, liveFeedResult] = await Promise.allSettled([
         getMatches(),
-        getPlayers({ limit: 18 }),
+        getPlayers({ limit: 50 }),
+        getHomeMatchFeed(),
       ]);
 
       const liveMatches = matchesResult.status === "fulfilled" ? matchesResult.value.matches || [] : [];
       const playerDirectory = playersResult.status === "fulfilled" ? playersResult.value.players || [] : [];
       const livePlayers = selectSpotlightDirectory(playerDirectory, fallbackSpotlightPlayers.length);
+      const homeFeed = liveFeedResult.status === "fulfilled" ? liveFeedResult.value : null;
 
       let featuredAnalysis = null;
       if (liveMatches[0]?.matchId) {
@@ -199,9 +254,19 @@ const Home = () => {
             buildPlayerCard(player, liveSpotlightProfiles[index], fallbackSpotlightPlayers[index]),
           )
         : fallbackSpotlightPlayers;
+      const mappedRecentMatch = buildLiveFeedMatch(homeFeed?.recentMatch, fallbackMatches[1] || fallbackMatches[0]);
+      const mappedUpcomingMatches =
+        homeFeed?.upcomingMatches?.length > 0
+          ? homeFeed.upcomingMatches
+              .slice(0, 3)
+              .map((match: any, index: number) => buildLiveFeedMatch(match, fallbackMatches[index + 2] || fallbackMatches[0]))
+              .filter(Boolean)
+          : [];
 
       setHomeMatches(mappedMatches);
       setSpotlightPlayers(mappedPlayers);
+      setRecentMatch(mappedRecentMatch);
+      setUpcomingMatches(mappedUpcomingMatches as Match[]);
       setHeroMatchId(mappedMatches[0]?.id || fallbackMatches[0].id);
       setStats([
         {
@@ -293,12 +358,38 @@ const Home = () => {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <SectionHeader title="Recent Match" subtitle="The latest finished match from the live schedule feed" />
+        {recentMatch ? (
+          <MatchCard match={recentMatch} featured interactive={false} />
+        ) : (
+          <div className="glass-card rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
+            Add `FOOTBALL_DATA_API_TOKEN` in `backend/.env` to load the most recent real-world finished match here.
+          </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <SectionHeader title="Matches to Watch" subtitle="Recent results from elite competitions" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {homeMatches.map((match, index) => (
             <MatchCard key={match.id} match={match} index={index} />
           ))}
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <SectionHeader title="Upcoming Matches" subtitle="Upcoming fixtures from the live schedule feed" />
+        {upcomingMatches.length ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {upcomingMatches.map((match, index) => (
+              <MatchCard key={match.id} match={match} index={index} interactive={false} />
+            ))}
+          </div>
+        ) : (
+          <div className="glass-card rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
+            Add `FOOTBALL_DATA_API_TOKEN` in `backend/.env` to load upcoming real-world fixtures here.
+          </div>
+        )}
       </section>
 
       <section className="border-y border-border bg-card/30 py-16 sm:py-20">

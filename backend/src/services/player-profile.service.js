@@ -1,5 +1,6 @@
 import { getCachedPlayerProfile, savePlayerProfileCache } from "./analytics-cache.service.js";
 import {
+  fetchPlayerDirectory,
   fetchPlayerPlaystyle,
   fetchPlayerPressure,
   fetchPlayerRating,
@@ -108,6 +109,27 @@ export const buildProfileEnvelope = ({
 
 const buildStoredPlayerProfile = (storedPlayer) => buildProfileEnvelope({ storedPlayer, requestedPlayerId: storedPlayer.playerId });
 
+const findPlayerInDirectory = async (playerId) => {
+  const directory = await fetchPlayerDirectory();
+  const player = (directory?.players || []).find((candidate) => candidate.playerId === playerId);
+
+  if (!player) {
+    return null;
+  }
+
+  return {
+    playerId: player.playerId,
+    name: player.playerName || player.name || "Unknown Player",
+    team: player.team || "Unknown Team",
+    position: player.position || "Unknown",
+    nationality: player.nationality || "Unknown",
+    metadata: {
+      sources: player.sources || [],
+      displayMode: player.isIndian ? "priority-showcase" : "global-directory",
+    },
+  };
+};
+
 export const getPlayerProfileData = async (playerId) => {
   const [storedPlayerResult, cachedProfileResult, ratingResult, playstyleResult, pressureResult, reportResult] = await Promise.allSettled([
     findStoredPlayerById(playerId),
@@ -141,6 +163,15 @@ export const getPlayerProfileData = async (playerId) => {
 
   if (cachedProfile) {
     return cachedProfile;
+  }
+
+  try {
+    const directoryPlayer = await findPlayerInDirectory(playerId);
+    if (directoryPlayer) {
+      return buildStoredPlayerProfile(directoryPlayer);
+    }
+  } catch (_error) {
+    // Ignore directory lookup failures and preserve the original upstream error below.
   }
 
   const upstreamErrors = [ratingResult, playstyleResult, pressureResult, reportResult]
