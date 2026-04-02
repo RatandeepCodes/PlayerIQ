@@ -1,6 +1,7 @@
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import type { Player } from '@/data/mockData';
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+
+import type { Player } from "@/data/mockData";
 
 interface PlayerCardProps {
   player: Player;
@@ -14,21 +15,26 @@ const PlayerCard = ({ player, index = 0 }: PlayerCardProps) => (
     viewport={{ once: true }}
     transition={{ duration: 0.4, delay: index * 0.08 }}
   >
-    <Link to={`/player?id=${player.id}`} className="block group">
-      <div className="glass-card rounded-xl p-5 hover:border-foreground/20 transition-all duration-500 hover:glow-border">
-        <div className="flex items-start justify-between mb-4">
+    <Link to={`/player/${player.id}`} className="block group">
+      <div className="glass-card rounded-xl p-5 transition-all duration-500 hover:border-foreground/20 hover:glow-border">
+        <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="font-display text-xl text-foreground tracking-wide">{player.name}</h3>
-            <p className="text-xs text-muted-foreground font-body">{player.club} · {player.position}</p>
+            <h3 className="font-display text-xl tracking-wide text-foreground">{player.name}</h3>
+            <p className="font-body text-xs text-muted-foreground">
+              {player.club} · {player.position}
+            </p>
           </div>
-          <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
             <span className="font-display text-xl text-foreground">{player.rating}</span>
           </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {player.strengths.slice(0, 3).map((s) => (
-            <span key={s} className="text-[10px] font-body px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-              {s}
+        <div className="flex flex-wrap gap-2">
+          {player.strengths.slice(0, 3).map((strength) => (
+            <span
+              key={strength}
+              className="rounded-full bg-secondary px-2 py-1 text-[10px] font-body text-secondary-foreground"
+            >
+              {strength}
             </span>
           ))}
         </div>

@@ -7,12 +7,20 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/player', label: 'Player Profile' },
   { to: '/compare', label: 'Compare Players' },
-  { to: '/match', label: 'Match Day' },
+  { to: '/matches', label: 'Match Day' },
 ];
 
 const Navbar = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isActiveLink = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
 
   return (
     <motion.nav
@@ -30,7 +38,7 @@ const Navbar = () => {
           {/* Desktop */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
-              const isActive = location.pathname === link.to;
+              const isActive = isActiveLink(link.to);
               return (
                 <Link
                   key={link.to}
