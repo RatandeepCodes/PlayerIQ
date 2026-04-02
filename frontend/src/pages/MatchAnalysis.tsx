@@ -5,7 +5,7 @@ import { Clock, Zap } from "lucide-react";
 
 import { getMatchAnalysis, getMatches } from "@/api/client.js";
 import Footer from "@/components/Footer";
-import MomentumChart from "@/components/MomentumChart";
+import MomentumChart from "@/components/MomentumChart.tsx";
 import Navbar from "@/components/Navbar";
 import SearchableSelect from "@/components/SearchableSelect";
 import SectionHeader from "@/components/SectionHeader";

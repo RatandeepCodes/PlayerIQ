@@ -7,13 +7,14 @@ import { getMatchAnalysis, getMatches, getPlayerProfile, getPlayers } from "@/ap
 import Footer from "@/components/Footer";
 import MatchCard from "@/components/MatchCard";
 import Navbar from "@/components/Navbar";
-import PlayerCard from "@/components/PlayerCard";
+import PlayerCard from "@/components/PlayerCard.tsx";
 import SectionHeader from "@/components/SectionHeader";
 import StatCard from "@/components/StatCard";
 import {
   featuredStats as fallbackStats,
   matches as fallbackMatches,
   players as fallbackPlayers,
+  spotlightPlayers as fallbackSpotlightPlayers,
   type Match,
   type Player,
 } from "@/data/mockData";
@@ -107,9 +108,49 @@ const buildPlayerCard = (
   };
 };
 
+const isIndianPlayer = (player: { nationality?: string } | null | undefined) =>
+  String(player?.nationality || "").trim().toLowerCase() === "india";
+
+const selectSpotlightDirectory = <
+  T extends {
+    playerId: string;
+    nationality?: string;
+  },
+>(
+  players: T[],
+  limit: number,
+) => {
+  const uniquePlayers = [...new Map(players.map((player) => [player.playerId, player])).values()];
+  const indianPlayers = uniquePlayers.filter((player) => isIndianPlayer(player));
+  const foreignPlayers = uniquePlayers.filter((player) => !isIndianPlayer(player));
+
+  if (!indianPlayers.length || !foreignPlayers.length) {
+    return uniquePlayers.slice(0, limit);
+  }
+
+  const spotlightSelection: T[] = [];
+  const preferredIndianCount = Math.min(Math.ceil(limit / 2), indianPlayers.length);
+  const preferredForeignCount = Math.min(Math.floor(limit / 2), foreignPlayers.length);
+
+  for (let index = 0; index < Math.max(preferredIndianCount, preferredForeignCount); index += 1) {
+    if (indianPlayers[index] && spotlightSelection.length < limit) {
+      spotlightSelection.push(indianPlayers[index]);
+    }
+
+    if (foreignPlayers[index] && spotlightSelection.length < limit) {
+      spotlightSelection.push(foreignPlayers[index]);
+    }
+  }
+
+  const selectedIds = new Set(spotlightSelection.map((player) => player.playerId));
+  const remainingPlayers = uniquePlayers.filter((player) => !selectedIds.has(player.playerId));
+
+  return [...spotlightSelection, ...remainingPlayers].slice(0, limit);
+};
+
 const Home = () => {
   const [homeMatches, setHomeMatches] = useState<Match[]>(fallbackMatches);
-  const [spotlightPlayers, setSpotlightPlayers] = useState<Player[]>(fallbackPlayers.slice(0, 6));
+  const [spotlightPlayers, setSpotlightPlayers] = useState<Player[]>(fallbackSpotlightPlayers);
   const [heroMatchId, setHeroMatchId] = useState<string>(fallbackMatches[0].id);
   const [stats, setStats] = useState(fallbackStats);
 
@@ -119,11 +160,12 @@ const Home = () => {
     const loadHomeData = async () => {
       const [matchesResult, playersResult] = await Promise.allSettled([
         getMatches(),
-        getPlayers({ limit: 6 }),
+        getPlayers({ limit: 18 }),
       ]);
 
       const liveMatches = matchesResult.status === "fulfilled" ? matchesResult.value.matches || [] : [];
-      const livePlayers = playersResult.status === "fulfilled" ? playersResult.value.players || [] : [];
+      const playerDirectory = playersResult.status === "fulfilled" ? playersResult.value.players || [] : [];
+      const livePlayers = selectSpotlightDirectory(playerDirectory, fallbackSpotlightPlayers.length);
 
       let featuredAnalysis = null;
       if (liveMatches[0]?.matchId) {
@@ -153,10 +195,10 @@ const Home = () => {
         : fallbackMatches;
 
       const mappedPlayers = livePlayers.length
-        ? livePlayers.slice(0, 6).map((player: any, index: number) =>
-            buildPlayerCard(player, liveSpotlightProfiles[index], fallbackPlayers[index]),
+        ? livePlayers.map((player: any, index: number) =>
+            buildPlayerCard(player, liveSpotlightProfiles[index], fallbackSpotlightPlayers[index]),
           )
-        : fallbackPlayers.slice(0, 6);
+        : fallbackSpotlightPlayers;
 
       setHomeMatches(mappedMatches);
       setSpotlightPlayers(mappedPlayers);
@@ -164,7 +206,11 @@ const Home = () => {
       setStats([
         {
           label: "Players Profiled",
-          value: String(playersResult.status === "fulfilled" ? livePlayers.length || fallbackPlayers.length : fallbackPlayers.length),
+          value: String(
+            playersResult.status === "fulfilled"
+              ? playerDirectory.length || fallbackSpotlightPlayers.length
+              : fallbackSpotlightPlayers.length,
+          ),
         },
         {
           label: "Matches Available",
@@ -189,7 +235,7 @@ const Home = () => {
   }, []);
 
   const featuredMatch = useMemo(() => homeMatches[0] || fallbackMatches[0], [homeMatches]);
-  const featuredPlayer = useMemo(() => spotlightPlayers[0] || fallbackPlayers[0], [spotlightPlayers]);
+  const featuredPlayer = useMemo(() => spotlightPlayers[0] || fallbackSpotlightPlayers[0], [spotlightPlayers]);
 
   return (
     <div className="min-h-screen bg-background bg-noise">
@@ -257,7 +303,7 @@ const Home = () => {
 
       <section className="border-y border-border bg-card/30 py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader title="Player Spotlight" subtitle="Elite performers under the microscope" />
+          <SectionHeader title="Player Spotlight" subtitle="Indian standouts and global stars under the microscope" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {spotlightPlayers.map((player, index) => (
               <PlayerCard key={player.id} player={player} index={index} />

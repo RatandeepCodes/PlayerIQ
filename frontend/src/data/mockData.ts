@@ -200,6 +200,73 @@ export const players: Player[] = [
     summary: 'The ultimate competitor. Ronaldo continues to defy age with his incredible scoring instinct.',
     pressureRating: 95,
   },
+  {
+    id: 'P101',
+    name: 'Sunil Chhetri',
+    club: 'Bengaluru FC',
+    nationality: 'India',
+    position: 'Striker',
+    age: 40,
+    rating: 84,
+    attributes: { pace: 72, shooting: 85, passing: 74, dribbling: 78, defending: 42, physical: 70 },
+    recentForm: [7.7, 8.0, 7.9, 8.3, 8.1, 7.8, 8.4],
+    strengths: ['Finishing', 'Movement', 'Leadership', 'Composure'],
+    growthAreas: ['Aerial Duels', 'Recovery Pace'],
+    playstyle: 'Smart penalty-box striker who thrives on timing, movement, and decisive finishes.',
+    summary: 'India\'s iconic number nine still sets the tone with sharp movement and calm finishing.',
+    pressureRating: 89,
+  },
+  {
+    id: 'P104',
+    name: 'Lallianzuala Chhangte',
+    club: 'Mumbai City',
+    nationality: 'India',
+    position: 'Winger',
+    age: 27,
+    rating: 82,
+    attributes: { pace: 88, shooting: 76, passing: 75, dribbling: 84, defending: 45, physical: 68 },
+    recentForm: [7.8, 8.2, 7.6, 8.5, 8.0, 8.4, 8.1],
+    strengths: ['Acceleration', 'Direct Running', 'Ball Carrying', 'Transitions'],
+    growthAreas: ['Final Pass', 'Back-Post Finishing'],
+    playstyle: 'Explosive wide attacker who stretches back lines and attacks open space quickly.',
+    summary: 'One of India\'s most dangerous wingers, offering pace and intent every time he isolates a full-back.',
+    pressureRating: 83,
+  },
+  {
+    id: 'P102',
+    name: 'Sahal Abdul Samad',
+    club: 'Mohun Bagan SG',
+    nationality: 'India',
+    position: 'Attacking Midfielder',
+    age: 28,
+    rating: 81,
+    attributes: { pace: 79, shooting: 72, passing: 82, dribbling: 86, defending: 46, physical: 62 },
+    recentForm: [7.6, 7.9, 8.1, 8.0, 8.3, 7.8, 8.2],
+    strengths: ['Close Control', 'Creativity', 'Tight Turns', 'Link Play'],
+    growthAreas: ['Defensive Duels', 'Shot Volume'],
+    playstyle: 'A smooth creator who slips between lines, links attacks, and carries the ball through pressure.',
+    summary: 'Sahal brings flair and control between the lines, giving Indian attacks a more inventive rhythm.',
+    pressureRating: 82,
+  },
+];
+
+const pickPlayer = (id: string): Player => {
+  const player = players.find((candidate) => candidate.id === id);
+
+  if (!player) {
+    throw new Error(`Missing mock player: ${id}`);
+  }
+
+  return player;
+};
+
+export const spotlightPlayers: Player[] = [
+  pickPlayer('P101'),
+  pickPlayer('mbappe'),
+  pickPlayer('P104'),
+  pickPlayer('rodri'),
+  pickPlayer('P102'),
+  pickPlayer('salah'),
 ];
 
 export const matches: Match[] = [

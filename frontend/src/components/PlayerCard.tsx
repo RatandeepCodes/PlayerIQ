@@ -21,7 +21,7 @@ const PlayerCard = ({ player, index = 0 }: PlayerCardProps) => (
           <div>
             <h3 className="font-display text-xl tracking-wide text-foreground">{player.name}</h3>
             <p className="font-body text-xs text-muted-foreground">
-              {player.club} · {player.position}
+              {player.club} - {player.position}
             </p>
           </div>
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
