@@ -1,34 +1,85 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_AI_BASE_URL || "http://127.0.0.1:8000";
+
+async function apiRequest(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`);
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(payload?.detail || payload?.message || "Request failed");
+  }
+
+  return payload;
+}
 
 export async function getHealth() {
-  const response = await fetch(`${API_BASE_URL}/health`);
-  return response.json();
+  return apiRequest("/health");
+}
+
+export async function getPlayers() {
+  return apiRequest("/players");
+}
+
+export async function getMatches() {
+  return apiRequest("/matches");
 }
 
 export async function getPlayerProfile(playerId) {
+  const [rating, playstyle, pressure, report] = await Promise.all([
+    apiRequest(`/rating/${playerId}`),
+    apiRequest(`/playstyle/${playerId}`),
+    apiRequest(`/pressure/${playerId}`),
+    apiRequest(`/report/${playerId}`),
+  ]);
+
   return {
     player: {
-      playerId,
-      name: "Alex Mercer",
-      team: "Northbridge FC",
-      position: "CAM",
+      playerId: rating.playerId,
+      name: rating.playerName,
+      team: rating.team,
+      nationality: rating.nationality,
+      position: rating.position,
     },
     analytics: {
-      overallRating: 84,
-      attributes: {
-        shooting: 78,
-        passing: 88,
-        dribbling: 83,
-        defending: 65,
-        creativity: 90,
-        physical: 74,
+      overallRating: rating.overallRating,
+      attributes: rating.attributes,
+      playstyle: playstyle.playstyle,
+      ppi: rating.ppi,
+      pressureIndex: pressure.pressureIndex,
+      pressure: {
+        score: pressure.pressureScore,
+        events: pressure.pressureEvents,
+        note: pressure.interpretation,
       },
-      playstyle: "Playmaker",
-      ppi: 86,
-      pressureIndex: 1.04,
-      summary:
-        "Alex Mercer is a high-involvement creator who sustains passing value, chance creation, and stable output late in close matches.",
+      summary: report.summary,
+      strengths: report.strengths,
+      developmentAreas: report.developmentAreas,
+      matchesAnalyzed: rating.matchesAnalyzed,
     },
   };
 }
 
+export async function getPlayerComparison(player1, player2) {
+  return apiRequest(`/compare/${player1}/${player2}`);
+}
+
+export async function getMatchAnalysis(matchId) {
+  const [momentum, turningPoints] = await Promise.all([
+    apiRequest(`/match/${matchId}/momentum`),
+    apiRequest(`/match/${matchId}/turning-points`),
+  ]);
+
+  const title = momentum.teams?.length ? momentum.teams.join(" vs ") : `Match ${matchId}`;
+
+  return {
+    matchId,
+    title,
+    teams: momentum.teams || [],
+    momentumBuckets: momentum.buckets || [],
+    turningPoints: turningPoints.turningPoints || [],
+    summary: {
+      totalMomentumWindows: (momentum.buckets || []).length,
+      totalTurningPoints: (turningPoints.turningPoints || []).length,
+      swingMoments: (momentum.buckets || []).filter((bucket) => bucket.swing).length,
+    },
+  };
+}

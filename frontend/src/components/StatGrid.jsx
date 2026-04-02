@@ -5,9 +5,9 @@ export default function StatGrid({ analytics }) {
     ["Dribbling", analytics.attributes.dribbling],
     ["Defending", analytics.attributes.defending],
     ["Creativity", analytics.attributes.creativity],
-    ["Physical", analytics.attributes.physical],
-    ["PPI", analytics.ppi],
-    ["Pressure Index", analytics.pressureIndex],
+    ["Energy", analytics.attributes.physical],
+    ["Match Impact", analytics.ppi],
+    ["Big-game score", analytics.pressureIndex],
   ];
 
   return (

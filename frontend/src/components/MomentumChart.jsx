@@ -1,43 +1,58 @@
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { SHOWCASE_MATCH } from "../config/showcase.js";
+const buildChartData = (analysis) => {
+  const teams = analysis?.teams || [];
+  const buckets = analysis?.momentumBuckets || [];
 
-const data = [
-  { minute: 5, intensity: 24 },
-  { minute: 15, intensity: 48 },
-  { minute: 30, intensity: 34 },
-  { minute: 41, intensity: 61 },
-  { minute: 58, intensity: 50 },
-  { minute: 76, intensity: 83 },
-  { minute: 89, intensity: 68 },
-];
+  return buckets.map((bucket) => {
+    const scores = Array.isArray(bucket.scores)
+      ? Object.fromEntries(bucket.scores.map((entry) => [entry.team, entry.score]))
+      : {};
 
-export default function MomentumChart() {
+    return {
+      label: bucket.label,
+      [teams[0] || "Team A"]: scores[teams[0]] ?? 0,
+      [teams[1] || "Team B"]: scores[teams[1]] ?? 0,
+    };
+  });
+};
+
+export default function MomentumChart({ analysis, title }) {
+  const teams = analysis?.teams || [];
+  const chartData = buildChartData(analysis);
+
   return (
     <div className="panel chart-panel">
       <div className="panel-header">
         <div>
           <p className="eyebrow">Match Flow</p>
           <h2>How the game moved</h2>
-          <p className="summary-copy">{SHOWCASE_MATCH.title}</p>
+          <p className="summary-copy">{title}</p>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="momentumFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#d7b26d" stopOpacity={0.78} />
-              <stop offset="95%" stopColor="#d7b26d" stopOpacity={0.06} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid stroke="rgba(244, 226, 187, 0.08)" vertical={false} />
-          <XAxis dataKey="minute" tick={{ fill: "#eadfbe" }} />
-          <YAxis tick={{ fill: "#eadfbe" }} />
-          <Tooltip />
-          <Area type="monotone" dataKey="intensity" stroke="#d7b26d" fill="url(#momentumFill)" />
-        </AreaChart>
-      </ResponsiveContainer>
+      {chartData.length ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData}>
+            <CartesianGrid stroke="rgba(244, 226, 187, 0.08)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fill: "#eadfbe" }} />
+            <YAxis tick={{ fill: "#eadfbe" }} />
+            <Tooltip
+              contentStyle={{
+                background: "rgba(17, 20, 16, 0.96)",
+                border: "1px solid rgba(244, 226, 187, 0.08)",
+                borderRadius: "14px",
+                color: "#f6ecd2",
+              }}
+            />
+            <Legend />
+            <Line type="monotone" dataKey={teams[0] || "Team A"} stroke="#d7b26d" strokeWidth={3} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey={teams[1] || "Team B"} stroke="#6dc7ff" strokeWidth={3} dot={{ r: 3 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      ) : (
+        <p className="summary-copy">Match flow will appear here when the match data is ready.</p>
+      )}
     </div>
   );
 }

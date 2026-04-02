@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.comparison_engine import compare_players
-from app.services.data_repository import get_dataset_summary, get_match_events, list_players, load_all_events
+from app.services.data_repository import get_dataset_summary, get_match_events, list_matches, list_players, load_all_events
 from app.services.feature_engineering import get_live_feature_snapshot
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
@@ -31,6 +31,12 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         players = list_players()
         indian_players = [player for player in players.players if player.is_indian]
         self.assertGreaterEqual(len(indian_players), 4)
+        self.assertTrue(players.players[0].is_indian)
+
+    def test_match_directory_lists_available_games(self) -> None:
+        matches = list_matches()
+        self.assertGreaterEqual(len(matches.matches), 1)
+        self.assertTrue(matches.matches[0].title)
 
     def test_rating_output_is_bounded(self) -> None:
         rating = get_player_rating("P101")
@@ -123,6 +129,12 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertEqual(payload["matchId"], "ISL-2001")
         self.assertGreaterEqual(len(payload["buckets"]), 1)
         self.assertEqual(len(payload["teams"]), 2)
+
+    def test_matches_endpoint_returns_match_list(self) -> None:
+        response = self.client.get("/matches")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertGreaterEqual(len(payload["matches"]), 1)
 
 
 if __name__ == "__main__":

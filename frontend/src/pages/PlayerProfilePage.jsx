@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { getPlayerProfile } from "../api/client.js";
+import { getPlayerProfile, getPlayers } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import PlayerRadarChart from "../components/PlayerRadarChart.jsx";
@@ -10,7 +10,9 @@ import { SHOWCASE_MATCH } from "../config/showcase.js";
 
 export default function PlayerProfilePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,21 +22,24 @@ export default function PlayerProfilePage() {
     setLoading(true);
     setError("");
 
-    getPlayerProfile(id)
-      .then((payload) => {
+    Promise.allSettled([getPlayerProfile(id), getPlayers()])
+      .then(([profileResult, playersResult]) => {
         if (!active) {
           return;
         }
 
-        setProfile(payload);
-      })
-      .catch((requestError) => {
-        if (!active) {
-          return;
+        if (profileResult.status === "fulfilled") {
+          setProfile(profileResult.value);
+        } else {
+          setProfile(null);
+          setError(profileResult.reason?.message || "This player page is unavailable right now");
         }
 
-        setProfile(null);
-        setError(requestError?.message || "Player analytics service unavailable");
+        if (playersResult.status === "fulfilled") {
+          setPlayers(playersResult.value.players || []);
+        } else {
+          setPlayers([]);
+        }
       })
       .finally(() => {
         if (active) {
@@ -81,6 +86,29 @@ export default function PlayerProfilePage() {
   return (
     <div className="page">
       <PlayerCard player={profile.player} analytics={profile.analytics} />
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Player Switcher</p>
+            <h2>Jump to another player</h2>
+          </div>
+        </div>
+        <div className="selector-row">
+          <select
+            className="selector-input"
+            value={id}
+            onChange={(event) => navigate(`/player/${event.target.value}`)}
+          >
+            {players.map((player) => (
+              <option key={player.playerId} value={player.playerId}>
+                {player.playerName} - {player.team}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
+
       <StatGrid analytics={profile.analytics} />
 
       <section className="page-grid">
@@ -90,10 +118,16 @@ export default function PlayerProfilePage() {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Big Picture</p>
-              <h2>What stood out</h2>
+              <h2>What stands out</h2>
             </div>
           </div>
           <p className="summary-copy">{profile.analytics.summary}</p>
+          {profile.analytics.pressure ? (
+            <div className="detail-note-block">
+              <p><strong>Big-game read:</strong> {profile.analytics.pressure.note}</p>
+              <p><strong>Pressure moments reviewed:</strong> {profile.analytics.pressure.events}</p>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

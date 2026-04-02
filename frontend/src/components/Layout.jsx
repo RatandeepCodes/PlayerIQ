@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
   { label: "Home", to: "/dashboard" },
@@ -10,6 +11,9 @@ const navItems = [
 ];
 
 export default function Layout() {
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
+
   return (
     <div className="shell">
       <header className="site-header">
@@ -29,17 +33,33 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className="top-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
-              to={item.to}
+        <div className="header-bottom-row">
+          <nav className="top-nav">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
+                to={item.to}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="header-actions">
+            <span className="pill">{user?.name || "Football Fan"}</span>
+            <button
+              className="header-signout"
+              type="button"
+              onClick={() => {
+                logout();
+                navigate("/login", { replace: true });
+              }}
             >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+              Sign Out
+            </button>
+          </div>
+        </div>
       </header>
 
       <main className="content">

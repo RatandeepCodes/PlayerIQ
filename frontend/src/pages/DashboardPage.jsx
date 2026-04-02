@@ -19,8 +19,8 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="hero-callout">
-          <span>Indian stars shown first</span>
-          <span>Player stories, not jargon</span>
+          <span>Player stories that feel easy to follow</span>
+          <span>Big moments made simple</span>
           <span>Built for real football fans</span>
         </div>
       </section>
