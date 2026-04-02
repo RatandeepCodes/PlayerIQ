@@ -11,6 +11,7 @@ import {
 } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import MomentumChart from "../components/MomentumChart.jsx";
+import SearchPicker from "../components/SearchPicker.jsx";
 import { SHOWCASE_MATCH, SHOWCASE_PLAYERS } from "../config/showcase.js";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
@@ -51,7 +52,6 @@ export default function MatchAnalysisPage() {
   const [analysis, setAnalysis] = useState(null);
   const [simulation, setSimulation] = useState(null);
   const [matches, setMatches] = useState([]);
-  const [search, setSearch] = useState("");
   const [socketError, setSocketError] = useState("");
   const [loading, setLoading] = useState(true);
   const [controlLoading, setControlLoading] = useState("");
@@ -167,6 +167,10 @@ export default function MatchAnalysisPage() {
     });
 
     socket.on("simulation:error", (payload) => {
+      if (String(payload?.message || "").includes("No simulation session exists")) {
+        return;
+      }
+
       if (!payload?.matchId || payload.matchId === id) {
         setSocketError(payload?.message || "Simulation socket error");
       }
@@ -186,7 +190,11 @@ export default function MatchAnalysisPage() {
     setSocketError("");
 
     try {
-      const session = await startMatchSimulation(id);
+      if (!simulation) {
+        await startMatchSimulation(id);
+      }
+
+      const session = await controlMatchSimulation(id, "start");
       setSimulation(session);
     } catch (requestError) {
       setSocketError(requestError?.message || "Unable to start the simulation.");
@@ -218,11 +226,11 @@ export default function MatchAnalysisPage() {
   const speedOptions = useMemo(() => [0.5, 1, 1.5, 2], []);
   const simulationStatusLabel = simulation?.status || "not started";
   const selectedMatch = matches.find((match) => match.matchId === id);
-  const filteredMatches = matches.filter((match) =>
-    [match.title, match.competition, ...(match.teams || [])]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(search.trim().toLowerCase())),
-  );
+  const matchOptions = matches.map((match) => ({
+    value: match.matchId,
+    label: match.title,
+    meta: match.competition,
+  }));
 
   if (loading) {
     return (
@@ -266,27 +274,17 @@ export default function MatchAnalysisPage() {
         </div>
 
         <div className="entity-selector-row">
-          <label className="comparison-field entity-selector-field">
-            <span>Search</span>
-            <input
-              className="selector-search-input"
-              type="text"
-              placeholder="Search match or competition"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+          <div className="entity-selector-field">
+            <SearchPicker
+              label="Match"
+              value={id}
+              options={matchOptions}
+              onChange={(matchId) => navigate(`/matches/${matchId}`)}
+              placeholder="Choose a match"
+              searchPlaceholder="Search match or competition"
+              emptyMessage="No matches found."
             />
-          </label>
-
-          <label className="comparison-field entity-selector-field">
-            <span>Match</span>
-            <select value={id} onChange={(event) => navigate(`/matches/${event.target.value}`)} disabled={!filteredMatches.length}>
-              {filteredMatches.map((match) => (
-                <option key={match.matchId} value={match.matchId}>
-                  {match.title} - {match.competition}
-                </option>
-              ))}
-            </select>
-          </label>
+          </div>
 
           <div className="entity-selector-actions">
             <Link className="secondary-link" to="/dashboard">
@@ -378,7 +376,7 @@ export default function MatchAnalysisPage() {
 
           {!simulation ? (
             <p className="simulation-helper-copy">
-              Create a live session first, then use the controls below to start, pause, or step through the match.
+              Start a live run to begin the event feed for this match.
             </p>
           ) : null}
 
@@ -390,7 +388,7 @@ export default function MatchAnalysisPage() {
                 onClick={handleStartSimulation}
                 disabled={controlLoading === "start"}
               >
-                {controlLoading === "start" ? "Starting..." : "Create simulation"}
+                {controlLoading === "start" ? "Starting..." : "Start live run"}
               </button>
             ) : (
               simulationControls

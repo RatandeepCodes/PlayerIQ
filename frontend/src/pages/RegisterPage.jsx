@@ -16,9 +16,9 @@ export default function RegisterPage() {
   const isFormValid =
     formData.name.trim().length >= 2 && formData.email.trim().length > 4 && formData.password.trim().length >= 8;
   const highlights = [
-    { label: "Built For Fans", value: "Football-first experience", note: "Simple match and player stories" },
-    { label: "Start With", value: "Indian stars up front", note: "Sunil Chhetri and more in the spotlight" },
-    { label: "Your Space", value: "One account, one matchday hub", note: "Follow, compare, and revisit performances" },
+    { label: "Track", value: "Players and matches" },
+    { label: "Compare", value: "Key performances" },
+    { label: "Follow", value: "Every match day" },
   ];
 
   async function handleSubmit(event) {
@@ -36,14 +36,12 @@ export default function RegisterPage() {
   return (
     <AuthShell
       eyebrow="Get Started"
-      title="Create your football space"
-      subtitle="Save the players you follow, compare stars across matches, and keep a closer eye on every big performance."
+      title="Create account"
+      subtitle="Set up your account and get in."
       highlights={highlights}
-      footer="A PlayerIQ account gives you a personal football home across player pages and match views."
     >
       <p className="eyebrow">Create Account</p>
       <h2 className="auth-form-title">Join PlayerIQ</h2>
-      <p className="auth-panel-copy">Set up your account once and keep every favourite player and match story close by.</p>
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Name
@@ -90,8 +88,7 @@ export default function RegisterPage() {
               </button>
             </div>
           </label>
-          <p className="auth-hint">Use at least 8 characters for a secure sign-in.</p>
-          <p className="auth-helper-text">A name, an email, and a password are all you need to get started.</p>
+          <p className="auth-hint">Use at least 8 characters.</p>
           {error ? <p className="auth-error">{error}</p> : null}
           {errorMeta?.requestId ? <p className="auth-meta">Reference: {errorMeta.requestId}</p> : null}
           <button className="auth-submit" disabled={isLoading || !isFormValid} type="submit">

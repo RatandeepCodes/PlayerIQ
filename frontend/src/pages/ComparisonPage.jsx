@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getPlayerComparison, getPlayers } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import ComparisonRadar from "../components/ComparisonRadar.jsx";
+import SearchPicker from "../components/SearchPicker.jsx";
 import { SHOWCASE_PLAYERS } from "../config/showcase.js";
 
 const defaultSelection = {
@@ -15,7 +16,6 @@ export default function ComparisonPage() {
   const [directory, setDirectory] = useState([]);
   const [selection, setSelection] = useState(defaultSelection);
   const [comparison, setComparison] = useState(null);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [error, setError] = useState("");
@@ -101,18 +101,15 @@ export default function ComparisonPage() {
       ),
     [directory],
   );
-  const filteredDirectory = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      return directory;
-    }
-
-    return directory.filter((player) =>
-      [player.name, player.team, player.position, player.nationality]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query)),
-    );
-  }, [directory, search]);
+  const playerOptions = useMemo(
+    () =>
+      directory.map((player) => ({
+        value: player.playerId,
+        label: player.name,
+        meta: [player.team, player.position].filter(Boolean).join(" · "),
+      })),
+    [directory],
+  );
 
   if (loading && !comparison) {
     return (
@@ -151,31 +148,17 @@ export default function ComparisonPage() {
         </div>
 
         <div className="comparison-selector-grid">
-          <label className="comparison-field comparison-search-field">
-            <span>Search players</span>
-            <input
-              className="selector-search-input"
-              type="text"
-              placeholder="Search by name, club, or position"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-
-          <label className="comparison-field">
-            <span>Player One</span>
-            <select
+          <div className="comparison-field">
+            <SearchPicker
+              label="Player One"
               value={selection.player1}
-              onChange={(event) => setSelection((current) => ({ ...current, player1: event.target.value }))}
-              disabled={!filteredDirectory.length}
-            >
-              {filteredDirectory.map((player) => (
-                <option key={player.playerId} value={player.playerId}>
-                  {player.name} - {player.team}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={playerOptions}
+              onChange={(playerId) => setSelection((current) => ({ ...current, player1: playerId }))}
+              placeholder="Choose player one"
+              searchPlaceholder="Search player, club, or position"
+              emptyMessage="No players found."
+            />
+          </div>
 
           <button
             className="comparison-swap"
@@ -186,20 +169,17 @@ export default function ComparisonPage() {
             Swap
           </button>
 
-          <label className="comparison-field">
-            <span>Player Two</span>
-            <select
+          <div className="comparison-field">
+            <SearchPicker
+              label="Player Two"
               value={selection.player2}
-              onChange={(event) => setSelection((current) => ({ ...current, player2: event.target.value }))}
-              disabled={!filteredDirectory.length}
-            >
-              {filteredDirectory.map((player) => (
-                <option key={player.playerId} value={player.playerId}>
-                  {player.name} - {player.team}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={playerOptions}
+              onChange={(playerId) => setSelection((current) => ({ ...current, player2: playerId }))}
+              placeholder="Choose player two"
+              searchPlaceholder="Search player, club, or position"
+              emptyMessage="No players found."
+            />
+          </div>
         </div>
 
         {error ? <p className="auth-error comparison-inline-error">{error}</p> : null}

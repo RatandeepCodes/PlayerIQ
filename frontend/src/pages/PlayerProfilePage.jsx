@@ -6,6 +6,7 @@ import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import PlayerHistoryChart from "../components/PlayerHistoryChart.jsx";
 import PlayerRadarChart from "../components/PlayerRadarChart.jsx";
+import SearchPicker from "../components/SearchPicker.jsx";
 import StatGrid from "../components/StatGrid.jsx";
 import { SHOWCASE_MATCH } from "../config/showcase.js";
 
@@ -20,7 +21,6 @@ export default function PlayerProfilePage() {
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState(null);
   const [directory, setDirectory] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -148,11 +148,11 @@ export default function PlayerProfilePage() {
       ? "The main ratings are in place, and PlayerIQ is still enriching the story around the player."
       : "This player page is live, but the deeper numbers still need more match events before they become meaningful.");
   const selectedPlayerId = profile?.player?.playerId || id;
-  const filteredDirectory = directory.filter((player) =>
-    [player.name, player.team, player.position, player.nationality]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(search.trim().toLowerCase())),
-  );
+  const playerOptions = directory.map((player) => ({
+    value: player.playerId,
+    label: player.name,
+    meta: [player.team, player.position].filter(Boolean).join(" · "),
+  }));
 
   return (
     <div className="page profile-page">
@@ -165,31 +165,17 @@ export default function PlayerProfilePage() {
         </div>
 
         <div className="entity-selector-row">
-          <label className="comparison-field entity-selector-field">
-            <span>Search</span>
-            <input
-              className="selector-search-input"
-              type="text"
-              placeholder="Search player, club, or position"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
-
-          <label className="comparison-field entity-selector-field">
-            <span>Player</span>
-            <select
+          <div className="entity-selector-field">
+            <SearchPicker
+              label="Player"
               value={selectedPlayerId}
-              onChange={(event) => navigate(`/player/${event.target.value}`)}
-              disabled={!filteredDirectory.length}
-            >
-              {filteredDirectory.map((player) => (
-                <option key={player.playerId} value={player.playerId}>
-                  {player.name} - {player.team}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={playerOptions}
+              onChange={(playerId) => navigate(`/player/${playerId}`)}
+              placeholder="Choose a player"
+              searchPlaceholder="Search player, club, or position"
+              emptyMessage="No players found."
+            />
+          </div>
 
           <div className="entity-selector-actions">
             <Link className="secondary-link" to="/compare">

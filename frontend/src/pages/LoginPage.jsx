@@ -17,9 +17,9 @@ export default function LoginPage() {
   const targetPath = location.state?.from || "/dashboard";
   const isFormValid = formData.email.trim().length > 4 && formData.password.trim().length >= 8;
   const highlights = [
-    { label: "Featured Star", value: "Sunil Chhetri", note: "Front and centre in the current fan view" },
-    { label: "Big Match", value: "Bengaluru FC vs Kerala Blasters", note: "Ready to explore on Match Day" },
-    { label: "What You Get", value: "Player stories and live match feel", note: "Built for football fans, not just data people" },
+    { label: "Players", value: "Profiles and form" },
+    { label: "Matches", value: "Live match centre" },
+    { label: "Compare", value: "Side-by-side view" },
   ];
 
   async function handleSubmit(event) {
@@ -37,15 +37,13 @@ export default function LoginPage() {
   return (
     <AuthShell
       eyebrow="Welcome Back"
-      title="Sign in and step back into the game"
-      subtitle="Follow favourite players, revisit standout performances, and keep your football world in one place."
+      title="Sign in"
+      subtitle="Pick up where you left off."
       highlights={highlights}
-      footer="Tip: press Enter after filling your details to sign in quickly."
     >
       <p className="eyebrow">Sign In</p>
-      <h2 className="auth-form-title">Access your football space</h2>
-      <p className="auth-panel-copy">Pick up from where you left off and jump straight into the players and matches you care about.</p>
-        {location.state?.from ? <p className="auth-hint">Sign in to continue where you left off.</p> : null}
+      <h2 className="auth-form-title">Access PlayerIQ</h2>
+      {location.state?.from ? <p className="auth-hint">Continue to your page.</p> : null}
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Email
@@ -80,7 +78,6 @@ export default function LoginPage() {
               </button>
             </div>
           </label>
-          <p className="auth-helper-text">Use the same email and password you used when joining PlayerIQ.</p>
           {error ? <p className="auth-error">{error}</p> : null}
           {errorMeta?.requestId ? <p className="auth-meta">Reference: {errorMeta.requestId}</p> : null}
           <button className="auth-submit" disabled={isLoading || !isFormValid} type="submit">

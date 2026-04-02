@@ -8,18 +8,36 @@ import {
   saveTurningPointsCache,
 } from "./analytics-cache.service.js";
 
-const toMinuteRangeLabel = (bucket) => `${bucket.startMinute}'-${bucket.endMinute}'`;
+const normalizeBucketScores = (scores = []) => {
+  if (Array.isArray(scores)) {
+    return Object.fromEntries(scores.map((entry) => [entry.team, Number(entry.score || 0)]));
+  }
+
+  return Object.fromEntries(
+    Object.entries(scores || {}).map(([team, score]) => [team, Number(score || 0)]),
+  );
+};
+
+const toMinuteRangeLabel = (bucket) =>
+  `${bucket.bucketStart ?? bucket.startMinute ?? 0}'-${bucket.bucketEnd ?? bucket.endMinute ?? 0}'`;
 
 export const buildMomentumEnvelope = (matchId, momentum) => {
   const buckets = (momentum.buckets || []).map((bucket) => ({
-    ...bucket,
-    label: toMinuteRangeLabel(bucket),
+    bucketStart: bucket.bucketStart ?? bucket.startMinute ?? 0,
+    bucketEnd: bucket.bucketEnd ?? bucket.endMinute ?? 0,
+    label: bucket.label || toMinuteRangeLabel(bucket),
+    minuteMark: bucket.minuteMark ?? bucket.minute_mark ?? bucket.bucketStart ?? 0,
+    scores: normalizeBucketScores(bucket.scores),
+    leadingTeam: bucket.leadingTeam ?? bucket.leading_team ?? null,
+    isSwing: Boolean(bucket.isSwing ?? bucket.swing),
+    swingMagnitude: Number(bucket.swingMagnitude ?? bucket.swing_magnitude ?? 0),
+    note: bucket.note ?? null,
   }));
 
   const swings = buckets.filter((bucket) => bucket.isSwing);
   const peakBucket = buckets.reduce((peak, bucket) => {
-    const peakScore = peak ? Math.max(...Object.values(peak.scores || {})) : -1;
-    const bucketScore = Math.max(...Object.values(bucket.scores || {}));
+    const peakScore = peak ? Math.max(...Object.values(peak.scores || { default: -1 })) : -1;
+    const bucketScore = Math.max(...Object.values(bucket.scores || { default: -1 }));
     return bucketScore > peakScore ? bucket : peak;
   }, null);
 

@@ -5,17 +5,19 @@ export default function AuthShell({ eyebrow, title, subtitle, highlights, childr
         <aside className="auth-showcase">
           <p className="eyebrow">{eyebrow}</p>
           <h1>{title}</h1>
-          <p className="auth-subcopy">{subtitle}</p>
+          {subtitle ? <p className="auth-subcopy">{subtitle}</p> : null}
 
-          <div className="auth-highlights">
-            {highlights.map((highlight) => (
-              <article key={highlight.label} className="auth-highlight-card">
-                <span className="auth-highlight-label">{highlight.label}</span>
-                <strong>{highlight.value}</strong>
-                <small>{highlight.note}</small>
-              </article>
-            ))}
-          </div>
+          {highlights?.length ? (
+            <div className="auth-highlights">
+              {highlights.map((highlight) => (
+                <article key={highlight.label} className="auth-highlight-card">
+                  <span className="auth-highlight-label">{highlight.label}</span>
+                  <strong>{highlight.value}</strong>
+                  {highlight.note ? <small>{highlight.note}</small> : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
         </aside>
 
         <div className="auth-panel-wrap">

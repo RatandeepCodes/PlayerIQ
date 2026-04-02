@@ -130,6 +130,10 @@ export const createSimulationSocketRuntime = (
 
     socket.on("simulation:sync", ({ matchId }) => {
       try {
+        if (!dependencies.hasSimulationSession(matchId)) {
+          return;
+        }
+
         socket.emit("simulation:state", dependencies.getSimulationSessionState(matchId));
       } catch (error) {
         emitError(socket, matchId, error);
