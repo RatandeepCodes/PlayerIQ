@@ -4,7 +4,14 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.comparison_engine import compare_players
-from app.services.data_repository import get_dataset_summary, get_match_events, list_players, load_all_events
+from app.services.data_repository import (
+    get_dataset_health,
+    get_dataset_summary,
+    get_match_events,
+    get_source_file_status,
+    list_players,
+    load_all_events,
+)
 from app.services.feature_engineering import get_live_feature_snapshot
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
@@ -26,6 +33,13 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertGreater(summary.indian_players, 0)
         self.assertIn("kaggle_indian_players", summary.sources)
         self.assertIn("statsbomb_open_data", summary.sources)
+
+    def test_dataset_health_reports_source_status(self) -> None:
+        health = get_dataset_health()
+        source_status = get_source_file_status()
+        self.assertIn(health["status"], {"ok", "degraded"})
+        self.assertEqual(sorted(health["sources"]["available_sources"]), sorted(source_status["available_sources"]))
+        self.assertIsNotNone(health["dataset"])
 
     def test_player_directory_flags_indian_players(self) -> None:
         players = list_players()
@@ -60,6 +74,7 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         report = generate_player_summary("P102")
         self.assertIn("kaggle_indian_players", report.summary)
         self.assertEqual(len(report.strengths), 3)
+        self.assertIn("PPI", report.summary)
 
     def test_turning_points_return_records(self) -> None:
         turning_points = detect_turning_points("ISL-2001")
@@ -110,6 +125,15 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         response = self.client.get("/rating/UNKNOWN")
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["detail"], "Player 'UNKNOWN' not found in analytics dataset")
+
+    def test_health_endpoint_returns_dataset_context(self) -> None:
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn(payload["status"], {"ok", "degraded"})
+        self.assertEqual(payload["service"], "playeriq-ai-service")
+        self.assertIn("sources", payload)
+        self.assertIn("warnings", payload)
 
     def test_simulation_endpoint_does_not_mix_extra_teams(self) -> None:
         response = self.client.post("/simulate/match/SB-1001")

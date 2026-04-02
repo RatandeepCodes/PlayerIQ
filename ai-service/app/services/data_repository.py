@@ -110,8 +110,33 @@ def _read_source_csv(source_name: str, source_file: Path) -> pd.DataFrame:
 
 
 @lru_cache(maxsize=1)
+def get_source_file_status() -> dict:
+    available_sources: list[str] = []
+    missing_sources: list[str] = []
+
+    for source_name, source_file in SOURCE_FILES.items():
+        if source_file.exists():
+            available_sources.append(source_name)
+        else:
+            missing_sources.append(source_name)
+
+    return {
+        "available_sources": sorted(available_sources),
+        "missing_sources": sorted(missing_sources),
+        "configured_sources": sorted(SOURCE_FILES.keys()),
+        "data_path": str(settings.data_path),
+    }
+
+
+@lru_cache(maxsize=1)
 def load_all_events() -> pd.DataFrame:
-    frames = [_read_source_csv(source_name, source_file) for source_name, source_file in SOURCE_FILES.items()]
+    frames = [
+        _read_source_csv(source_name, source_file)
+        for source_name, source_file in SOURCE_FILES.items()
+        if source_file.exists()
+    ]
+    if not frames:
+        raise RuntimeError(f"No source event files are available under {settings.data_path}")
     return pd.concat(frames, ignore_index=True)
 
 
@@ -160,6 +185,31 @@ def get_dataset_summary() -> DatasetSummaryResponse:
         competitions=sorted(events["competition"].unique().tolist()),
         sources=sorted(events["source"].unique().tolist()),
     )
+
+
+def get_dataset_health() -> dict:
+    source_status = get_source_file_status()
+
+    try:
+        summary = get_dataset_summary()
+        warnings: list[str] = []
+        if source_status["missing_sources"]:
+            warnings.append("One or more configured data sources are missing from disk.")
+
+        status = "ok" if not warnings else "degraded"
+        return {
+            "status": status,
+            "dataset": summary.model_dump(by_alias=True),
+            "sources": source_status,
+            "warnings": warnings,
+        }
+    except RuntimeError as error:
+        return {
+            "status": "offline",
+            "dataset": None,
+            "sources": source_status,
+            "warnings": [str(error)],
+        }
 
 
 def list_players() -> PlayerListResponse:
