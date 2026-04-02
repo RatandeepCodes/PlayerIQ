@@ -6,5 +6,15 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          routerVendor: ["react-router-dom"],
+          chartVendor: ["recharts"],
+          realtimeVendor: ["socket.io-client"],
+        },
+      },
+    },
+  },
 });
-
