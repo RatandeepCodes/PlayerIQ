@@ -91,35 +91,46 @@ const mapAiDirectoryPlayer = (player) => ({
   },
 });
 
-const applyDirectoryFilters = (players, { team, nationality, limit }) => {
+const mergeDirectoryPlayers = (players = []) =>
+  [...new Map(players.map((player) => [player.playerId, player])).values()];
+
+const applyDirectoryFilters = (players, { team, nationality, limit, search }) => {
   const normalizedNationality = nationality?.trim().toLowerCase();
+  const normalizedSearch = search?.trim().toLowerCase();
   return normalizePlayerCollection(
     players.filter((player) => {
       const matchesTeam = team ? player.team === team : true;
       const matchesNationality = normalizedNationality
         ? String(player.nationality || "").toLowerCase() === normalizedNationality
         : true;
-      return matchesTeam && matchesNationality;
+      const matchesSearch = normalizedSearch
+        ? [player.name, player.team, player.position, player.nationality]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+        : true;
+      return matchesTeam && matchesNationality && matchesSearch;
     }),
   ).slice(0, Number(limit) || 50);
 };
 
-export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}) => {
+export const getStoredPlayerDirectory = async ({ team, nationality, limit, search } = {}) => {
   const storedPlayers = await listStoredPlayers({ team, nationality, limit });
   let players = normalizePlayerCollection(storedPlayers);
   let source = "database";
 
-  if (!players.length) {
-    try {
-      const aiDirectory = await fetchPlayerDirectory();
-      const aiPlayers = (aiDirectory.players || []).map(mapAiDirectoryPlayer);
-      players = applyDirectoryFilters(aiPlayers, { team, nationality, limit });
-      source = "ai-service";
-    } catch (_error) {
-      players = applyDirectoryFilters(SHOWCASE_DIRECTORY, { team, nationality, limit });
+  try {
+    const aiDirectory = await fetchPlayerDirectory();
+    const aiPlayers = (aiDirectory.players || []).map(mapAiDirectoryPlayer);
+    players = mergeDirectoryPlayers([...players, ...aiPlayers]);
+    source = players.length ? "database+ai-service" : "ai-service";
+  } catch (_error) {
+    if (!players.length) {
+      players = SHOWCASE_DIRECTORY;
       source = "showcase";
     }
   }
+
+  players = applyDirectoryFilters(players, { team, nationality, limit, search });
 
   return {
     players,
@@ -130,6 +141,7 @@ export const getStoredPlayerDirectory = async ({ team, nationality, limit } = {}
       filters: {
         team: team || null,
         nationality: nationality || null,
+        search: search || null,
         limit: Number(limit) || 50,
       },
     },

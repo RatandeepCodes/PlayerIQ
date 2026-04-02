@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import {
   controlMatchSimulation,
   getMatchAnalysis,
+  getMatches,
   getMatchSimulation,
   startMatchSimulation,
 } from "../api/client.js";
@@ -46,12 +47,37 @@ const formatFeedDetail = (event) =>
 
 export default function MatchAnalysisPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [matches, setMatches] = useState([]);
   const [analysis, setAnalysis] = useState(null);
   const [simulation, setSimulation] = useState(null);
   const [socketError, setSocketError] = useState("");
   const [loading, setLoading] = useState(true);
   const [controlLoading, setControlLoading] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadMatches = async () => {
+      try {
+        const response = await getMatches();
+        if (active) {
+          setMatches(response.matches || []);
+        }
+      } catch (_error) {
+        if (active) {
+          setMatches([]);
+        }
+      }
+    };
+
+    loadMatches();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -180,7 +206,8 @@ export default function MatchAnalysisPage() {
 
   const simulationControls = simulation?.controls || ["start", "step", "reset", "speed"];
   const teams = analysis?.overview?.teams || analysis?.teams || simulation?.teams || [];
-  const title = teams.length ? teams.join(" vs ") : fallbackMatchTitle(id);
+  const selectedMatch = matches.find((match) => match.matchId === id);
+  const title = teams.length ? teams.join(" vs ") : selectedMatch?.title || fallbackMatchTitle(id);
   const turningPoints = analysis?.turningPointList || [];
   const peakWindow = analysis?.momentum?.summary?.peakWindow;
   const recentEvents = simulation?.recentEvents || [];
@@ -220,6 +247,36 @@ export default function MatchAnalysisPage() {
 
   return (
     <div className="page match-analysis-page">
+      <section className="panel comparison-selector-panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Match Directory</p>
+            <h2>Switch the match story</h2>
+          </div>
+        </div>
+
+        <div className="comparison-selector-grid match-selector-grid">
+          <label className="comparison-field">
+            <span>Match</span>
+            <select
+              value={id}
+              onChange={(event) => navigate(`/matches/${event.target.value}`)}
+              disabled={!matches.length}
+            >
+              {matches.map((match) => (
+                <option key={match.matchId} value={match.matchId}>
+                  {match.title} - {match.competition}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <Link className="secondary-link" to={`/player/${SHOWCASE_PLAYERS.featured.id}`}>
+            Open player page
+          </Link>
+        </div>
+      </section>
+
       <section className="match-hero-grid">
         <article className="panel match-hero-copy">
           <div className="panel-header">
@@ -227,7 +284,7 @@ export default function MatchAnalysisPage() {
               <p className="eyebrow">Match Day</p>
               <h2>{title}</h2>
             </div>
-            <div className="live-pill">{SHOWCASE_MATCH.competition}</div>
+            <div className="live-pill">{selectedMatch?.competition || SHOWCASE_MATCH.competition}</div>
           </div>
 
           <p className="summary-copy">

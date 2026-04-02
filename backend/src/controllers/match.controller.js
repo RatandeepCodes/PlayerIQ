@@ -1,5 +1,6 @@
 import {
   getMatchAnalysisData,
+  getMatchDirectoryData,
   getMatchMomentumData,
   getMatchTurningPointsData,
 } from "../services/match-analysis.service.js";
@@ -13,6 +14,15 @@ export const getMatchAnalysis = async (req, res, next) => {
   try {
     const analysis = await getMatchAnalysisData(req.params.id);
     res.json(analysis);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listMatches = async (_req, res, next) => {
+  try {
+    const directory = await getMatchDirectoryData();
+    res.json(directory);
   } catch (error) {
     next(error);
   }

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.analytics import (
     CompareResponse,
     DatasetSummaryResponse,
+    MatchListResponse,
     MatchMomentumResponse,
     PlaystyleResponse,
     PlayerListResponse,
@@ -12,7 +13,7 @@ from app.schemas.analytics import (
     SimulationResponse,
     TurningPointResponse,
 )
-from app.services.data_repository import get_dataset_summary, list_players
+from app.services.data_repository import get_dataset_summary, list_matches, list_players
 from app.services.comparison_engine import compare_players
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
@@ -33,6 +34,11 @@ def dataset_summary() -> DatasetSummaryResponse:
 @router.get("/players", response_model=PlayerListResponse)
 def players() -> PlayerListResponse:
     return list_players()
+
+
+@router.get("/matches", response_model=MatchListResponse)
+def matches() -> MatchListResponse:
+    return list_matches()
 
 
 @router.get("/rating/{player_id}", response_model=RatingResponse)

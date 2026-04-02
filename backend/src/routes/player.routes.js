@@ -30,6 +30,7 @@ router.get(
     query("limit").optional().isInt({ min: 1, max: 100 }).withMessage("limit must be between 1 and 100"),
     query("team").optional().trim(),
     query("nationality").optional().trim(),
+    query("search").optional().trim(),
     validateRequest,
   ],
   listPlayers,

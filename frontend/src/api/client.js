@@ -105,6 +105,10 @@ export async function getPlayers(params = {}) {
   return apiRequest(`/player${query ? `?${query}` : ""}`);
 }
 
+export async function getMatches() {
+  return apiRequest("/matches");
+}
+
 export async function getMatchAnalysis(matchId) {
   return apiRequest(`/matches/${matchId}/analysis`);
 }

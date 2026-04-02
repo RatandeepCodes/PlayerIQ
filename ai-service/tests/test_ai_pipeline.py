@@ -9,6 +9,7 @@ from app.services.data_repository import (
     get_dataset_summary,
     get_match_events,
     get_source_file_status,
+    list_matches,
     list_players,
     load_all_events,
 )
@@ -46,6 +47,11 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         indian_players = [player for player in players.players if player.is_indian]
         self.assertGreaterEqual(len(indian_players), 4)
         self.assertTrue(players.players[0].is_indian)
+
+    def test_match_directory_exposes_match_choices(self) -> None:
+        matches = list_matches()
+        self.assertGreaterEqual(len(matches.matches), 1)
+        self.assertTrue(any("vs" in match.title for match in matches.matches))
 
     def test_rating_output_is_bounded(self) -> None:
         rating = get_player_rating("P101")

@@ -1039,6 +1039,11 @@ input {
   align-items: end;
 }
 
+.profile-selector-grid,
+.match-selector-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .comparison-field {
   display: grid;
   gap: 8px;

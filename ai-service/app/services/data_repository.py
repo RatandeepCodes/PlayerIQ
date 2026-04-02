@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from app.core.config import settings
-from app.schemas.analytics import DatasetSummaryResponse, PlayerListItem, PlayerListResponse
+from app.schemas.analytics import DatasetSummaryResponse, MatchListItem, MatchListResponse, PlayerListItem, PlayerListResponse
 
 REQUIRED_EVENT_COLUMNS = [
     "source",
@@ -227,3 +227,42 @@ def list_players() -> PlayerListResponse:
         for row in directory.itertuples(index=False)
     ]
     return PlayerListResponse(players=players)
+
+
+def list_matches() -> MatchListResponse:
+    events = load_all_events()
+    grouped = (
+        events.groupby("match_id")
+        .agg(
+            competition=("competition", "last"),
+            season=("season", "last"),
+            teams=("team", lambda values: sorted({value for value in values if value})),
+            opponents=("opponent", lambda values: sorted({value for value in values if value})),
+            sources=("source", lambda values: sorted(set(values))),
+        )
+        .reset_index()
+    )
+
+    matches = []
+    for row in grouped.itertuples(index=False):
+        teams = sorted({*row.teams, *row.opponents})
+        if len(teams) >= 2:
+            title = f"{teams[0]} vs {teams[1]}"
+        elif teams:
+            title = teams[0]
+        else:
+            title = str(row.match_id)
+
+        matches.append(
+            MatchListItem(
+                match_id=str(row.match_id),
+                title=title,
+                competition=str(row.competition),
+                season=str(row.season),
+                teams=list(teams),
+                sources=list(row.sources),
+            )
+        )
+
+    matches.sort(key=lambda item: (item.competition, item.title, item.match_id))
+    return MatchListResponse(matches=matches)

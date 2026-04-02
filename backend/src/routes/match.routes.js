@@ -4,6 +4,7 @@ import { body, param } from "express-validator";
 import {
   controlMatchSimulation,
   getMatchAnalysis,
+  listMatches,
   getMatchMomentum,
   getMatchSimulation,
   getMatchTurningPoints,
@@ -27,6 +28,7 @@ const simulationControlValidation = [
   validateRequest,
 ];
 
+router.get("/", requireAuth, listMatches);
 router.get("/:id/analysis", requireAuth, matchIdValidation, getMatchAnalysis);
 router.get("/:id/momentum", requireAuth, matchIdValidation, getMatchMomentum);
 router.get("/:id/turning-points", requireAuth, matchIdValidation, getMatchTurningPoints);

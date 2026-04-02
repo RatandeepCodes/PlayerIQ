@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { getPlayerHistory, getPlayerProfile } from "../api/client.js";
+import { getPlayerHistory, getPlayerProfile, getPlayers } from "../api/client.js";
 import AppStatusScreen from "../components/AppStatusScreen.jsx";
 import PlayerCard from "../components/PlayerCard.jsx";
 import PlayerHistoryChart from "../components/PlayerHistoryChart.jsx";
@@ -16,10 +16,35 @@ const hasValue = (value) => value !== null && value !== undefined && value !== "
 
 export default function PlayerProfilePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [directory, setDirectory] = useState([]);
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadDirectory = async () => {
+      try {
+        const response = await getPlayers({ limit: 50 });
+        if (active) {
+          setDirectory(response.players || []);
+        }
+      } catch (_error) {
+        if (active) {
+          setDirectory([]);
+        }
+      }
+    };
+
+    loadDirectory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -120,6 +145,36 @@ export default function PlayerProfilePage() {
 
   return (
     <div className="page profile-page">
+      <section className="panel comparison-selector-panel">
+        <div className="panel-header">
+          <div>
+            <p className="eyebrow">Player Directory</p>
+            <h2>Switch the player view</h2>
+          </div>
+        </div>
+
+        <div className="comparison-selector-grid profile-selector-grid">
+          <label className="comparison-field">
+            <span>Player</span>
+            <select
+              value={id}
+              onChange={(event) => navigate(`/player/${event.target.value}`)}
+              disabled={!directory.length}
+            >
+              {directory.map((player) => (
+                <option key={player.playerId} value={player.playerId}>
+                  {player.name} - {player.team}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <Link className="secondary-link" to="/compare">
+            Compare this player
+          </Link>
+        </div>
+      </section>
+
       <PlayerCard player={profile.player} analytics={profile.analytics} />
 
       <section className="profile-overview-grid">

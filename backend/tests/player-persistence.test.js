@@ -69,6 +69,20 @@ describe("Player persistence routes", () => {
     assert.equal(payload.players[0].nationality, "India");
   });
 
+  it("supports lightweight player directory search", async () => {
+    const response = await fetch(`${baseUrl}/api/player?limit=10&search=Sunil`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.ok(payload.players.length >= 1);
+    assert.equal(payload.metadata.filters.search, "Sunil");
+    assert.ok(payload.players.some((player) => player.name.includes("Sunil")));
+  });
+
   it("returns empty player history when the database is unavailable", async () => {
     const response = await fetch(`${baseUrl}/api/player/P101/history`, {
       headers: {
