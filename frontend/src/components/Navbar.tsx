@@ -1,22 +1,25 @@
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { motion } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+
+import { useAuth } from "@/context/AuthContext.jsx";
 
 const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/player', label: 'Player Profile' },
-  { to: '/compare', label: 'Compare Players' },
-  { to: '/matches', label: 'Match Day' },
+  { to: "/", label: "Home" },
+  { to: "/player", label: "Player Profile" },
+  { to: "/compare", label: "Compare Players" },
+  { to: "/matches", label: "Match Day" },
 ];
 
 const Navbar = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
 
   const isActiveLink = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
+    if (path === "/") {
+      return location.pathname === "/";
     }
 
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -27,44 +30,59 @@ const Navbar = () => {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-0 left-0 right-0 z-50 glass"
+      className="glass fixed left-0 right-0 top-0 z-50"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           <Link to="/" className="font-display text-2xl tracking-widest text-foreground">
             PlayerIQ
           </Link>
 
-          {/* Desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
               const isActive = isActiveLink(link.to);
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`relative px-4 py-2 text-sm font-body font-medium rounded-full transition-all duration-300 ${
+                  className={`relative rounded-full px-4 py-2 text-sm font-body font-medium transition-all duration-300 ${
                     isActive
-                      ? 'bg-foreground text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                      ? "bg-foreground text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
                   {link.label}
                 </Link>
               );
             })}
-            <Link
-              to="/login"
-              className="ml-4 px-5 py-2 text-sm font-body font-medium rounded-full border border-border text-foreground hover:bg-accent transition-all duration-300"
-            >
-              Sign In
-            </Link>
+
+            {isAuthenticated ? (
+              <div className="ml-4 flex items-center gap-3">
+                <span className="hidden text-xs font-body uppercase tracking-[0.2em] text-muted-foreground lg:block">
+                  {user?.name || "Analyst"}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-full border border-border px-5 py-2 text-sm font-body font-medium text-foreground transition-all duration-300 hover:bg-accent"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="ml-4 rounded-full border border-border px-5 py-2 text-sm font-body font-medium text-foreground transition-all duration-300 hover:bg-accent"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
 
-          {/* Mobile toggle */}
           <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden text-foreground p-2"
+            type="button"
+            onClick={() => setMobileOpen((current) => !current)}
+            className="p-2 text-foreground md:hidden"
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -72,34 +90,47 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
+      {mobileOpen ? (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:hidden glass border-t border-border"
+          className="glass border-t border-border md:hidden"
         >
-          <div className="px-4 py-4 space-y-2">
+          <div className="space-y-2 px-4 py-4">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2 text-sm font-body text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-colors"
+                className="block rounded-lg px-4 py-2 text-sm font-body text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 {link.label}
               </Link>
             ))}
-            <Link
-              to="/login"
-              onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2 text-sm font-body text-foreground border border-border rounded-lg text-center mt-2 hover:bg-accent transition-colors"
-            >
-              Sign In
-            </Link>
+
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setMobileOpen(false);
+                }}
+                className="mt-2 block w-full rounded-lg border border-border px-4 py-2 text-center text-sm font-body text-foreground transition-colors hover:bg-accent"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="mt-2 block rounded-lg border border-border px-4 py-2 text-center text-sm font-body text-foreground transition-colors hover:bg-accent"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </motion.div>
-      )}
+      ) : null}
     </motion.nav>
   );
 };
