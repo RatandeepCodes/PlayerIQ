@@ -1,62 +1,255 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Brain, Shield, Target, Zap } from "lucide-react";
 
+import { getPlayerHistory, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
 import FormChart from "@/components/FormChart";
 import Navbar from "@/components/Navbar";
 import RadarChartComponent from "@/components/RadarChart";
 import SearchableSelect from "@/components/SearchableSelect";
 import SectionHeader from "@/components/SectionHeader";
-import { players } from "@/data/mockData";
+import { players as fallbackPlayers } from "@/data/mockData";
 
-const defaultPlayer = players[0];
+type DirectoryPlayer = {
+  playerId: string;
+  name: string;
+  team?: string;
+  position?: string;
+  nationality?: string;
+};
+
+type ProfileSnapshot = {
+  overallRating?: number | null;
+  ppi?: number | null;
+};
+
+const defaultFallbackPlayer = fallbackPlayers[0];
+
+const buildPlaceholderPlayer = (playerId: string) => ({
+  id: playerId,
+  name: "Loading player",
+  club: "Loading club",
+  nationality: "Loading nationality",
+  position: "Profile",
+  age: defaultFallbackPlayer.age,
+  rating: defaultFallbackPlayer.rating,
+  attributes: defaultFallbackPlayer.attributes,
+  recentForm: defaultFallbackPlayer.recentForm,
+  strengths: defaultFallbackPlayer.strengths,
+  growthAreas: defaultFallbackPlayer.growthAreas,
+  playstyle: "Profile details are loading from PlayerIQ.",
+  summary: "PlayerIQ is preparing this player profile.",
+  pressureRating: defaultFallbackPlayer.pressureRating,
+});
+
+const mapProfileToDisplayPlayer = ({
+  playerId,
+  directoryPlayer,
+  profile,
+  snapshots,
+}: {
+  playerId: string;
+  directoryPlayer?: DirectoryPlayer | null;
+  profile?: any;
+  snapshots?: ProfileSnapshot[];
+}) => {
+  const fallbackByName =
+    fallbackPlayers.find(
+      (candidate) =>
+        candidate.name.toLowerCase() === String(profile?.player?.name || directoryPlayer?.name || "").toLowerCase(),
+    ) || defaultFallbackPlayer;
+
+  const attributes = profile?.analytics?.attributes || {};
+  const pressurePayload = profile?.analytics?.pressure || {};
+  const historySeries =
+    snapshots && snapshots.length
+      ? snapshots
+          .map((snapshot) => {
+            const sourceValue = snapshot.overallRating ?? snapshot.ppi ?? null;
+            if (sourceValue === null || sourceValue === undefined) {
+              return null;
+            }
+
+            return Math.max(6, Math.min(10, Number(sourceValue) / 10));
+          })
+          .filter(Boolean)
+      : [];
+
+  return {
+    ...fallbackByName,
+    id: profile?.player?.playerId || directoryPlayer?.playerId || playerId,
+    name: profile?.player?.name || directoryPlayer?.name || fallbackByName.name,
+    club: profile?.player?.team || directoryPlayer?.team || fallbackByName.club,
+    nationality: profile?.player?.nationality || directoryPlayer?.nationality || fallbackByName.nationality,
+    position: profile?.player?.position || directoryPlayer?.position || fallbackByName.position,
+    rating: profile?.overview?.overallRating ?? fallbackByName.rating,
+    summary: profile?.overview?.reportSummary || fallbackByName.summary,
+    playstyle:
+      profile?.analytics?.playstyleProfile?.name ||
+      profile?.overview?.playstyle ||
+      fallbackByName.playstyle,
+    pressureRating:
+      pressurePayload?.pressureScore ??
+      (profile?.overview?.pressureIndex !== null && profile?.overview?.pressureIndex !== undefined
+        ? Math.round(Number(profile.overview.pressureIndex) * 100)
+        : fallbackByName.pressureRating),
+    strengths:
+      profile?.analytics?.report?.strengths?.length > 0
+        ? profile.analytics.report.strengths
+        : fallbackByName.strengths,
+    growthAreas:
+      profile?.analytics?.report?.developmentAreas?.length > 0
+        ? profile.analytics.report.developmentAreas
+        : fallbackByName.growthAreas,
+    attributes: {
+      shooting: attributes.shooting ?? fallbackByName.attributes.shooting,
+      passing: attributes.passing ?? fallbackByName.attributes.passing,
+      dribbling: attributes.dribbling ?? fallbackByName.attributes.dribbling,
+      defending: attributes.defending ?? fallbackByName.attributes.defending,
+      creativity: attributes.creativity ?? fallbackByName.attributes.pace,
+      physical: attributes.physical ?? fallbackByName.attributes.physical,
+    },
+    recentForm: historySeries.length ? historySeries : fallbackByName.recentForm,
+  };
+};
 
 const PlayerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [directoryPlayers, setDirectoryPlayers] = useState<DirectoryPlayer[]>([]);
+  const [profilePayload, setProfilePayload] = useState<any>(null);
+  const [historyPayload, setHistoryPayload] = useState<{ snapshots?: ProfileSnapshot[] } | null>(null);
 
-  const player = useMemo(
-    () => players.find((candidate) => candidate.id === id) || defaultPlayer,
-    [id],
-  );
+  useEffect(() => {
+    let active = true;
+
+    const loadDirectory = async () => {
+      try {
+        const response = await getPlayers({ limit: 50 });
+        if (!active) {
+          return;
+        }
+
+        const livePlayers = response.players || [];
+        setDirectoryPlayers(livePlayers);
+
+        if (!id && livePlayers[0]?.playerId) {
+          navigate(`/player/${livePlayers[0].playerId}`, { replace: true });
+        }
+      } catch (_error) {
+        if (!active) {
+          return;
+        }
+
+        setDirectoryPlayers([]);
+      }
+    };
+
+    loadDirectory();
+
+    return () => {
+      active = false;
+    };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!id) {
+      return () => {
+        active = false;
+      };
+    }
+
+    const loadProfile = async () => {
+      try {
+        const [profileResponse, historyResponse] = await Promise.all([
+          getPlayerProfile(id),
+          getPlayerHistory(id),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setProfilePayload(profileResponse);
+        setHistoryPayload(historyResponse);
+      } catch (_error) {
+        if (!active) {
+          return;
+        }
+
+        setProfilePayload(null);
+        setHistoryPayload(null);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const currentPlayerId = id || directoryPlayers[0]?.playerId || defaultFallbackPlayer.id;
+  const directoryPlayer = directoryPlayers.find((candidate) => candidate.playerId === currentPlayerId) || null;
+
+  const player = useMemo(() => {
+    if (profilePayload || directoryPlayer) {
+      return mapProfileToDisplayPlayer({
+        playerId: currentPlayerId,
+        directoryPlayer,
+        profile: profilePayload,
+        snapshots: historyPayload?.snapshots || [],
+      });
+    }
+
+    return buildPlaceholderPlayer(currentPlayerId);
+  }, [currentPlayerId, directoryPlayer, historyPayload?.snapshots, profilePayload]);
 
   const radarData = useMemo(
     () =>
       Object.entries(player.attributes).map(([key, value]) => ({
         attribute: key.charAt(0).toUpperCase() + key.slice(1),
-        value,
+        value: Number(value),
       })),
-    [player],
+    [player.attributes],
   );
 
-  const options = useMemo(
-    () =>
-      players.map((candidate) => ({
-        value: candidate.id,
+  const options = useMemo(() => {
+    if (directoryPlayers.length) {
+      return directoryPlayers.map((candidate) => ({
+        value: candidate.playerId,
         label: candidate.name,
-        subtitle: `${candidate.club} · ${candidate.position}`,
-      })),
-    [],
-  );
+        subtitle: `${candidate.team || "Club"} · ${candidate.position || "Role"}`,
+      }));
+    }
+
+    return fallbackPlayers.map((candidate) => ({
+      value: candidate.id,
+      label: candidate.name,
+      subtitle: `${candidate.club} · ${candidate.position}`,
+    }));
+  }, [directoryPlayers]);
 
   return (
     <div className="min-h-screen bg-background bg-noise">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-10">
+      <div className="mx-auto max-w-7xl px-4 pb-10 pt-24 sm:px-6 lg:px-8">
         <div className="max-w-xs">
           <SearchableSelect
             options={options}
-            value={player.id}
+            value={currentPlayerId}
             onChange={(nextId) => navigate(`/player/${nextId}`)}
             placeholder="Search players..."
           />
         </div>
       </div>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <motion.div
           key={player.id}
           initial={{ opacity: 0, y: 20 }}
@@ -85,7 +278,7 @@ const PlayerProfile = () => {
         </motion.div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="glass-card rounded-xl p-6">
             <SectionHeader title="Attributes" className="mb-6" />
@@ -115,14 +308,14 @@ const PlayerProfile = () => {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="glass-card rounded-xl p-6">
           <SectionHeader title="Recent Form" className="mb-4" />
           <FormChart data={player.recentForm} />
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -185,7 +378,7 @@ const PlayerProfile = () => {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
