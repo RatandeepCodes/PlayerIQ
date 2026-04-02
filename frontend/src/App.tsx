@@ -36,7 +36,7 @@ const App = () => (
               <Route path="/player/:id" element={<PlayerProfile />} />
               <Route path="/compare" element={<ComparePlayers />} />
               <Route path="/match" element={<Navigate to="/matches" replace />} />
-              <Route path="/matches" element={<Navigate to="/matches/match-1" replace />} />
+              <Route path="/matches" element={<MatchAnalysis />} />
               <Route path="/matches/:id" element={<MatchAnalysis />} />
             </Route>
 
