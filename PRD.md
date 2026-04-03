@@ -81,6 +81,11 @@ Build a full-stack football analytics platform that converts event-level data in
 - Native mobile apps
 - Advanced LLM fine-tuning or multi-language reporting
 
+### Current Implementation Note
+- The current PlayerIQ codebase already includes an AI analytics engine built from event normalization, feature engineering, rules, clustering, and report generation.
+- The current implementation does not yet include a fully trained supervised model artifact for player ratings or a true live third-party football data ingestion pipeline.
+- The roadmap below defines how PlayerIQ should evolve from the current rules-and-features engine into a full ML-assisted and live-data-assisted platform.
+
 ## 6. Functional Requirements
 
 ### 6.1 Data Ingestion
@@ -336,11 +341,36 @@ Football Event Data
 - Apply position-aware weights in later iterations
 - Initial V1 overall rating can be a weighted average of six attributes
 
+### 10.1.1 Transition To A Trained Rating Model
+- PlayerIQ should evolve from a formula-only overall rating into a trained regression model.
+- The first supervised model should predict `overallRating` from player event-derived features.
+- Candidate baseline models:
+  - Random Forest Regressor
+  - Gradient Boosting Regressor
+  - XGBoost or LightGBM in later iterations
+- The trained model must:
+  - consume the same normalized feature vectors used by the analytics engine
+  - be versioned and stored as a model artifact
+  - expose reproducible inference inputs and outputs
+  - fall back to the current rule-based rating engine if the model is unavailable
+- The system must preserve explainability by continuing to expose feature-level attribute scores even when the final overall rating is model-assisted.
+
 ### 10.2 Playstyle Model Requirements
 - Train clustering on aggregated player vectors
 - Standardize features before clustering
 - Store cluster assignment and label mapping
 - Provide confidence or distance-to-centroid as an interpretability signal if feasible
+
+### 10.2.1 Future Supervised Playstyle Extension
+- V1 playstyle may remain clustering-based.
+- Later versions may add supervised classification to predict labeled football roles from historical player examples.
+- Candidate future labels include:
+  - Playmaker
+  - Winger
+  - Striker
+  - Ball-winning Midfielder
+  - Defender
+  - Box-to-box Midfielder
 
 ### 10.3 Performance Index Requirements
 
@@ -369,6 +399,43 @@ Football Event Data
 - Generated output must avoid unsupported claims
 - Reports must be concise, readable, and suitable for dashboard display
 
+### 10.7 Training Data Requirements
+- The platform must support creation of trainable datasets from normalized event data.
+- Training rows should be generated at one or more of these granularities:
+  - player-match
+  - player-rolling-form window
+  - player-season aggregate
+- Initial candidate input features include:
+  - pass completion
+  - progressive passes
+  - key passes
+  - shots
+  - shots on target
+  - goals
+  - xG
+  - dribbles attempted and completed
+  - tackles
+  - interceptions
+  - recoveries
+  - clearances
+  - pressure actions
+  - success rate
+- Initial target labels may include:
+  - overall rating
+  - playstyle category
+  - pressure-performance tier
+- Training datasets must be versioned so the team can reproduce model results later.
+
+### 10.8 Model Lifecycle Requirements
+- The project must support an offline training workflow.
+- The project must persist:
+  - trained model artifact
+  - feature column order
+  - training metadata
+  - evaluation metrics
+- The project should support retraining on a scheduled basis such as weekly or monthly.
+- The inference layer must use the latest approved model version, not an ad hoc in-memory model.
+
 ## 11. API Requirements
 
 ### Node.js Backend API
@@ -395,6 +462,14 @@ Football Event Data
 - `GET /report/{player_id}`
 - `POST /simulate/match/{match_id}`
 - `GET /match/{match_id}/turning-points`
+
+### Future Data And Model Operations APIs
+- The long-term architecture should add internal or admin-only workflows for:
+  - dataset refresh
+  - model retraining
+  - model version listing
+  - health visibility for external data providers
+- These workflows may be implemented as internal scripts first and promoted to protected APIs later if needed.
 
 ### Response Requirements
 - APIs must return JSON
@@ -535,6 +610,16 @@ PlayerIQ/
 - Pandas and NumPy for processing
 - Scikit-learn for clustering and preprocessing
 
+### Data And Model Pipeline Extension
+- Add a training pipeline that exports training datasets, trains models, evaluates them, and stores model artifacts under a dedicated model directory.
+- Add import/sync scripts for:
+  - historical dataset refresh from StatsBomb Open Data
+  - scheduled dataset snapshot refresh from Kaggle
+  - fixture and status sync from a live football API
+- Separate historical analytics ingestion from live fixture ingestion:
+  - historical event data powers player and match analytics
+  - live fixture APIs power upcoming matches, status updates, and score updates
+
 ## 18. Phased Delivery Plan
 
 ### Phase 1 - Foundation
@@ -569,6 +654,36 @@ PlayerIQ/
 - deployment configuration
 - monitoring and documentation
 
+### Phase 6 - Trained ML And Live Data Expansion
+- Export a reusable training dataset from normalized football events
+- Train and evaluate the first supervised player rating model
+- Serve model predictions in the AI service with fallback to rule-based logic
+- Add scheduled historical refresh from StatsBomb Open Data and Kaggle snapshots
+- Add live fixtures, results, and status sync from a real football API provider
+- Add retraining and data-refresh operational scripts
+
+## 18A. External Data Strategy
+
+### Historical Data Sources
+- StatsBomb Open Data should be used as a primary historical event source for analytics development and model training.
+- Kaggle datasets may be used as supplemental historical sources for player and match coverage.
+- Historical sources must be normalized into one internal event schema before feature engineering.
+
+### Live Data Sources
+- Kaggle is not a live football feed and must not be treated as one.
+- StatsBomb Open Data is not a live football feed and must not be treated as one.
+- Live or auto-updating upcoming/completed match data must come from a dedicated football API provider.
+- Candidate providers may include:
+  - football-data.org
+  - Sportmonks
+  - Hudl StatsBomb Live or other licensed live event feeds
+
+### Auto-Refresh Policy
+- Upcoming fixture sync should run on a schedule such as every 6 to 12 hours.
+- Live match status or score sync should run more frequently during active match windows.
+- Historical model retraining should run on a slower schedule such as weekly or monthly.
+- A completed match should only gain full PlayerIQ analytics after event-level data is ingested and normalized.
+
 ## 19. Risks And Mitigations
 
 ### Risk: Incomplete Or Inconsistent Open Data
@@ -585,6 +700,15 @@ Mitigation: Use centroid inspection, feature importance summaries, and manual ma
 
 ### Risk: Pressure Definition Is Oversimplified
 Mitigation: Keep rules configurable so future versions can add competition context, game state, or possession context.
+
+### Risk: Open Data Is Not Live
+Mitigation: Use StatsBomb Open Data and Kaggle for historical training data only, and use a dedicated live football API for fixtures, match status, and score updates.
+
+### Risk: Live Fixtures And Event Analytics Diverge
+Mitigation: Treat upcoming/live fixture feeds separately from completed event-level analytics and only generate full match analysis when detailed event data is available.
+
+### Risk: Trained Model Underperforms Football Intuition
+Mitigation: Keep the current interpretable rules engine as fallback, track evaluation metrics, and review predictions against known player benchmarks before promoting a model version.
 
 ## 20. Acceptance Criteria For V1
 
