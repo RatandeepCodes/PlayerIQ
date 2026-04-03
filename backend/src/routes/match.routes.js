@@ -1,5 +1,5 @@
 import express from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 
 import {
   controlMatchSimulation,
@@ -29,7 +29,19 @@ const simulationControlValidation = [
   validateRequest,
 ];
 
-router.get("/", requireAuth, listMatches);
+router.get(
+  "/",
+  requireAuth,
+  [
+    query("limit").optional().isInt({ min: 1, max: 500 }).withMessage("limit must be between 1 and 500"),
+    query("page").optional().isInt({ min: 1 }).withMessage("page must be at least 1"),
+    query("status").optional().isIn(["completed", "upcoming", "all"]).withMessage("status must be completed, upcoming, or all"),
+    query("search").optional().trim(),
+    query("competition").optional().trim(),
+    validateRequest,
+  ],
+  listMatches,
+);
 router.get("/live-feed/home", requireAuth, getHomeMatchFeed);
 router.get("/:id/analysis", requireAuth, matchIdValidation, getMatchAnalysis);
 router.get("/:id/momentum", requireAuth, matchIdValidation, getMatchMomentum);

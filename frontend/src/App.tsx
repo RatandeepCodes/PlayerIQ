@@ -10,8 +10,10 @@ import PublicOnlyRoute from "./components/PublicOnlyRoute.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 const Home = lazy(() => import("./pages/Home"));
+const PlayerDirectory = lazy(() => import("./pages/PlayerDirectory"));
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const ComparePlayers = lazy(() => import("./pages/ComparePlayers"));
+const MatchDirectory = lazy(() => import("./pages/MatchDirectory"));
 const MatchAnalysis = lazy(() => import("./pages/MatchAnalysis"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
@@ -45,9 +47,11 @@ const App = () => (
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                <Route path="/players" element={<PlayerDirectory />} />
                 <Route path="/player" element={<PlayerProfile />} />
                 <Route path="/player/:id" element={<PlayerProfile />} />
                 <Route path="/compare" element={<ComparePlayers />} />
+                <Route path="/fixtures" element={<MatchDirectory />} />
                 <Route path="/match" element={<Navigate to="/matches" replace />} />
                 <Route path="/matches" element={<MatchAnalysis />} />
                 <Route path="/matches/:id" element={<MatchAnalysis />} />

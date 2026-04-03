@@ -45,7 +45,7 @@ describe("Player persistence routes", () => {
   });
 
   it("validates stored player directory query parameters", async () => {
-    const response = await fetch(`${baseUrl}/api/player?limit=200`, {
+    const response = await fetch(`${baseUrl}/api/player?limit=600`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -81,6 +81,34 @@ describe("Player persistence routes", () => {
     assert.ok(payload.players.length >= 1);
     assert.equal(payload.metadata.filters.search, "Sunil");
     assert.ok(payload.players.some((player) => player.name.includes("Sunil")));
+  });
+
+  it("supports analytics-backed player directory filtering", async () => {
+    const response = await fetch(`${baseUrl}/api/player?limit=50&analyticsOnly=true`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.metadata.filters.analyticsOnly, true);
+    assert.ok(payload.players.length > 0);
+    assert.ok(payload.players.every((player) => player.metadata?.hasAnalytics === true));
+  });
+
+  it("supports player directory pagination metadata", async () => {
+    const response = await fetch(`${baseUrl}/api/player?limit=5&page=2`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.metadata.page, 2);
+    assert.equal(payload.metadata.limit, 5);
+    assert.ok(Array.isArray(payload.players));
   });
 
   it("returns empty player history when the database is unavailable", async () => {

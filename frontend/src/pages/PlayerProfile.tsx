@@ -16,6 +16,18 @@ import type { ApiDirectoryPlayer, ApiPlayerHistoryResponse, ApiPlayerProfile } f
 type DisplayPlayer = Player;
 
 const defaultFallbackPlayer = fallbackPlayers[0];
+const neutralAttributes: DisplayPlayer["attributes"] = {
+  pace: 0,
+  shooting: 0,
+  passing: 0,
+  dribbling: 0,
+  defending: 0,
+  physical: 0,
+};
+const neutralRecentForm = [0, 0, 0, 0, 0, 0, 0];
+const fallbackPlayerNameSet = new Set(fallbackPlayers.map((player) => player.name.trim().toLowerCase()));
+const isRenderablePlayer = (player: ApiDirectoryPlayer) =>
+  Boolean(player.hasAnalytics) || fallbackPlayerNameSet.has((player.name || "").trim().toLowerCase());
 
 const buildPlaceholderPlayer = (playerId: string): DisplayPlayer => ({
   id: playerId,
@@ -23,15 +35,33 @@ const buildPlaceholderPlayer = (playerId: string): DisplayPlayer => ({
   club: "Loading club",
   nationality: "Loading nationality",
   position: "Profile",
-  age: defaultFallbackPlayer.age,
-  rating: defaultFallbackPlayer.rating,
-  attributes: defaultFallbackPlayer.attributes,
-  recentForm: defaultFallbackPlayer.recentForm,
-  strengths: defaultFallbackPlayer.strengths,
-  growthAreas: defaultFallbackPlayer.growthAreas,
+  age: 0,
+  rating: 0,
+  attributes: neutralAttributes,
+  recentForm: neutralRecentForm,
+  strengths: ["Profile loading"],
+  growthAreas: ["Profile loading"],
   playstyle: "Profile details are loading from PlayerIQ.",
   summary: "PlayerIQ is preparing this player profile.",
-  pressureRating: defaultFallbackPlayer.pressureRating,
+  pressureRating: 0,
+});
+
+const buildNeutralFallbackPlayer = (directoryPlayer?: ApiDirectoryPlayer | null, playerId = ""): DisplayPlayer => ({
+  ...defaultFallbackPlayer,
+  id: directoryPlayer?.playerId || playerId || defaultFallbackPlayer.id,
+  name: directoryPlayer?.name || "Player profile",
+  club: directoryPlayer?.team || "Club",
+  nationality: directoryPlayer?.nationality || "Nationality",
+  position: directoryPlayer?.position || "Role",
+  age: 0,
+  rating: 0,
+  attributes: neutralAttributes,
+  recentForm: neutralRecentForm,
+  strengths: ["Live profile updating"],
+  growthAreas: ["More match data needed"],
+  playstyle: "Live playstyle will appear once player analytics are available.",
+  summary: "PlayerIQ is preparing this player's latest profile.",
+  pressureRating: 0,
 });
 
 const mapProfileToDisplayPlayer = ({
@@ -45,11 +75,11 @@ const mapProfileToDisplayPlayer = ({
   profile?: ApiPlayerProfile | null;
   snapshots?: ApiPlayerHistoryResponse["snapshots"];
 }): DisplayPlayer => {
-  const fallbackByName =
-    fallbackPlayers.find(
-      (candidate) =>
-        candidate.name.toLowerCase() === String(profile?.player?.name || directoryPlayer?.name || "").toLowerCase(),
-    ) || defaultFallbackPlayer;
+  const matchedFallbackPlayer = fallbackPlayers.find(
+    (candidate) =>
+      candidate.name.toLowerCase() === String(profile?.player?.name || directoryPlayer?.name || "").toLowerCase(),
+  );
+  const fallbackByName = matchedFallbackPlayer || buildNeutralFallbackPlayer(directoryPlayer, playerId);
 
   const attributes = profile?.analytics?.attributes || {};
   const pressurePayload = profile?.analytics?.pressure || {};
@@ -91,11 +121,11 @@ const mapProfileToDisplayPlayer = ({
         ? profile.analytics.report.developmentAreas
         : fallbackByName.growthAreas,
     attributes: {
+      pace: matchedFallbackPlayer?.attributes.pace ?? fallbackByName.attributes.pace,
       shooting: attributes.shooting ?? fallbackByName.attributes.shooting,
       passing: attributes.passing ?? fallbackByName.attributes.passing,
       dribbling: attributes.dribbling ?? fallbackByName.attributes.dribbling,
       defending: attributes.defending ?? fallbackByName.attributes.defending,
-      creativity: attributes.creativity ?? fallbackByName.attributes.pace,
       physical: attributes.physical ?? fallbackByName.attributes.physical,
     },
     recentForm: historySeries.length ? historySeries : fallbackByName.recentForm,
@@ -114,12 +144,12 @@ const PlayerProfile = () => {
 
     const loadDirectory = async () => {
       try {
-        const response = (await getPlayers({ limit: 100 })) as { players?: ApiDirectoryPlayer[] };
+        const response = (await getPlayers({ limit: 500 })) as { players?: ApiDirectoryPlayer[] };
         if (!active) {
           return;
         }
 
-        const livePlayers = response.players || [];
+        const livePlayers = (response.players || []).filter(isRenderablePlayer);
         setDirectoryPlayers(livePlayers);
 
         if (!id && livePlayers[0]?.playerId) {
@@ -142,6 +172,16 @@ const PlayerProfile = () => {
   }, [id, navigate]);
 
   useEffect(() => {
+    if (!directoryPlayers.length || !id) {
+      return;
+    }
+
+    if (!directoryPlayers.some((candidate) => candidate.playerId === id) && directoryPlayers[0]?.playerId) {
+      navigate(`/player/${directoryPlayers[0].playerId}`, { replace: true });
+    }
+  }, [directoryPlayers, id, navigate]);
+
+  useEffect(() => {
     let active = true;
 
     if (!id) {
@@ -149,6 +189,9 @@ const PlayerProfile = () => {
         active = false;
       };
     }
+
+    setProfilePayload(null);
+    setHistoryPayload(null);
 
     const loadProfile = async () => {
       try {
@@ -180,7 +223,17 @@ const PlayerProfile = () => {
     };
   }, [id]);
 
-  const currentPlayerId = id || directoryPlayers[0]?.playerId || defaultFallbackPlayer.id;
+  const currentPlayerId = useMemo(() => {
+    if (directoryPlayers.length) {
+      if (id && directoryPlayers.some((candidate) => candidate.playerId === id)) {
+        return id;
+      }
+
+      return directoryPlayers[0]?.playerId || defaultFallbackPlayer.id;
+    }
+
+    return id || defaultFallbackPlayer.id;
+  }, [directoryPlayers, id]);
   const directoryPlayer = directoryPlayers.find((candidate) => candidate.playerId === currentPlayerId) || null;
 
   const player = useMemo(
@@ -246,7 +299,9 @@ const PlayerProfile = () => {
         >
           <div className="flex flex-col items-start gap-8 sm:flex-row">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-accent sm:h-32 sm:w-32">
-              <span className="font-display text-4xl text-foreground sm:text-5xl">{player.rating}</span>
+              <span className="font-display text-4xl text-foreground sm:text-5xl">
+                {player.rating > 0 ? player.rating : "--"}
+              </span>
             </div>
             <div className="flex-1">
               <h1 className="font-display text-4xl tracking-wider text-foreground sm:text-5xl">{player.name}</h1>
@@ -256,8 +311,12 @@ const PlayerProfile = () => {
                 <span className="text-sm font-body text-muted-foreground">{player.position}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="text-sm font-body text-muted-foreground">{player.nationality}</span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-sm font-body text-muted-foreground">Age {player.age}</span>
+                {player.age > 0 ? (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="text-sm font-body text-muted-foreground">Age {player.age}</span>
+                  </>
+                ) : null}
               </div>
               <p className="mt-4 max-w-xl text-sm font-body text-muted-foreground">{player.summary}</p>
             </div>

@@ -20,9 +20,9 @@ export const getMatchAnalysis = async (req, res, next) => {
   }
 };
 
-export const listMatches = async (_req, res, next) => {
+export const listMatches = async (req, res, next) => {
   try {
-    const directory = await getMatchDirectoryData();
+    const directory = await getMatchDirectoryData(req.query);
     res.json(directory);
   } catch (error) {
     next(error);

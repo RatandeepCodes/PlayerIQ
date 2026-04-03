@@ -9,7 +9,7 @@ const navLinks = [
   { to: "/", label: "Home" },
   { to: "/player", label: "Player Profile" },
   { to: "/compare", label: "Compare Players" },
-  { to: "/matches", label: "Match Day" },
+  { to: "/fixtures", label: "Match Day" },
 ];
 
 const Navbar = () => {

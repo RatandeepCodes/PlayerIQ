@@ -105,8 +105,17 @@ export async function getPlayers(params = {}) {
   return apiRequest(`/player${query ? `?${query}` : ""}`);
 }
 
-export async function getMatches() {
-  return apiRequest("/matches");
+export async function getMatches(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const query = searchParams.toString();
+  return apiRequest(`/matches${query ? `?${query}` : ""}`);
 }
 
 export async function getHomeMatchFeed() {

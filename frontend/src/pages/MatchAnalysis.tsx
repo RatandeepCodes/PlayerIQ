@@ -206,12 +206,12 @@ const buildMatchFromAnalysis = ({
     id: matchId,
     homeTeam,
     awayTeam,
-    homeScore: fallbackMatch?.homeScore ?? 0,
-    awayScore: fallbackMatch?.awayScore ?? 0,
+    homeScore: toNumber(directoryMatch?.homeScore, fallbackMatch?.homeScore ?? 0),
+    awayScore: toNumber(directoryMatch?.awayScore, fallbackMatch?.awayScore ?? 0),
     competition: directoryMatch?.competition || fallbackMatch?.competition || "Competition",
     date: directoryMatch?.season || fallbackMatch?.date || "Season pending",
-    venue: fallbackMatch?.venue || "Venue pending",
-    metaLine: [fallbackMatch?.venue || "Venue pending", directoryMatch?.season || fallbackMatch?.date || "Season pending"]
+    venue: fallbackMatch?.venue || "",
+    metaLine: [fallbackMatch?.venue, directoryMatch?.season || fallbackMatch?.date || "Season pending"]
       .filter(Boolean)
       .join(" | "),
     momentum,
@@ -237,10 +237,10 @@ const MatchAnalysis = () => {
           return;
         }
 
-        const matches = response.matches || [];
+        const matches = (response.matches || []).filter((match) => match.status === "completed");
         setDirectoryMatches(matches);
 
-        if (!id && matches[0]?.matchId) {
+        if ((!id || !matches.some((match) => match.matchId === id)) && matches[0]?.matchId) {
           navigate(`/matches/${matches[0].matchId}`, { replace: true });
         }
       } catch (_error) {
@@ -268,6 +268,8 @@ const MatchAnalysis = () => {
       };
     }
 
+    setAnalysisPayload(null);
+
     const loadAnalysis = async () => {
       try {
         const response = (await getMatchAnalysis(id)) as ApiMatchAnalysisResponse;
@@ -292,7 +294,17 @@ const MatchAnalysis = () => {
     };
   }, [id]);
 
-  const currentMatchId = id || directoryMatches[0]?.matchId || defaultFallbackMatch.id;
+  const currentMatchId = useMemo(() => {
+    if (directoryMatches.length) {
+      if (id && directoryMatches.some((candidate) => candidate.matchId === id)) {
+        return id;
+      }
+
+      return directoryMatches[0]?.matchId || defaultFallbackMatch.id;
+    }
+
+    return id || defaultFallbackMatch.id;
+  }, [directoryMatches, id]);
   const directoryMatch = directoryMatches.find((candidate) => candidate.matchId === currentMatchId) || null;
 
   const match = useMemo(
@@ -310,7 +322,7 @@ const MatchAnalysis = () => {
       return directoryMatches.map((candidate) => ({
         value: candidate.matchId,
         label: candidate.title || `${candidate.teams?.[0] || "Home"} vs ${candidate.teams?.[1] || "Away"}`,
-        subtitle: candidate.competition || "Competition",
+        subtitle: [candidate.competition || "Competition", candidate.status || "Match"].filter(Boolean).join(" · "),
       }));
     }
 

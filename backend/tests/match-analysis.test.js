@@ -154,6 +154,21 @@ describe("Match analysis routes", () => {
     assert.ok(payload.matches.length >= 1);
   });
 
+  it("supports match directory filtering and pagination metadata", async () => {
+    const response = await fetch(`${baseUrl}/api/matches?limit=5&page=1&status=completed&search=Bengaluru`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.metadata.page, 1);
+    assert.equal(payload.metadata.limit, 5);
+    assert.equal(payload.metadata.filters.status, "completed");
+    assert.ok(Array.isArray(payload.matches));
+  });
+
   it("returns a normalized home live feed envelope", async () => {
     const response = await fetch(`${baseUrl}/api/matches/live-feed/home`, {
       headers: {

@@ -27,7 +27,9 @@ router.get(
   "/",
   requireAuth,
   [
-    query("limit").optional().isInt({ min: 1, max: 100 }).withMessage("limit must be between 1 and 100"),
+    query("limit").optional().isInt({ min: 1, max: 500 }).withMessage("limit must be between 1 and 500"),
+    query("page").optional().isInt({ min: 1 }).withMessage("page must be at least 1"),
+    query("analyticsOnly").optional().isBoolean().withMessage("analyticsOnly must be true or false"),
     query("search").optional().trim(),
     query("team").optional().trim(),
     query("nationality").optional().trim(),

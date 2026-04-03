@@ -15,6 +15,9 @@ type AttributeKey = keyof DisplayPlayer["attributes"];
 
 const defaultLeftPlayer = fallbackPlayers[0];
 const defaultRightPlayer = fallbackPlayers[2] || fallbackPlayers[1];
+const fallbackPlayerNameSet = new Set(fallbackPlayers.map((player) => player.name.trim().toLowerCase()));
+const isRenderablePlayer = (player: ApiDirectoryPlayer) =>
+  Boolean(player.hasAnalytics) || fallbackPlayerNameSet.has((player.name || "").trim().toLowerCase());
 
 const mapProfileToPlayer = (
   directoryPlayer: ApiDirectoryPlayer | undefined,
@@ -81,20 +84,28 @@ const ComparePlayers = () => {
 
     const loadDirectory = async () => {
       try {
-        const response = (await getPlayers({ limit: 100 })) as { players?: ApiDirectoryPlayer[] };
+        const response = (await getPlayers({ limit: 500 })) as { players?: ApiDirectoryPlayer[] };
         if (!active) {
           return;
         }
 
-        const livePlayers = response.players || [];
+        const livePlayers = (response.players || []).filter(isRenderablePlayer);
         setDirectoryPlayers(livePlayers);
 
         if (livePlayers[0]?.playerId) {
-          setLeftId((current) => (current === defaultLeftPlayer.id ? livePlayers[0].playerId : current));
+          setLeftId((current) =>
+            current === defaultLeftPlayer.id || !livePlayers.some((player) => player.playerId === current)
+              ? livePlayers[0].playerId
+              : current,
+          );
         }
 
         if (livePlayers[1]?.playerId) {
-          setRightId((current) => (current === defaultRightPlayer.id ? livePlayers[1].playerId : current));
+          setRightId((current) =>
+            current === defaultRightPlayer.id || !livePlayers.some((player) => player.playerId === current)
+              ? livePlayers[1].playerId
+              : current,
+          );
         }
       } catch (_error) {
         if (!active) {

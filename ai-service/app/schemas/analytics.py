@@ -142,6 +142,7 @@ class PlayerListItem(APIModel):
     team: str
     nationality: str
     position: str
+    has_analytics: bool = Field(serialization_alias="hasAnalytics")
     is_indian: bool = Field(serialization_alias="isIndian")
     sources: list[str]
 
@@ -156,6 +157,9 @@ class MatchListItem(APIModel):
     teams: list[str]
     competition: str
     season: str
+    status: str
+    home_score: int = Field(serialization_alias="homeScore")
+    away_score: int = Field(serialization_alias="awayScore")
     sources: list[str]
 
 

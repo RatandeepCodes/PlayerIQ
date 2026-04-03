@@ -167,8 +167,12 @@ def _sort_player_directory(frame: pd.DataFrame) -> pd.DataFrame:
         return frame
 
     sorted_frame = frame.copy()
+    sorted_frame["analytics_priority"] = sorted_frame["has_analytics"].astype(int)
     sorted_frame["display_priority"] = sorted_frame["is_indian"].astype(int)
-    return sorted_frame.sort_values(["display_priority", "player_name"], ascending=[False, True]).reset_index(drop=True)
+    return (
+        sorted_frame.sort_values(["analytics_priority", "display_priority", "player_name"], ascending=[False, False, True])
+        .reset_index(drop=True)
+    )
 
 
 def _merge_player_frames(primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.DataFrame:
@@ -195,11 +199,13 @@ def _merge_player_frames(primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.D
                 "nationality": row.nationality,
                 "position": row.position,
                 "sources": row_sources,
+                "has_analytics": bool(getattr(row, "has_analytics", False)),
                 "is_indian": bool(row.is_indian),
             }
             continue
 
         current["sources"] = sorted(set(current["sources"]) | set(row_sources))
+        current["has_analytics"] = current["has_analytics"] or bool(getattr(row, "has_analytics", False))
         current["is_indian"] = current["is_indian"] or bool(row.is_indian)
         for column in ["player_name", "team", "nationality", "position"]:
             if not current[column] and getattr(row, column):
@@ -237,12 +243,16 @@ def _merge_match_frames(primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.Da
                 "teams": row_teams,
                 "sources": row_sources,
                 "has_events": bool(getattr(row, "has_events", False)),
+                "home_score": int(getattr(row, "home_score", 0) or 0),
+                "away_score": int(getattr(row, "away_score", 0) or 0),
             }
             continue
 
         current["sources"] = sorted(set(current["sources"]) | set(row_sources))
         current["teams"] = list(dict.fromkeys([*current["teams"], *row_teams]))
         current["has_events"] = current["has_events"] or bool(getattr(row, "has_events", False))
+        current["home_score"] = current["home_score"] or int(getattr(row, "home_score", 0) or 0)
+        current["away_score"] = current["away_score"] or int(getattr(row, "away_score", 0) or 0)
         for column in ["title", "competition", "season"]:
             if not current[column] and getattr(row, column):
                 current[column] = getattr(row, column)
@@ -299,6 +309,7 @@ def load_player_directory() -> pd.DataFrame:
         .reset_index()
     )
     event_directory["is_indian"] = event_directory["nationality"].str.casefold().eq("india")
+    event_directory["has_analytics"] = True
 
     extra_frames = [
         _read_optional_directory_csv(
@@ -311,6 +322,7 @@ def load_player_directory() -> pd.DataFrame:
     extra_directory = pd.concat(extra_frames, ignore_index=True) if extra_frames else pd.DataFrame()
     if not extra_directory.empty:
         extra_directory["is_indian"] = extra_directory["nationality"].str.casefold().eq("india")
+        extra_directory["has_analytics"] = False
 
     return _merge_player_frames(event_directory, extra_directory)
 
@@ -323,13 +335,53 @@ def load_match_directory() -> pd.DataFrame:
         .agg(
             competition=("competition", "last"),
             season=("season", "last"),
-            teams=("team", lambda values: sorted(set(value for value in values if value))),
             sources=("source", lambda values: sorted(set(values))),
         )
         .reset_index()
     )
+    team_lookup = (
+        events.groupby("match_id")
+        .apply(
+            lambda frame: list(
+                dict.fromkeys(
+                    [
+                        str(value).strip()
+                        for value in [*frame["team"].tolist(), *frame["opponent"].tolist()]
+                        if str(value).strip()
+                    ]
+                )
+            )[:2],
+            include_groups=False,
+        )
+        .reset_index(name="teams")
+    )
+    event_directory = event_directory.merge(team_lookup, on="match_id", how="left")
     event_directory["title"] = event_directory["teams"].apply(lambda teams: " vs ".join(teams[:2]) if teams else "Match")
     event_directory["has_events"] = True
+    score_lookup = (
+        events.groupby(["match_id", "team"])["goal"]
+        .sum()
+        .reset_index()
+        .groupby("match_id")
+        .apply(
+            lambda frame: {
+                str(row.team).strip(): int(row.goal)
+                for row in frame.itertuples(index=False)
+                if str(row.team).strip()
+            },
+            include_groups=False,
+        )
+        .reset_index(name="score_map")
+    )
+    event_directory = event_directory.merge(score_lookup, on="match_id", how="left")
+    event_directory["home_score"] = event_directory.apply(
+        lambda row: int((row.score_map or {}).get(row.teams[0], 0)) if row.teams else 0,
+        axis=1,
+    )
+    event_directory["away_score"] = event_directory.apply(
+        lambda row: int((row.score_map or {}).get(row.teams[1], 0)) if isinstance(row.teams, list) and len(row.teams) > 1 else 0,
+        axis=1,
+    )
 
     extra_frames = [
         _read_optional_directory_csv(
@@ -342,6 +394,8 @@ def load_match_directory() -> pd.DataFrame:
     extra_directory = pd.concat(extra_frames, ignore_index=True) if extra_frames else pd.DataFrame()
     if not extra_directory.empty:
         extra_directory["has_events"] = False
+        extra_directory["home_score"] = 0
+        extra_directory["away_score"] = 0
 
     return _merge_match_frames(event_directory, extra_directory)
 
@@ -408,6 +462,7 @@ def list_players() -> PlayerListResponse:
             team=str(row.team),
             nationality=str(row.nationality),
             position=str(row.position),
+            has_analytics=bool(row.has_analytics),
             is_indian=bool(row.is_indian),
             sources=list(row.sources),
         )
@@ -434,10 +489,14 @@ def list_matches() -> MatchListResponse:
                 title=title,
                 competition=str(row.competition),
                 season=str(row.season),
+                status="completed" if bool(getattr(row, "has_events", False)) else "upcoming",
+                home_score=int(getattr(row, "home_score", 0) or 0),
+                away_score=int(getattr(row, "away_score", 0) or 0),
                 teams=list(teams),
                 sources=list(row.sources),
             )
         )
 
-    matches.sort(key=lambda item: (item.competition, item.title, item.match_id))
+    status_priority = {"completed": 0, "upcoming": 1}
+    matches.sort(key=lambda item: (status_priority.get(item.status, 2), item.competition, item.title, item.match_id))
     return MatchListResponse(matches=matches)

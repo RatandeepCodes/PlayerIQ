@@ -4,10 +4,18 @@ export interface ApiDirectoryPlayer {
   team?: string;
   position?: string;
   nationality?: string;
+  hasAnalytics?: boolean;
 }
 
 export interface ApiPlayersResponse {
   players?: ApiDirectoryPlayer[];
+  metadata?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+    hasMore?: boolean;
+  };
 }
 
 export interface ApiPlayerOverview {
@@ -80,10 +88,20 @@ export interface ApiMatchDirectoryEntry {
   teams?: string[];
   competition?: string;
   season?: string;
+  status?: "completed" | "upcoming";
+  homeScore?: number;
+  awayScore?: number;
 }
 
 export interface ApiMatchesResponse {
   matches?: ApiMatchDirectoryEntry[];
+  metadata?: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+    hasMore?: boolean;
+  };
 }
 
 export interface ApiLiveFeedMatch {

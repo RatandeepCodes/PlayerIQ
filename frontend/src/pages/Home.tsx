@@ -45,6 +45,41 @@ const editorialCards = [
   },
 ];
 
+const isIndianUpcomingCompetition = (competition?: string) => (competition || "").trim().toLowerCase().includes("indian super");
+const fallbackPlayerNameSet = new Set(fallbackPlayers.map((player) => player.name.trim().toLowerCase()));
+const isRenderablePlayer = (player: ApiDirectoryPlayer) =>
+  Boolean(player.hasAnalytics) || fallbackPlayerNameSet.has((player.name || "").trim().toLowerCase());
+const pickBalancedMatches = (matches: ApiMatchDirectoryEntry[], limit: number) => {
+  const selected: ApiMatchDirectoryEntry[] = [];
+  const seenTeams = new Set<string>();
+
+  for (const match of matches) {
+    const teams = match.teams || [];
+    const hasSeenTeam = teams.some((team) => seenTeams.has(team));
+
+    if (!hasSeenTeam) {
+      selected.push(match);
+      teams.forEach((team) => seenTeams.add(team));
+    }
+
+    if (selected.length >= limit) {
+      return selected;
+    }
+  }
+
+  for (const match of matches) {
+    if (!selected.includes(match)) {
+      selected.push(match);
+    }
+
+    if (selected.length >= limit) {
+      break;
+    }
+  }
+
+  return selected;
+};
+
 const buildMatchCard = (
   liveMatch: ApiMatchDirectoryEntry,
   fallbackMatch: Match | undefined,
@@ -58,7 +93,12 @@ const buildMatchCard = (
     id: liveMatch.matchId || fallback.id,
     homeTeam: liveTeams[0] || fallback.homeTeam,
     awayTeam: liveTeams[1] || fallback.awayTeam,
+    homeScore: liveMatch.status === "completed" ? Number(liveMatch.homeScore ?? fallback.homeScore) : 0,
+    awayScore: liveMatch.status === "completed" ? Number(liveMatch.awayScore ?? fallback.awayScore) : 0,
     competition: liveMatch.competition || fallback.competition,
+    date: liveMatch.season || fallback.date,
+    venue: liveMatch.status === "completed" ? fallback.venue : "Upcoming fixture",
+    status: liveMatch.status || fallback.status,
   };
 };
 
@@ -67,7 +107,11 @@ const buildPlayerCard = (
   profile: ApiPlayerProfile | null,
   fallbackPlayer: Player | undefined,
 ): Player => {
-  const fallback = fallbackPlayer || fallbackPlayers[0];
+  const matchedFallback =
+    fallbackPlayers.find((candidate) => candidate.name.toLowerCase() === String(livePlayer.name || "").toLowerCase()) ||
+    fallbackPlayer ||
+    fallbackPlayers[0];
+  const fallback = matchedFallback;
   const analyticsAttributes = profile?.analytics?.attributes || {};
 
   return {
@@ -141,8 +185,13 @@ const buildLiveFeedMatch = (liveMatch: ApiLiveFeedMatch | null | undefined, fall
   };
 };
 
-const selectSpotlightDirectory = <T extends { playerId: string }>(players: T[], limit: number) =>
-  [...new Map(players.map((player) => [player.playerId, player])).values()].slice(0, limit);
+const selectSpotlightDirectory = <T extends { playerId: string }>(players: T[], limit: number) => {
+  const deduped = [...new Map(players.map((player) => [player.playerId, player])).values()];
+  const preferredIds = new Set(fallbackSpotlightPlayers.map((player) => player.id));
+  const preferred = deduped.filter((player) => preferredIds.has(player.playerId));
+  const remainder = deduped.filter((player) => !preferredIds.has(player.playerId));
+  return [...preferred, ...remainder].slice(0, limit);
+};
 
 const Home = () => {
   const [homeMatches, setHomeMatches] = useState<Match[]>(fallbackMatches);
@@ -158,7 +207,7 @@ const Home = () => {
     const loadHomeData = async () => {
       const [matchesResult, playersResult, liveFeedResult] = await Promise.allSettled([
         getMatches(),
-        getPlayers({ limit: 100 }),
+        getPlayers({ limit: 500 }),
         getHomeMatchFeed(),
       ]);
 
@@ -166,7 +215,10 @@ const Home = () => {
         matchesResult.status === "fulfilled" ? ((matchesResult.value.matches || []) as ApiMatchDirectoryEntry[]) : [];
       const playerDirectory =
         playersResult.status === "fulfilled" ? ((playersResult.value.players || []) as ApiDirectoryPlayer[]) : [];
-      const livePlayers = selectSpotlightDirectory(playerDirectory, fallbackSpotlightPlayers.length);
+      const livePlayers = selectSpotlightDirectory(
+        playerDirectory.filter(isRenderablePlayer),
+        fallbackSpotlightPlayers.length,
+      );
       const homeFeed =
         liveFeedResult.status === "fulfilled" ? (liveFeedResult.value as ApiHomeMatchFeedResponse) : null;
 
@@ -193,8 +245,13 @@ const Home = () => {
         return;
       }
 
-      const mappedMatches = liveMatches.length
-        ? liveMatches
+      const completedMatches = liveMatches.filter((match) => match.status === "completed");
+      const upcomingIndianMatches = liveMatches.filter(
+        (match) => match.status === "upcoming" && isIndianUpcomingCompetition(match.competition),
+      );
+
+      const mappedMatches = completedMatches.length
+        ? completedMatches
             .slice(0, 6)
             .map((match, index) => buildMatchCard(match, fallbackMatches[index], index === 0 ? featuredAnalysis : null))
         : fallbackMatches;
@@ -204,9 +261,12 @@ const Home = () => {
         : fallbackSpotlightPlayers;
 
       const mappedRecentMatch = buildLiveFeedMatch(homeFeed?.recentMatch, fallbackMatches[1] || fallbackMatches[0]);
-      const mappedUpcomingMatches =
-        homeFeed?.upcomingMatches?.length
+      const mappedUpcomingMatches = upcomingIndianMatches.length
+        ? pickBalancedMatches(upcomingIndianMatches, 6)
+            .map((match, index) => buildMatchCard(match, fallbackMatches[index + 2] || fallbackMatches[0]))
+        : homeFeed?.upcomingMatches?.length
           ? homeFeed.upcomingMatches
+              .filter((match) => isIndianUpcomingCompetition(match.competition))
               .slice(0, 3)
               .map((match, index) => buildLiveFeedMatch(match, fallbackMatches[index + 2] || fallbackMatches[0]))
               .filter((match): match is Match => Boolean(match))
@@ -229,7 +289,9 @@ const Home = () => {
         {
           label: "Matches Available",
           value: String(
-            matchesResult.status === "fulfilled" ? liveMatches.length || fallbackMatches.length : fallbackMatches.length,
+            matchesResult.status === "fulfilled"
+              ? completedMatches.length || fallbackMatches.length
+              : fallbackMatches.length,
           ),
         },
         {
@@ -327,11 +389,21 @@ const Home = () => {
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <SectionHeader title="Upcoming Matches" subtitle="Upcoming fixtures from the live schedule feed" />
         {upcomingMatches.length ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {upcomingMatches.map((match, index) => (
-              <MatchCard key={match.id} match={match} index={index} interactive={false} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {upcomingMatches.map((match, index) => (
+                <MatchCard key={match.id} match={match} index={index} interactive={false} />
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                to="/fixtures"
+                className="inline-flex items-center gap-2 text-sm font-body text-muted-foreground transition-colors hover:text-foreground"
+              >
+                View all matches <ArrowRight size={14} />
+              </Link>
+            </div>
+          </>
         ) : (
           <div className="glass-card rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
             Upcoming live fixtures will appear here when the schedule feed is available.
@@ -349,7 +421,7 @@ const Home = () => {
           </div>
           <div className="mt-8 text-center">
             <Link
-              to={`/player/${featuredPlayer.id}`}
+              to="/players"
               className="inline-flex items-center gap-2 text-sm font-body text-muted-foreground transition-colors hover:text-foreground"
             >
               View all players <ArrowRight size={14} />

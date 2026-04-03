@@ -187,22 +187,73 @@ export const getMatchAnalysisData = async (matchId) => {
   }
 };
 
-export const getMatchDirectoryData = async () => {
+const filterDirectoryMatches = (matches = [], { status, search, competition } = {}) => {
+  const normalizedSearch = String(search || "")
+    .trim()
+    .toLowerCase();
+  const normalizedCompetition = String(competition || "")
+    .trim()
+    .toLowerCase();
+
+  return matches.filter((match) => {
+    const matchesStatus = status && status !== "all" ? match.status === status : true;
+    const matchesCompetition = normalizedCompetition
+      ? String(match.competition || "").toLowerCase().includes(normalizedCompetition)
+      : true;
+    const haystack = [match.title, ...(match.teams || []), match.competition, match.season]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
+    return matchesStatus && matchesCompetition && matchesSearch;
+  });
+};
+
+export const getMatchDirectoryData = async ({ limit, page, status, search, competition } = {}) => {
   try {
     const directory = await fetchMatchDirectory();
+    const allMatches = directory.matches || [];
+    const filteredMatches = filterDirectoryMatches(allMatches, { status, search, competition });
+    const normalizedLimit = Number(limit) || 50;
+    const normalizedPage = Number(page) || 1;
+    const startIndex = (normalizedPage - 1) * normalizedLimit;
+    const matches = filteredMatches.slice(startIndex, startIndex + normalizedLimit);
     return {
-      matches: directory.matches || [],
+      matches,
       metadata: {
         source: "ai-service",
-        total: (directory.matches || []).length,
+        total: filteredMatches.length,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.max(1, Math.ceil(filteredMatches.length / normalizedLimit)),
+        hasMore: startIndex + normalizedLimit < filteredMatches.length,
+        filters: {
+          status: status || "all",
+          search: search || null,
+          competition: competition || null,
+        },
       },
     };
   } catch (_error) {
+    const filteredMatches = filterDirectoryMatches(SHOWCASE_MATCH_DIRECTORY, { status, search, competition });
+    const normalizedLimit = Number(limit) || 50;
+    const normalizedPage = Number(page) || 1;
+    const startIndex = (normalizedPage - 1) * normalizedLimit;
+    const matches = filteredMatches.slice(startIndex, startIndex + normalizedLimit);
     return {
-      matches: SHOWCASE_MATCH_DIRECTORY,
+      matches,
       metadata: {
         source: "showcase",
-        total: SHOWCASE_MATCH_DIRECTORY.length,
+        total: filteredMatches.length,
+        page: normalizedPage,
+        limit: normalizedLimit,
+        totalPages: Math.max(1, Math.ceil(filteredMatches.length / normalizedLimit)),
+        hasMore: startIndex + normalizedLimit < filteredMatches.length,
+        filters: {
+          status: status || "all",
+          search: search || null,
+          competition: competition || null,
+        },
       },
     };
   }
