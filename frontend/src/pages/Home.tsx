@@ -18,10 +18,18 @@ import {
   type Match,
   type Player,
 } from "@/data/mockData";
+import type {
+  ApiDirectoryPlayer,
+  ApiHomeMatchFeedResponse,
+  ApiLiveFeedMatch,
+  ApiMatchAnalysisResponse,
+  ApiMatchDirectoryEntry,
+  ApiPlayerProfile,
+} from "@/types/api";
 
 const editorialCards = [
   {
-    title: "The Mbappé Effect",
+    title: "The Mbappe Effect",
     subtitle: "How Kylian is reshaping Madrid's attack.",
     category: "Tactical Analysis",
   },
@@ -38,18 +46,9 @@ const editorialCards = [
 ];
 
 const buildMatchCard = (
-  liveMatch: {
-    matchId: string;
-    title?: string;
-    teams?: string[];
-    competition?: string;
-  },
+  liveMatch: ApiMatchDirectoryEntry,
   fallbackMatch: Match | undefined,
-  analysis: {
-    overview?: {
-      teams?: string[];
-    };
-  } | null = null,
+  analysis: ApiMatchAnalysisResponse | null = null,
 ): Match => {
   const fallback = fallbackMatch || fallbackMatches[0];
   const liveTeams = analysis?.overview?.teams?.length ? analysis.overview.teams : liveMatch.teams || [];
@@ -64,14 +63,8 @@ const buildMatchCard = (
 };
 
 const buildPlayerCard = (
-  livePlayer: {
-    playerId: string;
-    name?: string;
-    team?: string;
-    position?: string;
-    nationality?: string;
-  },
-  profile: any,
+  livePlayer: ApiDirectoryPlayer,
+  profile: ApiPlayerProfile | null,
   fallbackPlayer: Player | undefined,
 ): Player => {
   const fallback = fallbackPlayer || fallbackPlayers[0];
@@ -91,12 +84,14 @@ const buildPlayerCard = (
       profile?.overview?.pressureIndex !== null && profile?.overview?.pressureIndex !== undefined
         ? Math.round(Number(profile.overview.pressureIndex) * 100)
         : fallback.pressureRating,
-    strengths: profile?.analytics?.report?.strengths?.length
-      ? profile.analytics.report.strengths
-      : fallback.strengths,
-    growthAreas: profile?.analytics?.report?.developmentAreas?.length
-      ? profile.analytics.report.developmentAreas
-      : fallback.growthAreas,
+    strengths:
+      profile?.analytics?.report?.strengths?.length
+        ? profile.analytics.report.strengths
+        : fallback.strengths,
+    growthAreas:
+      profile?.analytics?.report?.developmentAreas?.length
+        ? profile.analytics.report.developmentAreas
+        : fallback.growthAreas,
     attributes: {
       pace: fallback.attributes.pace,
       shooting: analyticsAttributes.shooting ?? fallback.attributes.shooting,
@@ -127,20 +122,7 @@ const formatHomeMatchDate = (value?: string) => {
   });
 };
 
-const buildLiveFeedMatch = (
-  liveMatch: {
-    id: string;
-    homeTeam?: string;
-    awayTeam?: string;
-    homeScore?: number;
-    awayScore?: number;
-    competition?: string;
-    date?: string;
-    venue?: string;
-    status?: "completed" | "upcoming" | "live";
-  } | null | undefined,
-  fallbackMatch: Match,
-): Match | null => {
+const buildLiveFeedMatch = (liveMatch: ApiLiveFeedMatch | null | undefined, fallbackMatch: Match): Match | null => {
   if (!liveMatch) {
     return null;
   }
@@ -159,45 +141,8 @@ const buildLiveFeedMatch = (
   };
 };
 
-const isIndianPlayer = (player: { nationality?: string } | null | undefined) =>
-  String(player?.nationality || "").trim().toLowerCase() === "india";
-
-const selectSpotlightDirectory = <
-  T extends {
-    playerId: string;
-    nationality?: string;
-  },
->(
-  players: T[],
-  limit: number,
-) => {
-  const uniquePlayers = [...new Map(players.map((player) => [player.playerId, player])).values()];
-  const indianPlayers = uniquePlayers.filter((player) => isIndianPlayer(player));
-  const foreignPlayers = uniquePlayers.filter((player) => !isIndianPlayer(player));
-
-  if (!indianPlayers.length || !foreignPlayers.length) {
-    return uniquePlayers.slice(0, limit);
-  }
-
-  const spotlightSelection: T[] = [];
-  const preferredIndianCount = Math.min(Math.ceil(limit / 2), indianPlayers.length);
-  const preferredForeignCount = Math.min(Math.floor(limit / 2), foreignPlayers.length);
-
-  for (let index = 0; index < Math.max(preferredIndianCount, preferredForeignCount); index += 1) {
-    if (indianPlayers[index] && spotlightSelection.length < limit) {
-      spotlightSelection.push(indianPlayers[index]);
-    }
-
-    if (foreignPlayers[index] && spotlightSelection.length < limit) {
-      spotlightSelection.push(foreignPlayers[index]);
-    }
-  }
-
-  const selectedIds = new Set(spotlightSelection.map((player) => player.playerId));
-  const remainingPlayers = uniquePlayers.filter((player) => !selectedIds.has(player.playerId));
-
-  return [...spotlightSelection, ...remainingPlayers].slice(0, limit);
-};
+const selectSpotlightDirectory = <T extends { playerId: string }>(players: T[], limit: number) =>
+  [...new Map(players.map((player) => [player.playerId, player])).values()].slice(0, limit);
 
 const Home = () => {
   const [homeMatches, setHomeMatches] = useState<Match[]>(fallbackMatches);
@@ -213,30 +158,35 @@ const Home = () => {
     const loadHomeData = async () => {
       const [matchesResult, playersResult, liveFeedResult] = await Promise.allSettled([
         getMatches(),
-        getPlayers({ limit: 50 }),
+        getPlayers({ limit: 100 }),
         getHomeMatchFeed(),
       ]);
 
-      const liveMatches = matchesResult.status === "fulfilled" ? matchesResult.value.matches || [] : [];
-      const playerDirectory = playersResult.status === "fulfilled" ? playersResult.value.players || [] : [];
+      const liveMatches =
+        matchesResult.status === "fulfilled" ? ((matchesResult.value.matches || []) as ApiMatchDirectoryEntry[]) : [];
+      const playerDirectory =
+        playersResult.status === "fulfilled" ? ((playersResult.value.players || []) as ApiDirectoryPlayer[]) : [];
       const livePlayers = selectSpotlightDirectory(playerDirectory, fallbackSpotlightPlayers.length);
-      const homeFeed = liveFeedResult.status === "fulfilled" ? liveFeedResult.value : null;
+      const homeFeed =
+        liveFeedResult.status === "fulfilled" ? (liveFeedResult.value as ApiHomeMatchFeedResponse) : null;
 
-      let featuredAnalysis = null;
+      let featuredAnalysis: ApiMatchAnalysisResponse | null = null;
       if (liveMatches[0]?.matchId) {
         try {
-          featuredAnalysis = await getMatchAnalysis(liveMatches[0].matchId);
+          featuredAnalysis = (await getMatchAnalysis(liveMatches[0].matchId)) as ApiMatchAnalysisResponse;
         } catch (_error) {
           featuredAnalysis = null;
         }
       }
 
-      let liveSpotlightProfiles: any[] = [];
+      let liveSpotlightProfiles: Array<ApiPlayerProfile | null> = [];
       if (livePlayers.length) {
         const profileResults = await Promise.allSettled(
-          livePlayers.slice(0, 6).map((player: { playerId: string }) => getPlayerProfile(player.playerId)),
+          livePlayers.slice(0, 6).map((player) => getPlayerProfile(player.playerId)),
         );
-        liveSpotlightProfiles = profileResults.map((result) => (result.status === "fulfilled" ? result.value : null));
+        liveSpotlightProfiles = profileResults.map((result) =>
+          result.status === "fulfilled" ? (result.value as ApiPlayerProfile) : null,
+        );
       }
 
       if (!active) {
@@ -244,29 +194,28 @@ const Home = () => {
       }
 
       const mappedMatches = liveMatches.length
-        ? liveMatches.slice(0, 6).map((match: any, index: number) =>
-            buildMatchCard(match, fallbackMatches[index], index === 0 ? featuredAnalysis : null),
-          )
+        ? liveMatches
+            .slice(0, 6)
+            .map((match, index) => buildMatchCard(match, fallbackMatches[index], index === 0 ? featuredAnalysis : null))
         : fallbackMatches;
 
       const mappedPlayers = livePlayers.length
-        ? livePlayers.map((player: any, index: number) =>
-            buildPlayerCard(player, liveSpotlightProfiles[index], fallbackSpotlightPlayers[index]),
-          )
+        ? livePlayers.map((player, index) => buildPlayerCard(player, liveSpotlightProfiles[index], fallbackSpotlightPlayers[index]))
         : fallbackSpotlightPlayers;
+
       const mappedRecentMatch = buildLiveFeedMatch(homeFeed?.recentMatch, fallbackMatches[1] || fallbackMatches[0]);
       const mappedUpcomingMatches =
-        homeFeed?.upcomingMatches?.length > 0
+        homeFeed?.upcomingMatches?.length
           ? homeFeed.upcomingMatches
               .slice(0, 3)
-              .map((match: any, index: number) => buildLiveFeedMatch(match, fallbackMatches[index + 2] || fallbackMatches[0]))
-              .filter(Boolean)
+              .map((match, index) => buildLiveFeedMatch(match, fallbackMatches[index + 2] || fallbackMatches[0]))
+              .filter((match): match is Match => Boolean(match))
           : [];
 
       setHomeMatches(mappedMatches);
       setSpotlightPlayers(mappedPlayers);
       setRecentMatch(mappedRecentMatch);
-      setUpcomingMatches(mappedUpcomingMatches as Match[]);
+      setUpcomingMatches(mappedUpcomingMatches);
       setHeroMatchId(mappedMatches[0]?.id || fallbackMatches[0].id);
       setStats([
         {
@@ -279,7 +228,9 @@ const Home = () => {
         },
         {
           label: "Matches Available",
-          value: String(matchesResult.status === "fulfilled" ? liveMatches.length || fallbackMatches.length : fallbackMatches.length),
+          value: String(
+            matchesResult.status === "fulfilled" ? liveMatches.length || fallbackMatches.length : fallbackMatches.length,
+          ),
         },
         {
           label: "Momentum Windows",
@@ -310,11 +261,7 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-transparent" />
         <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/[0.02] blur-3xl" />
         <div className="relative mx-auto max-w-7xl text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <p className="mb-4 text-xs font-body uppercase tracking-[0.3em] text-muted-foreground">
               Premium Football Intelligence
             </p>
@@ -363,7 +310,7 @@ const Home = () => {
           <MatchCard match={recentMatch} featured interactive={false} />
         ) : (
           <div className="glass-card rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
-            Add `FOOTBALL_DATA_API_TOKEN` in `backend/.env` to load the most recent real-world finished match here.
+            The live schedule feed is unavailable right now, so PlayerIQ is showing the curated match board.
           </div>
         )}
       </section>
@@ -387,14 +334,14 @@ const Home = () => {
           </div>
         ) : (
           <div className="glass-card rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
-            Add `FOOTBALL_DATA_API_TOKEN` in `backend/.env` to load upcoming real-world fixtures here.
+            Upcoming live fixtures will appear here when the schedule feed is available.
           </div>
         )}
       </section>
 
       <section className="border-y border-border bg-card/30 py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader title="Player Spotlight" subtitle="Indian standouts and global stars under the microscope" />
+          <SectionHeader title="Player Spotlight" subtitle="Elite performers under the microscope" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {spotlightPlayers.map((player, index) => (
               <PlayerCard key={player.id} player={player} index={index} />

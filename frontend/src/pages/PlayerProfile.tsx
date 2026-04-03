@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Brain, Shield, Target, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { getPlayerHistory, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
@@ -10,24 +10,14 @@ import Navbar from "@/components/Navbar";
 import RadarChartComponent from "@/components/RadarChart";
 import SearchableSelect from "@/components/SearchableSelect";
 import SectionHeader from "@/components/SectionHeader";
-import { players as fallbackPlayers } from "@/data/mockData";
+import { players as fallbackPlayers, type Player } from "@/data/mockData";
+import type { ApiDirectoryPlayer, ApiPlayerHistoryResponse, ApiPlayerProfile } from "@/types/api";
 
-type DirectoryPlayer = {
-  playerId: string;
-  name: string;
-  team?: string;
-  position?: string;
-  nationality?: string;
-};
-
-type ProfileSnapshot = {
-  overallRating?: number | null;
-  ppi?: number | null;
-};
+type DisplayPlayer = Player;
 
 const defaultFallbackPlayer = fallbackPlayers[0];
 
-const buildPlaceholderPlayer = (playerId: string) => ({
+const buildPlaceholderPlayer = (playerId: string): DisplayPlayer => ({
   id: playerId,
   name: "Loading player",
   club: "Loading club",
@@ -51,10 +41,10 @@ const mapProfileToDisplayPlayer = ({
   snapshots,
 }: {
   playerId: string;
-  directoryPlayer?: DirectoryPlayer | null;
-  profile?: any;
-  snapshots?: ProfileSnapshot[];
-}) => {
+  directoryPlayer?: ApiDirectoryPlayer | null;
+  profile?: ApiPlayerProfile | null;
+  snapshots?: ApiPlayerHistoryResponse["snapshots"];
+}): DisplayPlayer => {
   const fallbackByName =
     fallbackPlayers.find(
       (candidate) =>
@@ -74,7 +64,7 @@ const mapProfileToDisplayPlayer = ({
 
             return Math.max(6, Math.min(10, Number(sourceValue) / 10));
           })
-          .filter(Boolean)
+          .filter((value): value is number => value !== null)
       : [];
 
   return {
@@ -86,21 +76,18 @@ const mapProfileToDisplayPlayer = ({
     position: profile?.player?.position || directoryPlayer?.position || fallbackByName.position,
     rating: profile?.overview?.overallRating ?? fallbackByName.rating,
     summary: profile?.overview?.reportSummary || fallbackByName.summary,
-    playstyle:
-      profile?.analytics?.playstyleProfile?.name ||
-      profile?.overview?.playstyle ||
-      fallbackByName.playstyle,
+    playstyle: profile?.analytics?.playstyleProfile?.name || profile?.overview?.playstyle || fallbackByName.playstyle,
     pressureRating:
       pressurePayload?.pressureScore ??
       (profile?.overview?.pressureIndex !== null && profile?.overview?.pressureIndex !== undefined
         ? Math.round(Number(profile.overview.pressureIndex) * 100)
         : fallbackByName.pressureRating),
     strengths:
-      profile?.analytics?.report?.strengths?.length > 0
+      profile?.analytics?.report?.strengths?.length
         ? profile.analytics.report.strengths
         : fallbackByName.strengths,
     growthAreas:
-      profile?.analytics?.report?.developmentAreas?.length > 0
+      profile?.analytics?.report?.developmentAreas?.length
         ? profile.analytics.report.developmentAreas
         : fallbackByName.growthAreas,
     attributes: {
@@ -118,16 +105,16 @@ const mapProfileToDisplayPlayer = ({
 const PlayerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [directoryPlayers, setDirectoryPlayers] = useState<DirectoryPlayer[]>([]);
-  const [profilePayload, setProfilePayload] = useState<any>(null);
-  const [historyPayload, setHistoryPayload] = useState<{ snapshots?: ProfileSnapshot[] } | null>(null);
+  const [directoryPlayers, setDirectoryPlayers] = useState<ApiDirectoryPlayer[]>([]);
+  const [profilePayload, setProfilePayload] = useState<ApiPlayerProfile | null>(null);
+  const [historyPayload, setHistoryPayload] = useState<ApiPlayerHistoryResponse | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const loadDirectory = async () => {
       try {
-        const response = await getPlayers({ limit: 50 });
+        const response = (await getPlayers({ limit: 100 })) as { players?: ApiDirectoryPlayer[] };
         if (!active) {
           return;
         }
@@ -166,8 +153,8 @@ const PlayerProfile = () => {
     const loadProfile = async () => {
       try {
         const [profileResponse, historyResponse] = await Promise.all([
-          getPlayerProfile(id),
-          getPlayerHistory(id),
+          getPlayerProfile(id) as Promise<ApiPlayerProfile>,
+          getPlayerHistory(id) as Promise<ApiPlayerHistoryResponse>,
         ]);
 
         if (!active) {
@@ -196,18 +183,18 @@ const PlayerProfile = () => {
   const currentPlayerId = id || directoryPlayers[0]?.playerId || defaultFallbackPlayer.id;
   const directoryPlayer = directoryPlayers.find((candidate) => candidate.playerId === currentPlayerId) || null;
 
-  const player = useMemo(() => {
-    if (profilePayload || directoryPlayer) {
-      return mapProfileToDisplayPlayer({
-        playerId: currentPlayerId,
-        directoryPlayer,
-        profile: profilePayload,
-        snapshots: historyPayload?.snapshots || [],
-      });
-    }
-
-    return buildPlaceholderPlayer(currentPlayerId);
-  }, [currentPlayerId, directoryPlayer, historyPayload?.snapshots, profilePayload]);
+  const player = useMemo(
+    () =>
+      profilePayload || directoryPlayer
+        ? mapProfileToDisplayPlayer({
+            playerId: currentPlayerId,
+            directoryPlayer,
+            profile: profilePayload,
+            snapshots: historyPayload?.snapshots || [],
+          })
+        : buildPlaceholderPlayer(currentPlayerId),
+    [currentPlayerId, directoryPlayer, historyPayload?.snapshots, profilePayload],
+  );
 
   const radarData = useMemo(
     () =>

@@ -19,4 +19,39 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return;
+          }
+
+          if (id.includes("recharts")) {
+            return "charts-vendor";
+          }
+
+          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("embla-carousel") || id.includes("vaul")) {
+            return "ui-vendor";
+          }
+
+          if (id.includes("@tanstack")) {
+            return "data-vendor";
+          }
+
+          if (
+            id.includes("react-router-dom") ||
+            id.includes("react-dom") ||
+            id.includes("/react/") ||
+            id.includes("\\react\\") ||
+            id.includes("framer-motion")
+          ) {
+            return "app-vendor";
+          }
+
+          return "vendor";
+        },
+      },
+    },
+  },
 }));

@@ -80,6 +80,11 @@ describe("Match analysis routes", () => {
     assert.equal(response.status, 401);
   });
 
+  it("requires authentication for the home live feed", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live-feed/home`);
+    assert.equal(response.status, 401);
+  });
+
   it("requires authentication for simulation status", async () => {
     const response = await fetch(`${baseUrl}/api/matches/SB-1001/simulation`);
     assert.equal(response.status, 401);
@@ -147,6 +152,20 @@ describe("Match analysis routes", () => {
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.ok(payload.matches.length >= 1);
+  });
+
+  it("returns a normalized home live feed envelope", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live-feed/home`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.ok(Array.isArray(payload.upcomingMatches));
+    assert.ok(payload.metadata?.source);
+    assert.ok(payload.metadata?.status);
   });
 
   it("returns not found for simulation status before a session is started", async () => {

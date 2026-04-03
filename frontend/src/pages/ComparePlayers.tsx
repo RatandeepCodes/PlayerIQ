@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 
 import { getPlayerComparison, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
@@ -7,24 +7,20 @@ import Navbar from "@/components/Navbar";
 import RadarChartComponent from "@/components/RadarChart";
 import SearchableSelect from "@/components/SearchableSelect";
 import SectionHeader from "@/components/SectionHeader";
-import { players as fallbackPlayers } from "@/data/mockData";
+import { players as fallbackPlayers, type Player } from "@/data/mockData";
+import type { ApiDirectoryPlayer, ApiPlayerComparisonResponse, ApiPlayerProfile } from "@/types/api";
 
-type DirectoryPlayer = {
-  playerId: string;
-  name: string;
-  team?: string;
-  position?: string;
-  nationality?: string;
-};
+type DisplayPlayer = Player;
+type AttributeKey = keyof DisplayPlayer["attributes"];
 
 const defaultLeftPlayer = fallbackPlayers[0];
 const defaultRightPlayer = fallbackPlayers[2] || fallbackPlayers[1];
 
 const mapProfileToPlayer = (
-  directoryPlayer: DirectoryPlayer | undefined,
-  profile: any,
-  fallbackPlayer: (typeof fallbackPlayers)[number],
-) => {
+  directoryPlayer: ApiDirectoryPlayer | undefined,
+  profile: ApiPlayerProfile | null,
+  fallbackPlayer: DisplayPlayer,
+): DisplayPlayer => {
   const attributes = profile?.analytics?.attributes || {};
 
   return {
@@ -36,21 +32,18 @@ const mapProfileToPlayer = (
     position: profile?.player?.position || directoryPlayer?.position || fallbackPlayer.position,
     rating: profile?.overview?.overallRating ?? fallbackPlayer.rating,
     summary: profile?.overview?.reportSummary || fallbackPlayer.summary,
-    playstyle:
-      profile?.analytics?.playstyleProfile?.name ||
-      profile?.overview?.playstyle ||
-      fallbackPlayer.playstyle,
+    playstyle: profile?.analytics?.playstyleProfile?.name || profile?.overview?.playstyle || fallbackPlayer.playstyle,
     pressureRating:
       profile?.analytics?.pressure?.pressureScore ??
       (profile?.overview?.pressureIndex !== null && profile?.overview?.pressureIndex !== undefined
         ? Math.round(Number(profile.overview.pressureIndex) * 100)
         : fallbackPlayer.pressureRating),
     strengths:
-      profile?.analytics?.report?.strengths?.length > 0
+      profile?.analytics?.report?.strengths?.length
         ? profile.analytics.report.strengths
         : fallbackPlayer.strengths,
     growthAreas:
-      profile?.analytics?.report?.developmentAreas?.length > 0
+      profile?.analytics?.report?.developmentAreas?.length
         ? profile.analytics.report.developmentAreas
         : fallbackPlayer.growthAreas,
     attributes: {
@@ -64,29 +57,31 @@ const mapProfileToPlayer = (
   };
 };
 
-const metricLabelToAttributeKey = (metric: string) => {
+const metricLabelToAttributeKey = (metric: string): AttributeKey => {
   const normalized = metric.trim().toLowerCase();
   if (normalized === "pace" || normalized === "creativity") {
     return "creativity";
   }
 
-  return normalized;
+  return (["shooting", "passing", "dribbling", "defending", "physical"].includes(normalized)
+    ? normalized
+    : "shooting") as AttributeKey;
 };
 
 const ComparePlayers = () => {
-  const [directoryPlayers, setDirectoryPlayers] = useState<DirectoryPlayer[]>([]);
+  const [directoryPlayers, setDirectoryPlayers] = useState<ApiDirectoryPlayer[]>([]);
   const [leftId, setLeftId] = useState(defaultLeftPlayer.id);
   const [rightId, setRightId] = useState(defaultRightPlayer.id);
-  const [leftProfile, setLeftProfile] = useState<any>(null);
-  const [rightProfile, setRightProfile] = useState<any>(null);
-  const [comparisonPayload, setComparisonPayload] = useState<any>(null);
+  const [leftProfile, setLeftProfile] = useState<ApiPlayerProfile | null>(null);
+  const [rightProfile, setRightProfile] = useState<ApiPlayerProfile | null>(null);
+  const [comparisonPayload, setComparisonPayload] = useState<ApiPlayerComparisonResponse | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const loadDirectory = async () => {
       try {
-        const response = await getPlayers({ limit: 50 });
+        const response = (await getPlayers({ limit: 100 })) as { players?: ApiDirectoryPlayer[] };
         if (!active) {
           return;
         }
@@ -123,9 +118,9 @@ const ComparePlayers = () => {
     const loadProfilesAndCompare = async () => {
       try {
         const [leftResponse, rightResponse, compareResponse] = await Promise.all([
-          getPlayerProfile(leftId),
-          getPlayerProfile(rightId),
-          getPlayerComparison(leftId, rightId),
+          getPlayerProfile(leftId) as Promise<ApiPlayerProfile>,
+          getPlayerProfile(rightId) as Promise<ApiPlayerProfile>,
+          getPlayerComparison(leftId, rightId) as Promise<ApiPlayerComparisonResponse>,
         ]);
 
         if (!active) {
@@ -184,20 +179,18 @@ const ComparePlayers = () => {
   }, [directoryPlayers]);
 
   const attrs = useMemo(() => {
-    const liveMetrics = comparisonPayload?.radar?.map((point: any) => metricLabelToAttributeKey(point.metric));
+    const liveMetrics = comparisonPayload?.radar?.map((point) => metricLabelToAttributeKey(point.metric));
     if (liveMetrics?.length) {
       return Array.from(new Set(liveMetrics));
     }
 
-    return Object.keys(leftPlayer.attributes) as (keyof typeof leftPlayer.attributes)[];
+    return Object.keys(leftPlayer.attributes) as AttributeKey[];
   }, [comparisonPayload?.radar, leftPlayer.attributes]);
 
   const radarData = useMemo(
     () =>
       attrs.map((key) => {
-        const livePoint = comparisonPayload?.radar?.find(
-          (point: any) => metricLabelToAttributeKey(point.metric) === key,
-        );
+        const livePoint = comparisonPayload?.radar?.find((point) => metricLabelToAttributeKey(point.metric) === key);
 
         return {
           attribute: key.charAt(0).toUpperCase() + key.slice(1),
@@ -210,9 +203,7 @@ const ComparePlayers = () => {
   const secondaryRadar = useMemo(
     () =>
       attrs.map((key) => {
-        const livePoint = comparisonPayload?.radar?.find(
-          (point: any) => metricLabelToAttributeKey(point.metric) === key,
-        );
+        const livePoint = comparisonPayload?.radar?.find((point) => metricLabelToAttributeKey(point.metric) === key);
 
         return {
           attribute: key.charAt(0).toUpperCase() + key.slice(1),
@@ -240,7 +231,7 @@ const ComparePlayers = () => {
 
   const categoryWinners = useMemo(() => {
     if (comparisonPayload?.categoryWinners?.length) {
-      return comparisonPayload.categoryWinners.map((item: any) => ({
+      return comparisonPayload.categoryWinners.map((item) => ({
         label: metricLabelToAttributeKey(item.metric),
         winner:
           item.winner === "playerOne"
@@ -266,19 +257,19 @@ const ComparePlayers = () => {
     <div className="min-h-screen bg-background bg-noise">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+      <div className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6 lg:px-8">
         <SectionHeader title="Compare Players" subtitle="Head-to-head analysis of elite talent" />
       </div>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
           <SearchableSelect options={options} value={leftId} onChange={setLeftId} placeholder="Select first player..." />
           <SearchableSelect options={options} value={rightId} onChange={setRightId} placeholder="Select second player..." />
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {[leftPlayer, rightPlayer].map((player, idx) => (
             <motion.div
               key={`${player.id}-${idx}`}
@@ -309,7 +300,7 @@ const ComparePlayers = () => {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 text-center">
+      <section className="mx-auto max-w-7xl px-4 pb-12 text-center sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -320,7 +311,7 @@ const ComparePlayers = () => {
         </motion.div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-xl rounded-xl glass-card p-6">
           <SectionHeader title="Attribute Radar" className="mb-2 text-center" />
           <div className="mb-4 flex items-center justify-center gap-6">
@@ -329,7 +320,7 @@ const ComparePlayers = () => {
               <span className="text-xs font-body text-muted-foreground">{leftPlayer.name}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-muted-foreground border-dashed" style={{ borderTop: "1px dashed" }} />
+              <div className="h-0.5 w-3 border-t border-dashed border-muted-foreground" />
               <span className="text-xs font-body text-muted-foreground">{rightPlayer.name}</span>
             </div>
           </div>
@@ -337,7 +328,7 @@ const ComparePlayers = () => {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <SectionHeader title="Attribute Breakdown" />
         <div className="space-y-3">
           {attrs.map((attr) => {
@@ -360,7 +351,7 @@ const ComparePlayers = () => {
                 >
                   {leftValue}
                 </span>
-                <span className="text-xs font-body capitalize uppercase tracking-widest text-muted-foreground">
+                <span className="text-xs font-body uppercase tracking-widest text-muted-foreground capitalize">
                   {attr}
                 </span>
                 <span
@@ -376,12 +367,12 @@ const ComparePlayers = () => {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
         <SectionHeader title="Category Winners" />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {categoryWinners.map((item) => (
             <div key={item.label} className="rounded-xl glass-card p-4 text-center">
-              <p className="mb-1 text-[10px] font-body uppercase tracking-widest text-muted-foreground capitalize">
+              <p className="mb-1 text-[10px] font-body capitalize uppercase tracking-widest text-muted-foreground">
                 {item.label}
               </p>
               <p className="font-display text-sm tracking-wide text-foreground">{item.winner}</p>

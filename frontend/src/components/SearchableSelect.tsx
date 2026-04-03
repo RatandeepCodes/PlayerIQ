@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +19,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder = 'Search...' 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const deferredQuery = useDeferredValue(query);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -28,15 +29,26 @@ const SearchableSelect = ({ options, value, onChange, placeholder = 'Search...' 
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const filtered = options.filter((o) =>
-    o.label.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const normalizedQuery = deferredQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return options;
+    }
+
+    return options.filter((option) =>
+      [option.label, option.subtitle]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
+    );
+  }, [deferredQuery, options]);
   const selected = options.find((o) => o.value === value);
 
   return (
     <div ref={ref} className="relative w-full">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-card border border-border text-sm font-body text-foreground hover:border-foreground/20 transition-colors"
       >
         <span className={selected ? 'text-foreground' : 'text-muted-foreground'}>
@@ -73,6 +85,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder = 'Search...' 
               ) : (
                 filtered.map((option) => (
                   <button
+                    type="button"
                     key={option.value}
                     onClick={() => {
                       onChange(option.value);

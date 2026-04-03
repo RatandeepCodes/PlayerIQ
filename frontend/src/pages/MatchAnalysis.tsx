@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Clock, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { getMatchAnalysis, getMatches } from "@/api/client.js";
 import Footer from "@/components/Footer";
@@ -10,14 +10,7 @@ import Navbar from "@/components/Navbar";
 import SearchableSelect from "@/components/SearchableSelect";
 import SectionHeader from "@/components/SectionHeader";
 import { matches as fallbackMatches } from "@/data/mockData";
-
-type DirectoryMatch = {
-  matchId: string;
-  title?: string;
-  teams?: string[];
-  competition?: string;
-  season?: string;
-};
+import type { ApiMatchAnalysisResponse, ApiMatchBucket, ApiMatchDirectoryEntry, ApiTurningPoint } from "@/types/api";
 
 type MatchMomentumPoint = {
   minute: number;
@@ -63,7 +56,7 @@ const findFallbackMatch = (teams: string[] = []) =>
   ) || null;
 
 const buildMomentumPoints = (
-  buckets: any[],
+  buckets: ApiMatchBucket[],
   homeTeam: string,
   awayTeam: string,
   fallbackMomentum: MatchMomentumPoint[] = [],
@@ -72,7 +65,7 @@ const buildMomentumPoints = (
     return fallbackMomentum;
   }
 
-  return buckets.map((bucket: any, index: number) => {
+  return buckets.map((bucket, index) => {
     const bucketStart = toNumber(bucket.bucketStart ?? bucket.startMinute, index * 5);
     const bucketEnd = toNumber(bucket.bucketEnd ?? bucket.endMinute, bucketStart + 4);
 
@@ -86,11 +79,11 @@ const buildMomentumPoints = (
 };
 
 const buildTurningPoints = (
-  analysis: any,
+  analysis: ApiMatchAnalysisResponse | null,
   fallbackTurningPoints: MatchTurningPoint[] = [],
 ): MatchTurningPoint[] => {
   if (analysis?.turningPointList?.length) {
-    return analysis.turningPointList.map((point: any) => ({
+    return analysis.turningPointList.map((point: ApiTurningPoint) => ({
       minute: toNumber(point.minute),
       event: point.team || "Turning Point",
       description: point.note || "A key moment shaped the flow of this match.",
@@ -100,9 +93,9 @@ const buildTurningPoints = (
   return fallbackTurningPoints;
 };
 
-const buildPhases = (buckets: any[], fallbackPhases: MatchPhase[] = []): MatchPhase[] => {
+const buildPhases = (buckets: ApiMatchBucket[], fallbackPhases: MatchPhase[] = []): MatchPhase[] => {
   if (buckets.length) {
-    return buckets.slice(0, 6).map((bucket: any, index: number) => {
+    return buckets.slice(0, 6).map((bucket, index) => {
       const bucketStart = toNumber(bucket.bucketStart ?? bucket.startMinute, index * 5);
       const bucketEnd = toNumber(bucket.bucketEnd ?? bucket.endMinute, bucketStart + 4);
 
@@ -118,7 +111,7 @@ const buildPhases = (buckets: any[], fallbackPhases: MatchPhase[] = []): MatchPh
 };
 
 const buildStats = (
-  buckets: any[],
+  buckets: ApiMatchBucket[],
   momentum: MatchMomentumPoint[],
   homeTeam: string,
   awayTeam: string,
@@ -137,7 +130,7 @@ const buildStats = (
   );
 
   const leadingWindows = buckets.reduce(
-    (accumulator: { home: number; away: number }, bucket: any) => {
+    (accumulator: { home: number; away: number }, bucket) => {
       if (bucket.leadingTeam === homeTeam) {
         accumulator.home += 1;
       }
@@ -152,7 +145,7 @@ const buildStats = (
   );
 
   const swingWindows = buckets.reduce(
-    (accumulator: { home: number; away: number }, bucket: any) => {
+    (accumulator: { home: number; away: number }, bucket) => {
       if (!bucket.isSwing) {
         return accumulator;
       }
@@ -192,8 +185,8 @@ const buildMatchFromAnalysis = ({
   analysis,
 }: {
   matchId: string;
-  directoryMatch?: DirectoryMatch | null;
-  analysis?: any;
+  directoryMatch?: ApiMatchDirectoryEntry | null;
+  analysis?: ApiMatchAnalysisResponse | null;
 }) => {
   const teams = analysis?.overview?.teams?.length
     ? analysis.overview.teams
@@ -222,7 +215,7 @@ const buildMatchFromAnalysis = ({
       .filter(Boolean)
       .join(" | "),
     momentum,
-    turningPoints: buildTurningPoints(analysis, fallbackMatch?.turningPoints || []),
+    turningPoints: buildTurningPoints(analysis || null, fallbackMatch?.turningPoints || []),
     phases: buildPhases(buckets, fallbackMatch?.phases || []),
     stats: buildStats(buckets, momentum, homeTeam, awayTeam, fallbackMatch?.stats || []),
   };
@@ -231,15 +224,15 @@ const buildMatchFromAnalysis = ({
 const MatchAnalysis = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [directoryMatches, setDirectoryMatches] = useState<DirectoryMatch[]>([]);
-  const [analysisPayload, setAnalysisPayload] = useState<any>(null);
+  const [directoryMatches, setDirectoryMatches] = useState<ApiMatchDirectoryEntry[]>([]);
+  const [analysisPayload, setAnalysisPayload] = useState<ApiMatchAnalysisResponse | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const loadDirectory = async () => {
       try {
-        const response = await getMatches();
+        const response = (await getMatches()) as { matches?: ApiMatchDirectoryEntry[] };
         if (!active) {
           return;
         }
@@ -277,7 +270,7 @@ const MatchAnalysis = () => {
 
     const loadAnalysis = async () => {
       try {
-        const response = await getMatchAnalysis(id);
+        const response = (await getMatchAnalysis(id)) as ApiMatchAnalysisResponse;
         if (!active) {
           return;
         }
@@ -316,9 +309,7 @@ const MatchAnalysis = () => {
     if (directoryMatches.length) {
       return directoryMatches.map((candidate) => ({
         value: candidate.matchId,
-        label:
-          candidate.title ||
-          `${candidate.teams?.[0] || "Home"} vs ${candidate.teams?.[1] || "Away"}`,
+        label: candidate.title || `${candidate.teams?.[0] || "Home"} vs ${candidate.teams?.[1] || "Away"}`,
         subtitle: candidate.competition || "Competition",
       }));
     }
