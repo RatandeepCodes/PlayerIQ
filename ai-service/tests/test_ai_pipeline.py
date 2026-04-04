@@ -13,7 +13,11 @@ from app.services.data_repository import (
     list_players,
     load_all_events,
 )
-from app.services.feature_engineering import get_live_feature_snapshot
+from app.services.feature_engineering import (
+    get_live_feature_snapshot,
+    get_player_training_dataset,
+    get_player_training_dataset_metadata,
+)
 from app.services.momentum_engine import get_match_momentum
 from app.services.playstyle_engine import get_playstyle_profile
 from app.services.pressure_engine import get_pressure_profile
@@ -170,6 +174,33 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertGreaterEqual(len(payload["matches"]), 1)
+
+    def test_training_dataset_export_has_required_columns(self) -> None:
+        dataset = get_player_training_dataset()
+        self.assertGreater(len(dataset), 0)
+        for column in [
+            "player_id",
+            "player_name",
+            "team",
+            "position",
+            "matches_played",
+            "pass_accuracy",
+            "xg_per_match",
+            "pressure_index",
+            "sample_overall_rating",
+            "overall_rating",
+            "target_label_version",
+            "target_label_source",
+        ]:
+            self.assertIn(column, dataset.columns)
+
+    def test_training_dataset_metadata_matches_export(self) -> None:
+        dataset = get_player_training_dataset()
+        metadata = get_player_training_dataset_metadata()
+        self.assertEqual(metadata["row_count"], len(dataset))
+        self.assertIn("overall_rating", metadata["target_columns"])
+        self.assertIn("pressure_index", metadata["feature_columns"])
+        self.assertEqual(metadata["target_label_version"], "heuristic_overall_rating_v1")
 
 
 if __name__ == "__main__":

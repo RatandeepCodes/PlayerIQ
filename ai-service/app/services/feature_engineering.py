@@ -15,6 +15,69 @@ RAW_SCORE_COLUMNS = [
 ]
 PRIOR_MATCH_WEIGHT = 3.0
 OVERALL_PRIOR_MATCH_WEIGHT = 6.0
+TRAINING_FEATURE_COLUMNS = [
+    "matches_played",
+    "total_events",
+    "passes_attempted",
+    "passes_completed",
+    "pass_accuracy",
+    "key_passes",
+    "progressive_passes",
+    "shots",
+    "shots_on_target",
+    "goals",
+    "xg_total",
+    "dribbles_attempted",
+    "dribbles_completed",
+    "dribble_success_rate",
+    "tackles_won",
+    "interceptions",
+    "clearances",
+    "recoveries",
+    "defensive_actions",
+    "success_rate",
+    "pressure_events",
+    "pressure_actions",
+    "pressure_index",
+    "passes_per_match",
+    "key_passes_per_match",
+    "progressive_passes_per_match",
+    "shots_per_match",
+    "shots_on_target_per_match",
+    "goals_per_match",
+    "xg_per_match",
+    "dribbles_per_match",
+    "dribbles_completed_per_match",
+    "tackles_per_match",
+    "interceptions_per_match",
+    "clearances_per_match",
+    "recoveries_per_match",
+    "defensive_actions_per_match",
+    "pressure_actions_per_match",
+    "shooting_raw",
+    "passing_raw",
+    "dribbling_raw",
+    "defending_raw",
+    "creativity_raw",
+    "physical_raw",
+    "ppi_raw",
+    "role_weighted_score",
+    "overall_sample_index",
+]
+TRAINING_TARGET_COLUMNS = [
+    "sample_overall_rating",
+    "overall_rating",
+]
+TRAINING_METADATA_COLUMNS = [
+    "player_id",
+    "player_name",
+    "team",
+    "nationality",
+    "position",
+    "position_group",
+    "sources",
+    "is_indian",
+]
 
 POSITION_BASELINES = {
     "att": 72,
@@ -393,6 +456,28 @@ def get_feature_matrix_for_clustering() -> pd.DataFrame:
         "recoveries_per_match",
     ]
     return table[["player_id", "player_name", *columns]].copy()
+
+
+def get_player_training_dataset() -> pd.DataFrame:
+    table = get_player_feature_table().copy()
+    dataset_columns = [*TRAINING_METADATA_COLUMNS, *TRAINING_FEATURE_COLUMNS, *TRAINING_TARGET_COLUMNS]
+    dataset = table[dataset_columns].copy()
+    dataset["sources"] = dataset["sources"].apply(lambda values: "|".join(sorted(set(values))))
+    dataset["target_label_version"] = "heuristic_overall_rating_v1"
+    dataset["target_label_source"] = "playeriq_rule_engine"
+    return dataset.sort_values(["player_name", "player_id"]).reset_index(drop=True)
+
+
+def get_player_training_dataset_metadata() -> dict:
+    dataset = get_player_training_dataset()
+    return {
+        "dataset_name": "player_rating_training_dataset",
+        "row_count": int(len(dataset)),
+        "feature_columns": list(TRAINING_FEATURE_COLUMNS),
+        "target_columns": list(TRAINING_TARGET_COLUMNS),
+        "metadata_columns": [*TRAINING_METADATA_COLUMNS, "target_label_version", "target_label_source"],
+        "target_label_version": "heuristic_overall_rating_v1",
+    }
 
 
 def get_live_feature_snapshot(event_slice: pd.DataFrame, player_id: str) -> dict:
