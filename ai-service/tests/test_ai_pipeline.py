@@ -1,4 +1,7 @@
 import unittest
+from pathlib import Path
+import shutil
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -19,6 +22,12 @@ from app.services.feature_engineering import (
     get_player_training_dataset_metadata,
 )
 from app.services.momentum_engine import get_match_momentum
+from app.services.model_training import (
+    load_player_rating_model,
+    predict_player_rating_from_features,
+    train_and_persist_player_rating_model,
+    train_player_rating_model,
+)
 from app.services.playstyle_engine import get_playstyle_profile
 from app.services.pressure_engine import get_pressure_profile
 from app.services.rating_engine import get_player_rating
@@ -201,6 +210,32 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertIn("overall_rating", metadata["target_columns"])
         self.assertIn("pressure_index", metadata["feature_columns"])
         self.assertEqual(metadata["target_label_version"], "heuristic_overall_rating_v1")
+
+    def test_rating_model_training_produces_metrics(self) -> None:
+        model, artifacts = train_player_rating_model()
+        self.assertGreater(artifacts.row_count, 0)
+        self.assertIn("mae", artifacts.metrics)
+        self.assertIn("rmse", artifacts.metrics)
+        self.assertIn("r2", artifacts.metrics)
+        self.assertGreaterEqual(len(model.feature_importances_), 1)
+
+    def test_rating_model_can_be_persisted_and_loaded(self) -> None:
+        model_dir = Path(__file__).resolve().parents[2] / ".tmp_model_test"
+        shutil.rmtree(model_dir, ignore_errors=True)
+        model_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            with patch("app.services.model_training._get_model_dir", return_value=model_dir):
+                artifacts = train_and_persist_player_rating_model()
+                self.assertTrue(artifacts.model_path.exists())
+                self.assertTrue(artifacts.metadata_path.exists())
+                model, metadata = load_player_rating_model()
+                self.assertEqual(metadata["model_version"], "player_rating_rf_v1")
+                dataset = get_player_training_dataset()
+                feature_row = dataset.iloc[0].to_dict()
+                prediction = predict_player_rating_from_features(feature_row, model=model)
+                self.assertGreaterEqual(prediction, 0.0)
+        finally:
+            shutil.rmtree(model_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":

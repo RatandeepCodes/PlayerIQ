@@ -8,3 +8,5 @@ Current utilities:
   - refreshes local StatsBomb open-data support files
 - `export_training_dataset.py`
   - exports the first reusable player-rating training dataset to `data/processed/`
+- `train_player_rating_model.py`
+  - trains and persists the first supervised player-rating model to `ai-service/models/`
