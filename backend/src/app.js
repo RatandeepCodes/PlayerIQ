@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.routes.js";
 import playerRoutes from "./routes/player.routes.js";
 import matchRoutes from "./routes/match.routes.js";
 import { getAiServiceHealth } from "./services/ai.service.js";
+import { getFootballDataHealth } from "./services/football-data.service.js";
 
 const app = express();
 const allowedOrigins = [env.clientOrigin, "http://localhost:8080", "http://127.0.0.1:8080", "http://127.0.0.1:5173"];
@@ -36,18 +37,27 @@ app.use(morgan("dev"));
 app.get("/api/health", async (_req, res) => {
   const warnings = getRuntimeWarnings();
   const aiHealth = await getAiServiceHealth();
+  const footballDataHealth = await getFootballDataHealth();
   const database = isDatabaseConnected() ? "connected" : "disconnected";
-  const status = database === "connected" && aiHealth.status === "online" && warnings.length === 0 ? "ok" : "degraded";
+  const status =
+    database === "connected" &&
+    aiHealth.status === "online" &&
+    footballDataHealth.status === "online" &&
+    warnings.length === 0
+      ? "ok"
+      : "degraded";
 
   res.json({
     status,
     service: "playeriq-backend",
     database,
     aiService: aiHealth.status,
+    liveData: footballDataHealth.status,
     services: {
       backend: "online",
       database,
       aiService: aiHealth.status,
+      liveData: footballDataHealth.status,
     },
     config: {
       liveDataProvider: env.liveDataProvider,
