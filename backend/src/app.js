@@ -50,6 +50,11 @@ app.get("/api/health", async (_req, res) => {
       aiService: aiHealth.status,
     },
     config: {
+      liveDataProvider: env.liveDataProvider,
+      footballData: {
+        configured: Boolean(env.footballDataApiToken),
+        baseUrl: env.footballDataApiBaseUrl,
+      },
       hasWarnings: warnings.length > 0,
       warnings,
     },

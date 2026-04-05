@@ -73,6 +73,17 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
         self.assertEqual(rating.nationality, "India")
         self.assertIn("kaggle_indian_players", rating.sources)
 
+    def test_rating_uses_trained_model_when_available(self) -> None:
+        with patch("app.services.rating_engine._load_rating_model_for_inference", return_value=(object(), {"feature_columns": ["matches_played"]})):
+            with patch("app.services.rating_engine.predict_player_rating_from_features", return_value=88.6):
+                rating = get_player_rating("P101")
+        self.assertEqual(rating.overall_rating, 89)
+
+    def test_rating_falls_back_to_heuristic_when_model_is_unavailable(self) -> None:
+        with patch("app.services.rating_engine._load_rating_model_for_inference", side_effect=FileNotFoundError("missing model")):
+            rating = get_player_rating("P101")
+        self.assertEqual(rating.overall_rating, 84)
+
     def test_sparse_sample_star_ratings_are_stabilized(self) -> None:
         messi = get_player_rating("P012")
         ronaldo = get_player_rating("P014")

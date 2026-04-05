@@ -34,6 +34,9 @@ describe("Auth routes", () => {
     assert.ok(["online", "offline"].includes(payload.aiService));
     assert.equal(payload.services.backend, "online");
     assert.ok(Array.isArray(payload.config.warnings));
+    assert.equal(typeof payload.config.liveDataProvider, "string");
+    assert.equal(typeof payload.config.footballData.configured, "boolean");
+    assert.equal(typeof payload.config.footballData.baseUrl, "string");
     assert.equal(typeof payload.uptimeSeconds, "number");
     assert.equal(typeof payload.timestamp, "string");
   });

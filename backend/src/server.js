@@ -31,6 +31,8 @@ const startServer = async () => {
       port: env.port,
       aiServiceUrl: env.aiServiceUrl,
       clientOrigin: env.clientOrigin,
+      liveDataProvider: env.liveDataProvider,
+      footballDataConfigured: Boolean(env.footballDataApiToken),
     });
   });
 };

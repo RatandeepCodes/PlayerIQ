@@ -179,6 +179,18 @@ Important:
 - Kaggle is not a live feed
 - StatsBomb Open Data is not a live feed
 
+### Selected First Provider
+
+For the first live-data integration milestone, PlayerIQ should use:
+
+- `football-data.org`
+
+Reason:
+
+- it fits the current project best for fixtures, statuses, and score updates
+- it is a simpler first integration than a larger premium provider
+- the project already references `FOOTBALL_DATA_API_TOKEN` in backend configuration
+
 ## 7. Build Scheduled Data Refresh Jobs
 
 Recommended jobs:
