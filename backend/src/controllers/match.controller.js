@@ -2,6 +2,7 @@ import {
   getMatchAnalysisData,
   getMatchDirectoryData,
   getMatchMomentumData,
+  getUpcomingFixtureDirectoryData,
   getMatchTurningPointsData,
 } from "../services/match-analysis.service.js";
 import { getHomeLiveMatchFeed } from "../services/live-match-feed.service.js";
@@ -33,6 +34,15 @@ export const getHomeMatchFeed = async (_req, res, next) => {
   try {
     const feed = await getHomeLiveMatchFeed();
     res.json(feed);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listUpcomingFixtures = async (req, res, next) => {
+  try {
+    const fixtures = await getUpcomingFixtureDirectoryData(req.query);
+    res.json(fixtures);
   } catch (error) {
     next(error);
   }

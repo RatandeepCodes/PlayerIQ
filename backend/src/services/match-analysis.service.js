@@ -1,4 +1,5 @@
 import { fetchMatchDirectory, fetchMatchMomentum, fetchMatchSimulation, fetchMatchTurningPoints } from "./ai.service.js";
+import { fetchUpcomingFootballFixtures, isFootballDataConfigured } from "./football-data.service.js";
 import {
   getCachedMatchAnalysis,
   getCachedMatchMomentum,
@@ -262,4 +263,37 @@ export const getMatchDirectoryData = async ({ limit, page, status, search, compe
 export const getMatchSimulationData = async (matchId) => {
   const simulation = await fetchMatchSimulation(matchId);
   return buildMatchSimulationEnvelope(matchId, simulation);
+};
+
+export const getUpcomingFixtureDirectoryData = async ({ limit, competition } = {}) => {
+  if (!isFootballDataConfigured()) {
+    return {
+      matches: [],
+      metadata: {
+        source: "football-data",
+        configured: false,
+        total: 0,
+        competition: competition || null,
+      },
+    };
+  }
+
+  const normalizedLimit = Number(limit) || 100;
+  const competitionCodes = competition
+    ? [String(competition).trim().toUpperCase()]
+    : undefined;
+
+  const fixtures = await fetchUpcomingFootballFixtures({
+    competitionCodes,
+    limit: normalizedLimit,
+  });
+
+  return {
+    matches: fixtures.matches,
+    metadata: {
+      ...fixtures.metadata,
+      limit: normalizedLimit,
+      competition: competition || null,
+    },
+  };
 };

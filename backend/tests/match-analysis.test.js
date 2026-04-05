@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 
 import app from "../src/app.js";
 import { env } from "../src/config/env.js";
+import { normalizeFootballDataFixture } from "../src/services/football-data.service.js";
 import { clearSimulationSessions } from "../src/services/simulation-session.service.js";
 
 const server = createServer(app);
@@ -82,6 +83,11 @@ describe("Match analysis routes", () => {
 
   it("requires authentication for the home live feed", async () => {
     const response = await fetch(`${baseUrl}/api/matches/live-feed/home`);
+    assert.equal(response.status, 401);
+  });
+
+  it("requires authentication for live fixtures", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live/fixtures`);
     assert.equal(response.status, 401);
   });
 
@@ -183,6 +189,20 @@ describe("Match analysis routes", () => {
     assert.ok(payload.metadata?.status);
   });
 
+  it("returns an empty live fixture feed when the provider is not configured", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live/fixtures`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.deepEqual(payload.matches, []);
+    assert.equal(payload.metadata.source, "football-data");
+    assert.equal(payload.metadata.configured, false);
+  });
+
   it("returns not found for simulation status before a session is started", async () => {
     const response = await fetch(`${baseUrl}/api/matches/SB-1001/simulation`, {
       headers: {
@@ -227,5 +247,46 @@ describe("Match analysis routes", () => {
     assert.equal(response.status, 404);
     const payload = await response.json();
     assert.equal(payload.message, "No simulation session exists for match 'SB-1001'");
+  });
+
+  it("normalizes football-data fixtures into the PlayerIQ match shape", () => {
+    const fixture = normalizeFootballDataFixture({
+      id: 2001,
+      utcDate: "2026-04-10T18:00:00Z",
+      status: "SCHEDULED",
+      matchday: 31,
+      stage: "REGULAR_SEASON",
+      venue: "Camp Nou",
+      competition: {
+        name: "Primera Division",
+        code: "PD",
+      },
+      season: {
+        startDate: "2025-08-01",
+        endDate: "2026-05-31",
+      },
+      homeTeam: {
+        name: "Barcelona",
+      },
+      awayTeam: {
+        name: "Real Madrid",
+      },
+      score: {
+        fullTime: {
+          home: null,
+          away: null,
+        },
+      },
+    });
+
+    assert.equal(fixture.matchId, "FD-2001");
+    assert.equal(fixture.title, "Barcelona vs Real Madrid");
+    assert.equal(fixture.competition, "Primera Division");
+    assert.equal(fixture.competitionCode, "PD");
+    assert.equal(fixture.status, "scheduled");
+    assert.equal(fixture.homeScore, 0);
+    assert.equal(fixture.awayScore, 0);
+    assert.deepEqual(fixture.teams, ["Barcelona", "Real Madrid"]);
+    assert.equal(fixture.hasEvents, false);
   });
 });
