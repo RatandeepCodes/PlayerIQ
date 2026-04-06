@@ -1,6 +1,7 @@
 import {
   getMatchAnalysisData,
   getMatchDirectoryData,
+  getLiveMatchStatusFeedData,
   getMatchMomentumData,
   getUpcomingFixtureDirectoryData,
   getMatchTurningPointsData,
@@ -43,6 +44,15 @@ export const listUpcomingFixtures = async (req, res, next) => {
   try {
     const fixtures = await getUpcomingFixtureDirectoryData(req.query);
     res.json(fixtures);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getLiveMatchStatuses = async (req, res, next) => {
+  try {
+    const feed = await getLiveMatchStatusFeedData(req.query);
+    res.json(feed);
   } catch (error) {
     next(error);
   }

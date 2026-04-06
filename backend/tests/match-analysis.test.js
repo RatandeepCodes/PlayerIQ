@@ -91,6 +91,11 @@ describe("Match analysis routes", () => {
     assert.equal(response.status, 401);
   });
 
+  it("requires authentication for live results", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live/results`);
+    assert.equal(response.status, 401);
+  });
+
   it("requires authentication for simulation status", async () => {
     const response = await fetch(`${baseUrl}/api/matches/SB-1001/simulation`);
     assert.equal(response.status, 401);
@@ -203,6 +208,21 @@ describe("Match analysis routes", () => {
     assert.equal(payload.metadata.configured, false);
   });
 
+  it("returns an empty live result feed when the provider is not configured", async () => {
+    const response = await fetch(`${baseUrl}/api/matches/live/results`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.deepEqual(payload.liveMatches, []);
+    assert.deepEqual(payload.completedMatches, []);
+    assert.equal(payload.metadata.source, "football-data");
+    assert.equal(payload.metadata.configured, false);
+  });
+
   it("returns not found for simulation status before a session is started", async () => {
     const response = await fetch(`${baseUrl}/api/matches/SB-1001/simulation`, {
       headers: {
@@ -288,5 +308,31 @@ describe("Match analysis routes", () => {
     assert.equal(fixture.awayScore, 0);
     assert.deepEqual(fixture.teams, ["Barcelona", "Real Madrid"]);
     assert.equal(fixture.hasEvents, false);
+  });
+
+  it("normalizes live and completed provider statuses into playeriq-friendly values", () => {
+    const liveFixture = normalizeFootballDataFixture({
+      id: 2002,
+      status: "IN_PLAY",
+      competition: { name: "Premier League", code: "PL" },
+      season: { startDate: "2025-08-01", endDate: "2026-05-31" },
+      homeTeam: { name: "Arsenal" },
+      awayTeam: { name: "Liverpool" },
+      score: { fullTime: { home: 1, away: 1 } },
+    });
+    const completedFixture = normalizeFootballDataFixture({
+      id: 2003,
+      status: "FINISHED",
+      competition: { name: "Premier League", code: "PL" },
+      season: { startDate: "2025-08-01", endDate: "2026-05-31" },
+      homeTeam: { name: "Manchester City" },
+      awayTeam: { name: "Chelsea" },
+      score: { fullTime: { home: 3, away: 1 } },
+    });
+
+    assert.equal(liveFixture.status, "in_play");
+    assert.equal(completedFixture.status, "finished");
+    assert.equal(completedFixture.homeScore, 3);
+    assert.equal(completedFixture.awayScore, 1);
   });
 });

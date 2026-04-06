@@ -166,3 +166,49 @@ export const fetchUpcomingFootballFixtures = async ({
     },
   };
 };
+
+export const fetchFootballMatchStatusFeed = async ({
+  competitionCodes = DEFAULT_COMPETITION_CODES,
+  recentDays = 3,
+  upcomingDays = 0,
+  limit = 100,
+} = {}) => {
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const from = new Date(today);
+  from.setUTCDate(from.getUTCDate() - recentDays);
+  const to = new Date(today);
+  to.setUTCDate(to.getUTCDate() + upcomingDays);
+  const dateFrom = from.toISOString().slice(0, 10);
+  const futureDateTo = to.toISOString().slice(0, 10);
+
+  const data = await fetchFootballDataResource(
+    "/matches",
+    {
+      dateFrom,
+      dateTo: futureDateTo,
+      competitions: competitionCodes.join(","),
+      limit,
+    },
+    "Live match status feed unavailable from football-data.org",
+  );
+
+  const allMatches = Array.isArray(data?.matches) ? data.matches.map(normalizeFootballDataFixture) : [];
+  const liveMatches = allMatches.filter((match) => ["in_play", "paused", "live"].includes(match.status));
+  const completedMatches = allMatches.filter((match) => match.status === "finished");
+
+  return {
+    liveMatches,
+    completedMatches,
+    metadata: {
+      source: "football-data",
+      configured: hasFootballDataToken(),
+      total: allMatches.length,
+      liveCount: liveMatches.length,
+      completedCount: completedMatches.length,
+      dateFrom,
+      dateTo: futureDateTo,
+      competitionCodes,
+    },
+  };
+};

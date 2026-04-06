@@ -5,6 +5,7 @@ import {
   controlMatchSimulation,
   getHomeMatchFeed,
   getMatchAnalysis,
+  getLiveMatchStatuses,
   listMatches,
   listUpcomingFixtures,
   getMatchMomentum,
@@ -52,6 +53,16 @@ router.get(
     validateRequest,
   ],
   listUpcomingFixtures,
+);
+router.get(
+  "/live/results",
+  requireAuth,
+  [
+    query("limit").optional().isInt({ min: 1, max: 500 }).withMessage("limit must be between 1 and 500"),
+    query("competition").optional().trim().isLength({ min: 2, max: 10 }).withMessage("competition must be a short code"),
+    validateRequest,
+  ],
+  getLiveMatchStatuses,
 );
 router.get("/live-feed/home", requireAuth, getHomeMatchFeed);
 router.get("/:id/analysis", requireAuth, matchIdValidation, getMatchAnalysis);
