@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import json
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -14,17 +17,30 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "data" / "sources" / "statsbomb_open_data"
 PLAYER_OUTPUT = OUTPUT_DIR / "player_directory.csv"
 MATCH_OUTPUT = OUTPUT_DIR / "match_directory.csv"
+METADATA_OUTPUT = OUTPUT_DIR / "refresh_metadata.json"
 
 
-def download_archive() -> bytes:
+@dataclass(slots=True)
+class RefreshSummary:
+    source: str
+    archive_url: str
+    refreshed_at_utc: str
+    player_count: int
+    match_count: int
+    output_dir: str
+    player_output: str
+    match_output: str
+
+
+def download_archive(archive_url: str = ARCHIVE_URL, timeout: int = 60) -> bytes:
     request = Request(
-        ARCHIVE_URL,
+        archive_url,
         headers={
             "User-Agent": "PlayerIQ StatsBomb Importer",
             "Accept": "application/zip",
         },
     )
-    with urlopen(request, timeout=60) as response:
+    with urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -160,25 +176,74 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def main() -> None:
-    archive_bytes = download_archive()
+def write_metadata(path: Path, summary: RefreshSummary) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(asdict(summary), indent=2), encoding="utf-8")
+
+
+def refresh_statsbomb_open_data(
+    archive_url: str = ARCHIVE_URL,
+    output_dir: Path = OUTPUT_DIR,
+    timeout: int = 60,
+) -> RefreshSummary:
+    player_output = output_dir / PLAYER_OUTPUT.name
+    match_output = output_dir / MATCH_OUTPUT.name
+    metadata_output = output_dir / METADATA_OUTPUT.name
+
+    archive_bytes = download_archive(archive_url=archive_url, timeout=timeout)
     with ZipFile(BytesIO(archive_bytes)) as archive:
         players = extract_players(archive)
         matches = extract_matches(archive)
 
     write_csv(
-        PLAYER_OUTPUT,
+        player_output,
         ["player_id", "player_name", "team", "nationality", "position", "sources"],
         players,
     )
     write_csv(
-        MATCH_OUTPUT,
+        match_output,
         ["match_id", "title", "competition", "season", "teams", "sources"],
         matches,
     )
 
-    print(f"wrote {len(players)} players -> {PLAYER_OUTPUT}")
-    print(f"wrote {len(matches)} matches -> {MATCH_OUTPUT}")
+    summary = RefreshSummary(
+        source="statsbomb_open_data",
+        archive_url=archive_url,
+        refreshed_at_utc=datetime.now(timezone.utc).isoformat(),
+        player_count=len(players),
+        match_count=len(matches),
+        output_dir=str(output_dir),
+        player_output=str(player_output),
+        match_output=str(match_output),
+    )
+    write_metadata(metadata_output, summary)
+    return summary
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Refresh local StatsBomb open-data support files.")
+    parser.add_argument("--archive-url", default=ARCHIVE_URL, help="Archive URL to download StatsBomb data from.")
+    parser.add_argument(
+        "--output-dir",
+        default=str(OUTPUT_DIR),
+        help="Directory where refreshed player and match CSV files should be written.",
+    )
+    parser.add_argument("--timeout", default=60, type=int, help="Download timeout in seconds.")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    summary = refresh_statsbomb_open_data(
+        archive_url=args.archive_url,
+        output_dir=Path(args.output_dir),
+        timeout=args.timeout,
+    )
+
+    print(f"StatsBomb refresh completed at {summary.refreshed_at_utc}")
+    print(f"wrote {summary.player_count} players -> {summary.player_output}")
+    print(f"wrote {summary.match_count} matches -> {summary.match_output}")
+    print(f"metadata -> {METADATA_OUTPUT if Path(args.output_dir) == OUTPUT_DIR else Path(args.output_dir) / METADATA_OUTPUT.name}")
 
 
 if __name__ == "__main__":
