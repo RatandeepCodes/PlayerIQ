@@ -88,9 +88,10 @@ export interface ApiMatchDirectoryEntry {
   teams?: string[];
   competition?: string;
   season?: string;
-  status?: "completed" | "upcoming";
+  status?: "completed" | "upcoming" | "live";
   homeScore?: number;
   awayScore?: number;
+  hasEvents?: boolean;
 }
 
 export interface ApiMatchesResponse {

@@ -37,7 +37,7 @@ router.get(
   [
     query("limit").optional().isInt({ min: 1, max: 500 }).withMessage("limit must be between 1 and 500"),
     query("page").optional().isInt({ min: 1 }).withMessage("page must be at least 1"),
-    query("status").optional().isIn(["completed", "upcoming", "all"]).withMessage("status must be completed, upcoming, or all"),
+    query("status").optional().isIn(["completed", "upcoming", "live", "all"]).withMessage("status must be completed, upcoming, live, or all"),
     query("search").optional().trim(),
     query("competition").optional().trim(),
     validateRequest,

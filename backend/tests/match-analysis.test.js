@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import app from "../src/app.js";
 import { env } from "../src/config/env.js";
 import { normalizeFootballDataFixture } from "../src/services/football-data.service.js";
+import { mergeMatchDirectories } from "../src/services/match-analysis.service.js";
 import { clearSimulationSessions } from "../src/services/simulation-session.service.js";
 
 const server = createServer(app);
@@ -303,7 +304,8 @@ describe("Match analysis routes", () => {
     assert.equal(fixture.title, "Barcelona vs Real Madrid");
     assert.equal(fixture.competition, "Primera Division");
     assert.equal(fixture.competitionCode, "PD");
-    assert.equal(fixture.status, "scheduled");
+    assert.equal(fixture.status, "upcoming");
+    assert.equal(fixture.providerStatus, "scheduled");
     assert.equal(fixture.homeScore, 0);
     assert.equal(fixture.awayScore, 0);
     assert.deepEqual(fixture.teams, ["Barcelona", "Real Madrid"]);
@@ -330,9 +332,50 @@ describe("Match analysis routes", () => {
       score: { fullTime: { home: 3, away: 1 } },
     });
 
-    assert.equal(liveFixture.status, "in_play");
-    assert.equal(completedFixture.status, "finished");
+    assert.equal(liveFixture.status, "live");
+    assert.equal(liveFixture.providerStatus, "in_play");
+    assert.equal(completedFixture.status, "completed");
+    assert.equal(completedFixture.providerStatus, "finished");
     assert.equal(completedFixture.homeScore, 3);
     assert.equal(completedFixture.awayScore, 1);
+  });
+
+  it("merges provider matches into the main directory without overwriting analytics-backed results", () => {
+    const merged = mergeMatchDirectories(
+      [
+        {
+          matchId: "ISL-2001",
+          title: "Bengaluru FC vs Kerala Blasters",
+          competition: "Indian Super League",
+          season: "2025-26",
+          teams: ["Bengaluru FC", "Kerala Blasters"],
+          status: "completed",
+          homeScore: 2,
+          awayScore: 1,
+          hasEvents: true,
+          sources: ["ai-service"],
+        },
+      ],
+      [
+        {
+          matchId: "FD-9001",
+          title: "Bengaluru FC vs Kerala Blasters",
+          competition: "Indian Super League",
+          season: "2025/2026",
+          teams: ["Bengaluru FC", "Kerala Blasters"],
+          status: "live",
+          homeScore: 0,
+          awayScore: 0,
+          hasEvents: false,
+          sources: ["football-data"],
+        },
+      ],
+    );
+
+    assert.equal(merged.length, 1);
+    assert.equal(merged[0].status, "completed");
+    assert.equal(merged[0].homeScore, 2);
+    assert.equal(merged[0].awayScore, 1);
+    assert.deepEqual(merged[0].sources, ["ai-service", "football-data"]);
   });
 });

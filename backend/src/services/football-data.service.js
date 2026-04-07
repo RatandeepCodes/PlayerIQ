@@ -98,6 +98,20 @@ const formatFixtureTitle = (homeTeam, awayTeam) => {
   return home || away || "Fixture";
 };
 
+const mapFootballDataStatus = (status) => {
+  const normalized = String(status || "").trim().toUpperCase();
+
+  if (["IN_PLAY", "PAUSED", "LIVE"].includes(normalized)) {
+    return "live";
+  }
+
+  if (["FINISHED", "AWARDED"].includes(normalized)) {
+    return "completed";
+  }
+
+  return "upcoming";
+};
+
 export const normalizeFootballDataFixture = (match = {}) => {
   const homeTeam = String(match.homeTeam?.name || "").trim();
   const awayTeam = String(match.awayTeam?.name || "").trim();
@@ -106,6 +120,8 @@ export const normalizeFootballDataFixture = (match = {}) => {
   const seasonEnd = match.season?.endDate ? new Date(match.season.endDate).getUTCFullYear() : null;
   const season =
     seasonStart && seasonEnd ? `${seasonStart}/${seasonEnd}` : String(match.season?.currentMatchday || "").trim() || "Unknown";
+  const providerStatus = String(match.status || "").toLowerCase() || "scheduled";
+  const status = mapFootballDataStatus(match.status);
 
   return {
     matchId: `FD-${match.id}`,
@@ -115,7 +131,8 @@ export const normalizeFootballDataFixture = (match = {}) => {
     competitionCode: String(match.competition?.code || "").trim() || null,
     season,
     utcDate: match.utcDate || null,
-    status: String(match.status || "").toLowerCase() || "upcoming",
+    status,
+    providerStatus,
     matchday: match.matchday ?? null,
     stage: match.stage || null,
     venue: match.venue || null,

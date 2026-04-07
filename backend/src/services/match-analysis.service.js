@@ -17,6 +17,10 @@ const SHOWCASE_MATCH_DIRECTORY = [
     season: "2025-26",
     teams: ["Bengaluru FC", "Kerala Blasters"],
     sources: ["kaggle_indian_players"],
+    status: "completed",
+    hasEvents: true,
+    homeScore: 2,
+    awayScore: 1,
   },
   {
     matchId: "SB-1001",
@@ -25,8 +29,79 @@ const SHOWCASE_MATCH_DIRECTORY = [
     season: "2025-26",
     teams: ["Barcelona", "Real Madrid"],
     sources: ["statsbomb_open_data"],
+    status: "completed",
+    hasEvents: true,
+    homeScore: 1,
+    awayScore: 2,
   },
 ];
+
+const normalizeDirectoryMatch = (match = {}, fallback = {}) => ({
+  matchId: match.matchId || fallback.matchId || "",
+  title: match.title || fallback.title || "",
+  competition: match.competition || fallback.competition || "",
+  season: match.season || fallback.season || "",
+  teams: Array.isArray(match.teams) ? match.teams : fallback.teams || [],
+  sources: Array.isArray(match.sources) ? match.sources : fallback.sources || [],
+  status: match.status || fallback.status || "completed",
+  homeScore: Number(match.homeScore ?? fallback.homeScore ?? 0),
+  awayScore: Number(match.awayScore ?? fallback.awayScore ?? 0),
+  hasEvents: Boolean(match.hasEvents ?? fallback.hasEvents ?? false),
+});
+
+const buildMatchIdentityKey = (match = {}) => {
+  const competition = String(match.competition || "").trim().toLowerCase();
+  const teams = (match.teams || []).map((team) => String(team || "").trim().toLowerCase()).filter(Boolean);
+  const title = String(match.title || "").trim().toLowerCase();
+  return [competition, teams.join("::"), title].join("|");
+};
+
+export const mergeMatchDirectories = (primaryMatches = [], secondaryMatches = []) => {
+  const merged = new Map();
+
+  for (const match of primaryMatches.map((entry) => normalizeDirectoryMatch(entry))) {
+    merged.set(buildMatchIdentityKey(match), match);
+  }
+
+  for (const secondary of secondaryMatches.map((entry) => normalizeDirectoryMatch(entry))) {
+    const key = buildMatchIdentityKey(secondary);
+    const current = merged.get(key);
+    if (!current) {
+      merged.set(key, secondary);
+      continue;
+    }
+
+    merged.set(key, {
+      ...secondary,
+      ...current,
+      sources: [...new Set([...(current.sources || []), ...(secondary.sources || [])])],
+      status: current.hasEvents ? current.status : secondary.status || current.status,
+      homeScore: current.hasEvents ? current.homeScore : secondary.homeScore,
+      awayScore: current.hasEvents ? current.awayScore : secondary.awayScore,
+      hasEvents: current.hasEvents || secondary.hasEvents,
+    });
+  }
+
+  const statusPriority = {
+    live: 0,
+    completed: 1,
+    upcoming: 2,
+  };
+
+  return [...merged.values()].sort((left, right) => {
+    const statusCompare = (statusPriority[left.status] ?? 9) - (statusPriority[right.status] ?? 9);
+    if (statusCompare !== 0) {
+      return statusCompare;
+    }
+
+    const competitionCompare = String(left.competition || "").localeCompare(String(right.competition || ""));
+    if (competitionCompare !== 0) {
+      return competitionCompare;
+    }
+
+    return String(left.title || "").localeCompare(String(right.title || ""));
+  });
+};
 
 const normalizeBucketScores = (scores = []) => {
   if (Array.isArray(scores)) {
@@ -212,8 +287,37 @@ const filterDirectoryMatches = (matches = [], { status, search, competition } = 
 
 export const getMatchDirectoryData = async ({ limit, page, status, search, competition } = {}) => {
   try {
-    const directory = await fetchMatchDirectory();
-    const allMatches = directory.matches || [];
+    const [directory, providerResults, providerFixtures] = await Promise.all([
+      fetchMatchDirectory(),
+      isFootballDataConfigured() ? fetchFootballMatchStatusFeed() : Promise.resolve({ liveMatches: [], completedMatches: [] }),
+      isFootballDataConfigured() ? fetchUpcomingFootballFixtures() : Promise.resolve({ matches: [] }),
+    ]);
+
+    const allMatches = mergeMatchDirectories(
+      (directory.matches || []).map((match) =>
+        normalizeDirectoryMatch(match, {
+          status: match.status || "completed",
+          hasEvents: true,
+        }),
+      ),
+      [
+        ...(providerResults.liveMatches || []).map((match) =>
+          normalizeDirectoryMatch(match, {
+            hasEvents: false,
+          }),
+        ),
+        ...(providerResults.completedMatches || []).map((match) =>
+          normalizeDirectoryMatch(match, {
+            hasEvents: false,
+          }),
+        ),
+        ...(providerFixtures.matches || []).map((match) =>
+          normalizeDirectoryMatch(match, {
+            hasEvents: false,
+          }),
+        ),
+      ],
+    );
     const filteredMatches = filterDirectoryMatches(allMatches, { status, search, competition });
     const normalizedLimit = Number(limit) || 50;
     const normalizedPage = Number(page) || 1;
@@ -222,7 +326,7 @@ export const getMatchDirectoryData = async ({ limit, page, status, search, compe
     return {
       matches,
       metadata: {
-        source: "ai-service",
+        source: isFootballDataConfigured() ? "ai-service+football-data" : "ai-service",
         total: filteredMatches.length,
         page: normalizedPage,
         limit: normalizedLimit,

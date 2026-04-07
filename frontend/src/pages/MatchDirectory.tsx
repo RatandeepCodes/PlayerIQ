@@ -13,7 +13,7 @@ const PAGE_SIZE = 24;
 const MatchDirectory = () => {
   const [matches, setMatches] = useState<ApiMatchDirectoryEntry[]>([]);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"all" | "completed" | "upcoming">("all");
+  const [status, setStatus] = useState<"all" | "completed" | "upcoming" | "live">("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalMatches, setTotalMatches] = useState(0);
@@ -85,13 +85,14 @@ const MatchDirectory = () => {
               <div className="flex items-center gap-2">
                 {[
                   { value: "all", label: "All Matches" },
+                  { value: "live", label: "Live" },
                   { value: "completed", label: "Completed" },
                   { value: "upcoming", label: "Upcoming" },
                 ].map((option) => (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setStatus(option.value as "all" | "completed" | "upcoming")}
+                    onClick={() => setStatus(option.value as "all" | "completed" | "upcoming" | "live")}
                     className={`rounded-full px-4 py-2 text-sm font-body transition-colors ${
                       status === option.value
                         ? "bg-foreground text-primary-foreground"
@@ -111,8 +112,10 @@ const MatchDirectory = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {matches.map((match, index) => {
             const title = match.title || `${match.teams?.[0] || "Home"} vs ${match.teams?.[1] || "Away"}`;
+            const statusLabel =
+              match.status === "completed" ? "Completed" : match.status === "live" ? "Live" : "Upcoming";
             const scoreline =
-              match.status === "completed"
+              match.status === "completed" || match.status === "live"
                 ? `${Number(match.homeScore || 0)} - ${Number(match.awayScore || 0)}`
                 : "vs";
 
@@ -132,17 +135,19 @@ const MatchDirectory = () => {
                     </p>
                     <h3 className="mt-2 font-display text-xl tracking-wide text-foreground">{title}</h3>
                     <p className="mt-2 text-sm font-body text-muted-foreground">
-                      {[match.season, match.status === "completed" ? "Completed" : "Upcoming"].filter(Boolean).join(" · ")}
+                      {[match.season, statusLabel].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-[10px] font-body uppercase tracking-widest ${
                       match.status === "completed"
                         ? "bg-foreground text-primary-foreground"
-                        : "border border-border text-muted-foreground"
+                        : match.status === "live"
+                          ? "bg-destructive/15 text-destructive"
+                          : "border border-border text-muted-foreground"
                     }`}
                   >
-                    {match.status || "match"}
+                    {statusLabel}
                   </span>
                 </div>
 
@@ -155,6 +160,10 @@ const MatchDirectory = () => {
                     >
                       Open Match Day
                     </Link>
+                  ) : match.status === "live" ? (
+                    <span className="rounded-full bg-destructive/15 px-4 py-2 text-sm font-body text-destructive">
+                      Live score
+                    </span>
                   ) : (
                     <span className="rounded-full border border-border px-4 py-2 text-sm font-body text-muted-foreground">
                       Upcoming
