@@ -32,9 +32,9 @@ describe("Auth routes", () => {
     assert.ok(["ok", "degraded"].includes(payload.status));
     assert.ok(["connected", "disconnected"].includes(payload.database));
     assert.ok(["online", "offline"].includes(payload.aiService));
-    assert.ok(["online", "offline"].includes(payload.liveData));
+    assert.ok(["online", "offline", "disabled"].includes(payload.liveData));
     assert.equal(payload.services.backend, "online");
-    assert.ok(["online", "offline"].includes(payload.services.liveData));
+    assert.ok(["online", "offline", "disabled"].includes(payload.services.liveData));
     assert.ok(Array.isArray(payload.config.warnings));
     assert.equal(typeof payload.config.liveDataProvider, "string");
     assert.equal(typeof payload.config.footballData.configured, "boolean");

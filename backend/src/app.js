@@ -42,7 +42,7 @@ app.get("/api/health", async (_req, res) => {
   const status =
     database === "connected" &&
     aiHealth.status === "online" &&
-    footballDataHealth.status === "online" &&
+    ["online", "disabled"].includes(footballDataHealth.status) &&
     warnings.length === 0
       ? "ok"
       : "degraded";

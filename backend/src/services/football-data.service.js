@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { env, hasFootballDataToken } from "../config/env.js";
+import { env, hasFootballDataToken, isFootballDataEnabled } from "../config/env.js";
 import { logger } from "../utils/logger.js";
 
 const footballDataClient = axios.create({
@@ -32,6 +32,15 @@ const normalizeFootballDataError = (error, fallbackMessage) => {
 export const isFootballDataConfigured = () => hasFootballDataToken();
 
 export const getFootballDataHealth = async () => {
+  if (!isFootballDataEnabled()) {
+    return {
+      status: "disabled",
+      detail: {
+        message: "Live football provider is disabled",
+      },
+    };
+  }
+
   if (!hasFootballDataToken()) {
     return {
       status: "offline",
@@ -211,8 +220,8 @@ export const fetchFootballMatchStatusFeed = async ({
   );
 
   const allMatches = Array.isArray(data?.matches) ? data.matches.map(normalizeFootballDataFixture) : [];
-  const liveMatches = allMatches.filter((match) => ["in_play", "paused", "live"].includes(match.status));
-  const completedMatches = allMatches.filter((match) => match.status === "finished");
+  const liveMatches = allMatches.filter((match) => match.status === "live");
+  const completedMatches = allMatches.filter((match) => match.status === "completed");
 
   return {
     liveMatches,
