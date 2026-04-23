@@ -26,6 +26,12 @@ const PlayerDirectory = () => {
   }, [analyticsOnly, normalizedSearch]);
 
   useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  useEffect(() => {
     let active = true;
 
     const loadPlayers = async () => {
@@ -76,12 +82,19 @@ const PlayerDirectory = () => {
   );
   const ratedPlayersOnPage = useMemo(() => players.filter((player) => player.hasAnalytics).length, [players]);
   const hasActiveFilters = Boolean(normalizedSearch) || analyticsOnly;
+  const rangeStart = totalPlayers === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = totalPlayers === 0 ? 0 : rangeStart + players.length - 1;
 
   const resetFilters = () => {
     setSearch("");
     setAnalyticsOnly(false);
     setPage(1);
   };
+
+  const goToFirstPage = () => setPage(1);
+  const goToPreviousPage = () => setPage((current) => Math.max(1, current - 1));
+  const goToNextPage = () => setPage((current) => Math.min(totalPages, current + 1));
+  const goToLastPage = () => setPage(totalPages);
 
   return (
     <div className="min-h-screen bg-background bg-noise">
@@ -135,6 +148,9 @@ const PlayerDirectory = () => {
             <span className="rounded-full border border-border px-3 py-1">{ratedPlayersOnPage} rated profiles visible</span>
             <span className="rounded-full border border-border px-3 py-1">
               {analyticsOnly ? "Filtered to analytics-backed players" : "Mixed directory with rated and directory-only players"}
+            </span>
+            <span className="rounded-full border border-border px-3 py-1">
+              {totalPlayers === 0 ? "No results yet" : `Results ${rangeStart}-${rangeEnd} of ${totalPlayers}`}
             </span>
             {normalizedSearch ? (
               <span className="rounded-full border border-border px-3 py-1">Search: "{normalizedSearch}"</span>
@@ -202,26 +218,45 @@ const PlayerDirectory = () => {
           </div>
         ) : null}
 
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page <= 1}
-            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <span className="text-sm font-body text-muted-foreground">
-            Page {page} of {Math.max(1, totalPages)}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            disabled={page >= totalPages}
-            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3">
+          <div className="text-sm font-body text-muted-foreground">
+            {totalPlayers === 0 ? "Page 1 of 1" : `Page ${page} of ${Math.max(1, totalPages)}`}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={goToFirstPage}
+              disabled={page <= 1 || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              First
+            </button>
+            <button
+              type="button"
+              onClick={goToPreviousPage}
+              disabled={page <= 1 || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={goToNextPage}
+              disabled={page >= totalPages || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={goToLastPage}
+              disabled={page >= totalPages || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Last
+            </button>
+          </div>
         </div>
       </section>
 

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { getMatches } from "@/api/client.js";
@@ -17,21 +17,27 @@ const MatchDirectory = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalMatches, setTotalMatches] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const deferredSearch = useDeferredValue(search);
+  const normalizedSearch = useMemo(() => deferredSearch.trim().replace(/\s+/g, " "), [deferredSearch]);
 
   useEffect(() => {
     setPage(1);
-  }, [deferredSearch, status]);
+  }, [normalizedSearch, status]);
 
   useEffect(() => {
     let active = true;
 
     const loadMatches = async () => {
+      if (active) {
+        setIsLoading(true);
+      }
+
       try {
         const response = (await getMatches({
           limit: PAGE_SIZE,
           page,
-          search: deferredSearch.trim(),
+          search: normalizedSearch,
           status,
         })) as ApiMatchesResponse;
 
@@ -50,6 +56,10 @@ const MatchDirectory = () => {
         setMatches([]);
         setTotalPages(1);
         setTotalMatches(0);
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -58,7 +68,18 @@ const MatchDirectory = () => {
     return () => {
       active = false;
     };
-  }, [deferredSearch, page, status]);
+  }, [normalizedSearch, page, status]);
+
+  const liveCountOnPage = useMemo(() => matches.filter((match) => match.status === "live").length, [matches]);
+  const completedCountOnPage = useMemo(() => matches.filter((match) => match.status === "completed").length, [matches]);
+  const upcomingCountOnPage = useMemo(() => matches.filter((match) => match.status === "upcoming").length, [matches]);
+  const hasActiveFilters = Boolean(normalizedSearch) || status !== "all";
+
+  const resetFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-background bg-noise">
@@ -71,7 +92,9 @@ const MatchDirectory = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h3 className="font-display text-xl tracking-wide text-foreground">Full match list</h3>
-              <p className="mt-1 text-sm font-body text-muted-foreground">{totalMatches} matches found</p>
+              <p className="mt-1 text-sm font-body text-muted-foreground">
+                {isLoading ? "Updating match results..." : `${totalMatches} matches found`}
+              </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -104,6 +127,28 @@ const MatchDirectory = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-body text-muted-foreground">
+            <span className="rounded-full border border-border px-3 py-1">Showing {matches.length} on this page</span>
+            <span className="rounded-full border border-border px-3 py-1">{completedCountOnPage} completed</span>
+            <span className="rounded-full border border-border px-3 py-1">{liveCountOnPage} live</span>
+            <span className="rounded-full border border-border px-3 py-1">{upcomingCountOnPage} upcoming</span>
+            <span className="rounded-full border border-border px-3 py-1">
+              {status === "all" ? "Showing every match status" : `Filtered to ${status} matches`}
+            </span>
+            {normalizedSearch ? (
+              <span className="rounded-full border border-border px-3 py-1">Search: "{normalizedSearch}"</span>
+            ) : null}
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="rounded-full border border-border px-3 py-1 text-foreground transition-colors hover:bg-accent"
+              >
+                Reset filters
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -177,7 +222,9 @@ const MatchDirectory = () => {
 
         {!matches.length ? (
           <div className="glass-card mt-6 rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
-            No matches matched the current search and filter.
+            {normalizedSearch || status !== "all"
+              ? "No matches matched the current search and filter."
+              : "No matches are available in the directory right now."}
           </div>
         ) : null}
 
@@ -185,7 +232,7 @@ const MatchDirectory = () => {
           <button
             type="button"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page <= 1}
+            disabled={page <= 1 || isLoading}
             className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
@@ -196,7 +243,7 @@ const MatchDirectory = () => {
           <button
             type="button"
             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            disabled={page >= totalPages}
+            disabled={page >= totalPages || isLoading}
             className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
