@@ -14,3 +14,5 @@ Current utilities:
   - exports the first reusable player-rating training dataset to `data/processed/`
 - `train_player_rating_model.py`
   - trains and persists the first supervised player-rating model to `ai-service/models/`
+- `retrain_player_rating_model.py`
+  - re-exports the current training dataset, archives the previous model artifacts, retrains the player-rating model, and writes a retraining summary to `data/processed/player_rating_retraining_summary.json`

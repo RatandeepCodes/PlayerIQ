@@ -23,8 +23,10 @@ from app.services.feature_engineering import (
 )
 from app.services.momentum_engine import get_match_momentum
 from app.services.model_training import (
+    archive_existing_rating_model,
     load_player_rating_model,
     predict_player_rating_from_features,
+    retrain_and_persist_player_rating_model,
     train_and_persist_player_rating_model,
     train_player_rating_model,
 )
@@ -245,6 +247,23 @@ class PlayerIQAIPipelineTests(unittest.TestCase):
                 feature_row = dataset.iloc[0].to_dict()
                 prediction = predict_player_rating_from_features(feature_row, model=model)
                 self.assertGreaterEqual(prediction, 0.0)
+        finally:
+            shutil.rmtree(model_dir, ignore_errors=True)
+
+    def test_rating_model_retraining_archives_previous_artifacts(self) -> None:
+        model_dir = Path(__file__).resolve().parents[2] / ".tmp_model_retrain_test"
+        shutil.rmtree(model_dir, ignore_errors=True)
+        model_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            with patch("app.services.model_training._get_model_dir", return_value=model_dir):
+                first_run = train_and_persist_player_rating_model()
+                self.assertTrue(first_run.model_path.exists())
+                retraining = retrain_and_persist_player_rating_model()
+                self.assertTrue(retraining["archive"]["created"])
+                self.assertTrue(Path(retraining["archive"]["archive_model_path"]).exists())
+                self.assertTrue(Path(retraining["archive"]["archive_metadata_path"]).exists())
+                self.assertTrue(Path(retraining["artifacts"]["model_path"]).exists())
+                self.assertTrue(Path(retraining["artifacts"]["metadata_path"]).exists())
         finally:
             shutil.rmtree(model_dir, ignore_errors=True)
 

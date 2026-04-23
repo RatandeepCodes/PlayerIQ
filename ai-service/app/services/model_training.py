@@ -1,7 +1,9 @@
 import json
 import pickle
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -32,10 +34,23 @@ class TrainingArtifacts:
     model_version: str
 
 
+def serialize_training_artifacts(artifacts: TrainingArtifacts) -> dict:
+    payload = asdict(artifacts)
+    payload["model_path"] = str(artifacts.model_path)
+    payload["metadata_path"] = str(artifacts.metadata_path)
+    return payload
+
+
 def _get_model_dir() -> Path:
     model_dir = settings.model_path
     model_dir.mkdir(parents=True, exist_ok=True)
     return model_dir
+
+
+def _get_model_archive_dir() -> Path:
+    archive_dir = _get_model_dir() / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    return archive_dir
 
 
 def get_rating_model_paths() -> tuple[Path, Path]:
@@ -132,6 +147,50 @@ def train_and_persist_player_rating_model(
     model, artifacts = train_player_rating_model(dataset=dataset, target_column=target_column)
     dataset_metadata = get_player_training_dataset_metadata()
     return persist_player_rating_model(model, artifacts, dataset_metadata=dataset_metadata)
+
+
+def archive_existing_rating_model() -> dict:
+    model_path, metadata_path = get_rating_model_paths()
+    if not model_path.exists() or not metadata_path.exists():
+        return {
+            "created": False,
+            "reason": "missing_current_artifacts",
+            "archive_model_path": None,
+            "archive_metadata_path": None,
+        }
+
+    archive_dir = _get_model_archive_dir()
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    archive_model_path = archive_dir / f"player_rating_model_{timestamp}.pkl"
+    archive_metadata_path = archive_dir / f"player_rating_model_metadata_{timestamp}.json"
+
+    shutil.copy2(model_path, archive_model_path)
+    shutil.copy2(metadata_path, archive_metadata_path)
+
+    return {
+        "created": True,
+        "reason": None,
+        "archive_model_path": str(archive_model_path),
+        "archive_metadata_path": str(archive_metadata_path),
+    }
+
+
+def retrain_and_persist_player_rating_model(
+    dataset: pd.DataFrame | None = None,
+    target_column: str = DEFAULT_TARGET_COLUMN,
+    archive_existing: bool = True,
+) -> dict:
+    archive_summary = archive_existing_rating_model() if archive_existing else {
+        "created": False,
+        "reason": "archiving_disabled",
+        "archive_model_path": None,
+        "archive_metadata_path": None,
+    }
+    artifacts = train_and_persist_player_rating_model(dataset=dataset, target_column=target_column)
+    return {
+        "archive": archive_summary,
+        "artifacts": serialize_training_artifacts(artifacts),
+    }
 
 
 def predict_player_rating_from_features(feature_row: dict | pd.Series, model: RandomForestRegressor | None = None) -> float:
