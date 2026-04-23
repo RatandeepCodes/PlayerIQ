@@ -26,6 +26,12 @@ const MatchDirectory = () => {
   }, [normalizedSearch, status]);
 
   useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  useEffect(() => {
     let active = true;
 
     const loadMatches = async () => {
@@ -73,13 +79,21 @@ const MatchDirectory = () => {
   const liveCountOnPage = useMemo(() => matches.filter((match) => match.status === "live").length, [matches]);
   const completedCountOnPage = useMemo(() => matches.filter((match) => match.status === "completed").length, [matches]);
   const upcomingCountOnPage = useMemo(() => matches.filter((match) => match.status === "upcoming").length, [matches]);
+  const analyticsBackedCountOnPage = useMemo(() => matches.filter((match) => match.hasEvents).length, [matches]);
   const hasActiveFilters = Boolean(normalizedSearch) || status !== "all";
+  const rangeStart = totalMatches === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = totalMatches === 0 ? 0 : rangeStart + matches.length - 1;
 
   const resetFilters = () => {
     setSearch("");
     setStatus("all");
     setPage(1);
   };
+
+  const goToFirstPage = () => setPage(1);
+  const goToPreviousPage = () => setPage((current) => Math.max(1, current - 1));
+  const goToNextPage = () => setPage((current) => Math.min(totalPages, current + 1));
+  const goToLastPage = () => setPage(totalPages);
 
   return (
     <div className="min-h-screen bg-background bg-noise">
@@ -134,6 +148,10 @@ const MatchDirectory = () => {
             <span className="rounded-full border border-border px-3 py-1">{completedCountOnPage} completed</span>
             <span className="rounded-full border border-border px-3 py-1">{liveCountOnPage} live</span>
             <span className="rounded-full border border-border px-3 py-1">{upcomingCountOnPage} upcoming</span>
+            <span className="rounded-full border border-border px-3 py-1">{analyticsBackedCountOnPage} analytics-backed</span>
+            <span className="rounded-full border border-border px-3 py-1">
+              {totalMatches === 0 ? "No results yet" : `Results ${rangeStart}-${rangeEnd} of ${totalMatches}`}
+            </span>
             <span className="rounded-full border border-border px-3 py-1">
               {status === "all" ? "Showing every match status" : `Filtered to ${status} matches`}
             </span>
@@ -156,7 +174,8 @@ const MatchDirectory = () => {
       <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {matches.map((match, index) => {
-            const title = match.title || `${match.teams?.[0] || "Home"} vs ${match.teams?.[1] || "Away"}`;
+            const teams = match.teams?.filter(Boolean) || [];
+            const title = match.title || `${teams[0] || "Home"} vs ${teams[1] || "Away"}`;
             const statusLabel =
               match.status === "completed" ? "Completed" : match.status === "live" ? "Live" : "Upcoming";
             const scoreline =
@@ -182,18 +201,28 @@ const MatchDirectory = () => {
                     <p className="mt-2 text-sm font-body text-muted-foreground">
                       {[match.season, statusLabel].filter(Boolean).join(" · ")}
                     </p>
+                    {teams.length === 2 ? (
+                      <p className="mt-2 text-xs font-body text-muted-foreground">
+                        {teams[0]} vs {teams[1]}
+                      </p>
+                    ) : null}
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-body uppercase tracking-widest ${
-                      match.status === "completed"
-                        ? "bg-foreground text-primary-foreground"
-                        : match.status === "live"
-                          ? "bg-destructive/15 text-destructive"
-                          : "border border-border text-muted-foreground"
-                    }`}
-                  >
-                    {statusLabel}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-[10px] font-body uppercase tracking-widest ${
+                        match.status === "completed"
+                          ? "bg-foreground text-primary-foreground"
+                          : match.status === "live"
+                            ? "bg-destructive/15 text-destructive"
+                            : "border border-border text-muted-foreground"
+                      }`}
+                    >
+                      {statusLabel}
+                    </span>
+                    <span className="rounded-full border border-border px-3 py-1 text-[10px] font-body uppercase tracking-widest text-muted-foreground">
+                      {match.hasEvents ? "Full analysis" : "Fixture only"}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-5 flex items-center justify-between">
@@ -228,26 +257,45 @@ const MatchDirectory = () => {
           </div>
         ) : null}
 
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page <= 1 || isLoading}
-            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <span className="text-sm font-body text-muted-foreground">
-            Page {page} of {Math.max(1, totalPages)}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            disabled={page >= totalPages || isLoading}
-            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3">
+          <div className="text-sm font-body text-muted-foreground">
+            {totalMatches === 0 ? "Page 1 of 1" : `Page ${page} of ${Math.max(1, totalPages)}`}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={goToFirstPage}
+              disabled={page <= 1 || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              First
+            </button>
+            <button
+              type="button"
+              onClick={goToPreviousPage}
+              disabled={page <= 1 || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={goToNextPage}
+              disabled={page >= totalPages || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={goToLastPage}
+              disabled={page >= totalPages || isLoading}
+              className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Last
+            </button>
+          </div>
         </div>
       </section>
 
