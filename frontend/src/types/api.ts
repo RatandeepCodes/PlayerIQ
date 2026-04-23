@@ -15,6 +15,13 @@ export interface ApiPlayersResponse {
     limit?: number;
     totalPages?: number;
     hasMore?: boolean;
+    filters?: {
+      team?: string | null;
+      nationality?: string | null;
+      search?: string | null;
+      analyticsOnly?: boolean;
+      limit?: number;
+    };
   };
 }
 

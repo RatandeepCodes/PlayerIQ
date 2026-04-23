@@ -145,7 +145,11 @@ const mapAiDirectoryPlayer = (player) => ({
 
 const filterDirectoryPlayers = (players, { team, nationality, search, analyticsOnly }) => {
   const normalizedNationality = nationality?.trim().toLowerCase();
-  const normalizedSearch = search?.trim().toLowerCase();
+  const searchTokens = String(search || "")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
   const requireAnalytics = analyticsOnly === true || String(analyticsOnly).toLowerCase() === "true";
   return normalizePlayerCollection(
     players.filter((player) => {
@@ -158,7 +162,7 @@ const filterDirectoryPlayers = (players, { team, nationality, search, analyticsO
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      const matchesSearch = normalizedSearch ? haystack.includes(normalizedSearch) : true;
+      const matchesSearch = searchTokens.length ? searchTokens.every((token) => haystack.includes(token)) : true;
       return matchesTeam && matchesNationality && matchesAnalytics && matchesSearch;
     }),
   );

@@ -17,21 +17,27 @@ const PlayerDirectory = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalPlayers, setTotalPlayers] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const deferredSearch = useDeferredValue(search);
+  const normalizedSearch = useMemo(() => deferredSearch.trim().replace(/\s+/g, " "), [deferredSearch]);
 
   useEffect(() => {
     setPage(1);
-  }, [analyticsOnly, deferredSearch]);
+  }, [analyticsOnly, normalizedSearch]);
 
   useEffect(() => {
     let active = true;
 
     const loadPlayers = async () => {
+      if (active) {
+        setIsLoading(true);
+      }
+
       try {
         const response = (await getPlayers({
           limit: PAGE_SIZE,
           page,
-          search: deferredSearch.trim(),
+          search: normalizedSearch,
           analyticsOnly,
         })) as ApiPlayersResponse;
 
@@ -50,6 +56,10 @@ const PlayerDirectory = () => {
         setPlayers([]);
         setTotalPages(1);
         setTotalPlayers(0);
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -58,12 +68,20 @@ const PlayerDirectory = () => {
     return () => {
       active = false;
     };
-  }, [analyticsOnly, deferredSearch, page]);
+  }, [analyticsOnly, normalizedSearch, page]);
 
   const heading = useMemo(
     () => (analyticsOnly ? "Analytics-backed players" : "All players in the project"),
     [analyticsOnly],
   );
+  const ratedPlayersOnPage = useMemo(() => players.filter((player) => player.hasAnalytics).length, [players]);
+  const hasActiveFilters = Boolean(normalizedSearch) || analyticsOnly;
+
+  const resetFilters = () => {
+    setSearch("");
+    setAnalyticsOnly(false);
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-background bg-noise">
@@ -76,7 +94,9 @@ const PlayerDirectory = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h3 className="font-display text-xl tracking-wide text-foreground">{heading}</h3>
-              <p className="mt-1 text-sm font-body text-muted-foreground">{totalPlayers} players found</p>
+              <p className="mt-1 text-sm font-body text-muted-foreground">
+                {isLoading ? "Updating player results..." : `${totalPlayers} players found`}
+              </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -108,6 +128,26 @@ const PlayerDirectory = () => {
                 </button>
               </div>
             </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-body text-muted-foreground">
+            <span className="rounded-full border border-border px-3 py-1">Showing {players.length} on this page</span>
+            <span className="rounded-full border border-border px-3 py-1">{ratedPlayersOnPage} rated profiles visible</span>
+            <span className="rounded-full border border-border px-3 py-1">
+              {analyticsOnly ? "Filtered to analytics-backed players" : "Mixed directory with rated and directory-only players"}
+            </span>
+            {normalizedSearch ? (
+              <span className="rounded-full border border-border px-3 py-1">Search: "{normalizedSearch}"</span>
+            ) : null}
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="rounded-full border border-border px-3 py-1 text-foreground transition-colors hover:bg-accent"
+              >
+                Reset filters
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -156,7 +196,9 @@ const PlayerDirectory = () => {
 
         {!players.length ? (
           <div className="glass-card mt-6 rounded-xl p-8 text-center text-sm font-body text-muted-foreground">
-            No players matched the current search and filter.
+            {normalizedSearch || analyticsOnly
+              ? "No players matched the current search and filter."
+              : "No players are available in the directory right now."}
           </div>
         ) : null}
 
