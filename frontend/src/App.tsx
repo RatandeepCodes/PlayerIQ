@@ -52,7 +52,7 @@ const App = () => (
                 <Route path="/player/:id" element={<PlayerProfile />} />
                 <Route path="/compare" element={<ComparePlayers />} />
                 <Route path="/fixtures" element={<MatchDirectory />} />
-                <Route path="/match" element={<Navigate to="/matches" replace />} />
+                <Route path="/match" element={<Navigate to="/fixtures" replace />} />
                 <Route path="/matches" element={<MatchAnalysis />} />
                 <Route path="/matches/:id" element={<MatchAnalysis />} />
               </Route>

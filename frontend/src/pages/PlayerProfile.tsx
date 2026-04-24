@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Brain, Shield, Target, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { getPlayerHistory, getPlayerProfile, getPlayers } from "@/api/client.js";
 import Footer from "@/components/Footer";
@@ -286,6 +286,20 @@ const PlayerProfile = () => {
             onChange={(nextId) => navigate(`/player/${nextId}`)}
             placeholder="Search players..."
           />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            to="/players"
+            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent"
+          >
+            Browse all players
+          </Link>
+          <Link
+            to="/compare"
+            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent"
+          >
+            Compare players
+          </Link>
         </div>
       </div>
 

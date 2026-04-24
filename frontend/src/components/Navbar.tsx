@@ -6,10 +6,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext.jsx";
 
 const navLinks = [
-  { to: "/", label: "Home" },
-  { to: "/player", label: "Player Profile" },
-  { to: "/compare", label: "Compare Players" },
-  { to: "/fixtures", label: "Match Day" },
+  { to: "/", label: "Home", matchPaths: ["/"] },
+  { to: "/players", label: "Players", matchPaths: ["/players", "/player"] },
+  { to: "/compare", label: "Compare", matchPaths: ["/compare"] },
+  { to: "/fixtures", label: "Matches", matchPaths: ["/fixtures", "/matches"] },
 ];
 
 const Navbar = () => {
@@ -17,12 +17,12 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
 
-  const isActiveLink = (path: string) => {
-    if (path === "/") {
+  const isActiveLink = (paths: string[]) => {
+    if (paths.includes("/")) {
       return location.pathname === "/";
     }
 
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return paths.some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`));
   };
 
   return (
@@ -40,7 +40,7 @@ const Navbar = () => {
 
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => {
-              const isActive = isActiveLink(link.to);
+              const isActive = isActiveLink(link.matchPaths);
               return (
                 <Link
                   key={link.to}
@@ -97,16 +97,22 @@ const Navbar = () => {
           className="glass border-t border-border md:hidden"
         >
           <div className="space-y-2 px-4 py-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className="block rounded-lg px-4 py-2 text-sm font-body text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = isActiveLink(link.matchPaths);
+
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block rounded-lg px-4 py-2 text-sm font-body transition-colors ${
+                    isActive ? "bg-foreground text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
 
             {isAuthenticated ? (
               <button

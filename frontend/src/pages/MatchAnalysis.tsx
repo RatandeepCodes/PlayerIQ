@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Clock, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { getMatchAnalysis, getMatches } from "@/api/client.js";
 import Footer from "@/components/Footer";
@@ -345,6 +345,20 @@ const MatchAnalysis = () => {
             onChange={(nextId) => navigate(`/matches/${nextId}`)}
             placeholder="Select a match..."
           />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            to="/fixtures"
+            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent"
+          >
+            Browse all matches
+          </Link>
+          <Link
+            to="/"
+            className="rounded-full border border-border px-4 py-2 text-sm font-body text-foreground transition-colors hover:bg-accent"
+          >
+            Back home
+          </Link>
         </div>
       </div>
 
