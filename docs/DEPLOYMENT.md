@@ -34,6 +34,9 @@ JWT_SECRET=your-long-random-secret
 JWT_EXPIRES_IN=7d
 AI_SERVICE_URL=https://your-ai-service-domain
 CLIENT_ORIGIN=https://your-frontend-domain
+LIVE_DATA_PROVIDER=football-data
+FOOTBALL_DATA_API_BASE_URL=https://api.football-data.org/v4
+FOOTBALL_DATA_API_TOKEN=your-football-data-token
 ```
 
 Readiness checks:
@@ -69,4 +72,4 @@ Readiness checks:
 5. MongoDB is reachable from the deployed backend.
 6. Backend can reach the deployed AI service.
 7. Frontend API and socket URLs point to the deployed backend.
-8. Login, player profile, comparison, and match simulation work end to end.
+8. Login, player directory, player profile, comparison, match directory, and completed match analysis work end to end.

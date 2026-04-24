@@ -1,12 +1,19 @@
 # PlayerIQ
 
-PlayerIQ is a football player intelligence platform with three main parts:
+PlayerIQ is a working football intelligence prototype with three main parts:
 
 - `frontend/`: React + Vite dashboard
 - `backend/`: Express API, auth, Socket.IO, and MongoDB integration
 - `ai-service/`: FastAPI analytics service for ratings, playstyles, reports, and match insights
 
 Local data and generated artifacts live in `data/`, while extra setup notes live in `docs/`.
+
+Current product areas:
+
+- `Home` for featured matches, recent results, and spotlight players
+- `Players` for the full player directory and player profiles
+- `Compare` for head-to-head player comparison
+- `Matches` for the full match directory and completed match analysis
 
 ## How To Download The Project
 
@@ -37,6 +44,7 @@ Notes:
 
 - The backend can still start in development if MongoDB is unavailable, but database-backed features may not work correctly.
 - `FOOTBALL_DATA_API_TOKEN` is optional unless you want external football-data integration.
+- `LIVE_DATA_PROVIDER` is intentionally `disabled` by default for local development.
 
 ## Project Structure
 
@@ -114,15 +122,14 @@ Run each service in a separate terminal from the repository root.
 
 ```powershell
 cd ai-service
-.venv\Scripts\activate
-uvicorn app.main:app --reload --port 8000
+py -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-If you did not activate the virtual environment:
+If your virtual environment is healthy and you prefer using it:
 
 ```powershell
 cd ai-service
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Terminal 2: Start the backend
@@ -148,6 +155,14 @@ npm run dev
 - AI service health check: `http://localhost:8000/health`
 
 Open `http://localhost:5173` in your browser after all three services are running.
+
+Useful app routes after login:
+
+- `/players` for the full player directory
+- `/player/:id` for a player profile
+- `/compare` for player comparison
+- `/fixtures` for the full match directory
+- `/matches/:id` for completed match analysis
 
 ## Optional: Refresh The StatsBomb Open Data Files
 
@@ -192,6 +207,7 @@ cd ai-service
 - If `http://localhost:5000/api/health` returns `degraded`, the most common causes are MongoDB not running, the AI service not running, or the backend still using the default `JWT_SECRET`.
 - If the frontend cannot connect, confirm that `frontend/.env` matches the backend port.
 - If the backend cannot reach the AI service, confirm that `backend/.env` has the correct `AI_SERVICE_URL`.
+- If live fixtures are not appearing, confirm that `LIVE_DATA_PROVIDER` and `FOOTBALL_DATA_API_TOKEN` are set in `backend/.env`. Local development keeps live-data sync disabled by default.
 
 ## Copyright And Disclaimer
 
